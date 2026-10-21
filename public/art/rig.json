@@ -1,0 +1,111 @@
+{
+  "balans": {
+    "w": 1024,
+    "h": 1536,
+    "eye": [
+      572,
+      116,
+      594,
+      128
+    ],
+    "cheek": [
+      575,
+      131,
+      592,
+      137
+    ],
+    "feet": 0.955
+  },
+  "pelgrim": {
+    "shift": [
+      0,
+      0
+    ]
+  },
+  "traagheid": {
+    "w": 627,
+    "h": 627,
+    "piece": [
+      466,
+      169,
+      506,
+      279
+    ],
+    "pivot": [
+      487,
+      174
+    ],
+    "remote": [
+      218,
+      438
+    ]
+  },
+  "ijver": {
+    "w": 627,
+    "h": 627,
+    "piece": [
+      195,
+      0,
+      355,
+      108
+    ],
+    "pivot": [
+      209,
+      94
+    ],
+    "hit": [
+      470,
+      176
+    ]
+  },
+  "matigheid": {
+    "piece": [
+      260,
+      190,
+      320,
+      300
+    ],
+    "kind": "pour"
+  },
+  "nederigheid": {
+    "piece": [
+      270,
+      395,
+      360,
+      530
+    ],
+    "kind": "pour"
+  },
+  "zuiverheid": {
+    "piece": [
+      145,
+      0,
+      215,
+      85
+    ],
+    "kind": "flame",
+    "pivot": [
+      180,
+      75
+    ]
+  },
+  "welwillendheid": {
+    "piece": [
+      315,
+      160,
+      610,
+      425
+    ],
+    "kind": "sway",
+    "pivot": [
+      330,
+      195
+    ]
+  },
+  "geduld": {
+    "kind": "still"
+  },
+  "vrijgevigheid": {
+    "kind": "still"
+  }
+}
