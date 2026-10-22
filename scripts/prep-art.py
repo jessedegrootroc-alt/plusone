@@ -77,6 +77,10 @@ LAYERS = {
     'achtergrond-terrassen-1-ver': (False, True),
     'achtergrond-terrassen-2-midden': (False, False),
     'achtergrond-terrassen-4-voorgrond': (False, False),
+    'achtergrond-paradiso-1-ver': (False, True),
+    'achtergrond-paradiso-2-midden': (False, False),
+    'achtergrond-paradiso-3-grond': (False, False),
+    'achtergrond-paradiso-4-voorgrond': (False, False),
 }
 for n, (mirror, opaque) in LAYERS.items():
     if os.path.exists(os.path.join(SRC, n + '.png')):
@@ -158,6 +162,17 @@ for n in ['effect-lichtje', 'effect-stofje']:
         white = Image.new('RGBA', lum.size, (255, 255, 255, 0))
         white.putalpha(lum)
         save(white, n, 96)
+
+
+# Paradiso: de emblemen van je doelen, en twee lichteffecten op zwart (die mengt de app weg met 'screen')
+for n in ['item-lauwerkrans', 'item-medaille', 'item-stralenkrans', 'item-ijsadem', 'item-vuur', 'item-dageraad', 'item-boek', 'item-halter']:
+    if os.path.exists(os.path.join(SRC, n + '.png')):
+        save(load(n), n, 220)
+for n, w in [('effect-gloed', 640), ('effect-stralen', 640)]:
+    if os.path.exists(os.path.join(SRC, n + '.png')):
+        save(load(n), n, w, rgb=True)
+if os.path.exists(os.path.join(SRC, 'item-tafereel-hoogmoed.png')):
+    save(load('item-tafereel-hoogmoed'), 'item-tafereel-hoogmoed', 627)
 
 
 def rig_pair(name, without, box, kind, pivot=None):

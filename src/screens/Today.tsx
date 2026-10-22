@@ -114,7 +114,7 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
       {/* De spiegel: in één oogopslag waar je staat. Deze kaart vult precies het scherm. */}
       <div className="card hero-card mt-24" style={{ padding: 0, overflow: 'hidden' }}>
         <div className="hero-scene">
-          <Scene balance={shown} onTap={() => openMirror(date)} shadow={charge} strong={strongest} />
+          <Scene balance={shown} onTap={() => openMirror(date)} shadow={charge} strong={strongest} features={s.avatar.features} />
         </div>
         <div style={{ padding: '24px 24px 16px' }}>
           <div className="hstack between" style={{ alignItems: 'flex-end', gap: 16 }}>

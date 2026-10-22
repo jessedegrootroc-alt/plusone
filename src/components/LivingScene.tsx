@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { FeatureId } from '../data/catalog'
 import type { SceneId, SinId } from '../data/sins'
 
 /**
@@ -55,6 +56,15 @@ const FILES = {
   welwillendheidD: 'rig-welwillendheid-deel',
   geduldB: 'rig-geduld-basis',
   vrijgevigheidB: 'rig-vrijgevigheid-basis',
+  gloed: 'effect-gloed',
+  stralen: 'effect-stralen',
+  e_halo: 'item-stralenkrans',
+  e_medal: 'item-medaille',
+  e_frost: 'item-ijsadem',
+  e_flame: 'item-vuur',
+  e_sun: 'item-dageraad',
+  e_book: 'item-boek',
+  e_dumbbell: 'item-halter',
 } as const
 type Key = keyof typeof FILES
 
@@ -75,6 +85,8 @@ interface Cast {
   frameTop?: number
   /** Waar het licht vandaan komt, als deel van de breedte. */
   lightX?: number
+  /** De voorgrond vóór je karakter (zonder taferelen), in plaats van erachter. */
+  frontOver?: boolean
   /** Welke beelden deze scène nog meer nodig heeft. */
   use: Key[]
   size: number
@@ -94,8 +106,12 @@ const CAST: Record<SceneId, Cast> = {
   woud: { use: [], char: 'karakter-verdwaalde', far: '../dore/forest', size: 0.6, feet: 0.991, breath: 3.4, eye: [738, 184, 763, 199], cheek: [740, 205, 760, 212], phone: [790, 868], light: 0.4, farBright: 0.26, dark: 0.85, feathers: false, embers: false },
   kust: { use: ['boat', 'pil1', 'pil2', 'bell', 'phone', 'water', 'ijver', 'arm', 'traag', 'slinger'], char: 'karakter-balans', far: 'achtergrond-kust-1-ver', farHorizon: 0.64, mid: 'achtergrond-kust-2-midden', ground: 'achtergrond-kust-3-grond', front: 'achtergrond-kust-4-voorgrond', size: 0.62, feet: 0.955, breath: 4.2, eye: [572, 116, 594, 128], cheek: [575, 131, 592, 137], light: 1, farBright: 0.6, dark: 0.75, feathers: true, embers: false },
   terrassen: { use: ['engel', 'duif1', 'duif2', 'lichtje', 'ijver', 'arm', 'matigheidB', 'matigheidD', 'nederigheidB', 'nederigheidD', 'zuiverheidB', 'zuiverheidD', 'welwillendheidB', 'welwillendheidD', 'geduldB', 'vrijgevigheidB'], char: 'karakter-klimmer', far: 'achtergrond-terrassen-1-ver', farHorizon: 0.6, mid: 'achtergrond-terrassen-2-midden', front: 'achtergrond-terrassen-4-voorgrond', frameTop: 0.26, lightX: 0.22, size: 0.6, feet: 0.994, breath: 5, eye: [553, 112, 568, 121], cheek: [555, 124, 567, 130], light: 1.1, farBright: 0.55, dark: 0.6, feathers: true, embers: false },
-  paradiso: { use: [], char: 'karakter-ideaal', far: '../dore/rose', size: 0.64, feet: 0.996, breath: 6, light: 1.6, farBright: 0.55, dark: 0.45, feathers: true, embers: false },
+  paradiso: { use: ['gloed', 'stralen', 'e_halo', 'e_medal', 'e_frost', 'e_flame', 'e_sun', 'e_book', 'e_dumbbell'], char: 'karakter-ideaal', far: 'achtergrond-paradiso-1-ver', farHorizon: 0.43, mid: 'achtergrond-paradiso-2-midden', ground: 'achtergrond-paradiso-3-grond', front: 'achtergrond-paradiso-4-voorgrond', frontOver: true, lightX: 0.5, size: 0.62, feet: 0.996, breath: 6, light: 1.2, farBright: 0.78, dark: 0.4, feathers: true, embers: false },
 }
+// Je doelen als embleem rond je ideale zelf (Paradiso)
+type Emblem = 'e_halo' | 'e_medal' | 'e_frost' | 'e_flame' | 'e_sun' | 'e_book' | 'e_dumbbell'
+const EMBLEM: Record<FeatureId, Emblem | null> = { halo: 'e_halo', medal: 'e_medal', frost: 'e_frost', flame: 'e_flame', sun: 'e_sun', book: 'e_book', dumbbell: 'e_dumbbell', abs: 'e_dumbbell', laurel: null }
+
 const RANGE: Record<SceneId, [number, number]> = { inferno: [-100, -60], woud: [-60, -20], kust: [-20, 20], terrassen: [20, 60], paradiso: [60, 100] }
 
 // Uit public/art/rig.json (scripts/prep-art.py)
@@ -194,11 +210,12 @@ const bake = (im: CanvasImageSource, w: number, h: number, bright: number, soft 
 
 interface Particle { x: number; y: number; vx: number; vy: number; s: number; a: number; ph: number; rot: number }
 
-export default function LivingScene({ balance, scene = 'kust', strong, still = false }: { balance: number; scene?: SceneId; /** Je twee sterkste deugden (als zonde-id), voor de taferelen op de terrassen. */ strong?: SinId[]; still?: boolean }) {
+export default function LivingScene({ balance, scene = 'kust', strong, features, still = false }: { balance: number; scene?: SceneId; /** Je twee sterkste deugden (als zonde-id), voor de taferelen op de terrassen. */ strong?: SinId[]; /** Je doelen, als emblemen in Paradiso. */ features?: FeatureId[]; still?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const kRef = useRef(0.5)
   const pair = (strong?.length ? [...strong, 'sloth', 'envy'] : ['sloth', 'envy']).filter((x, i, a) => a.indexOf(x) === i).slice(0, 2) as SinId[]
   const tabsKey = pair.join(',')
+  const emblemKey = [...new Set((features ?? []).map((f) => EMBLEM[f]).filter(Boolean))].join(',')
   const [ready, setReady] = useState(() => !!cachedAll(CAST[scene]))
   useEffect(() => {
     const [lo, hi] = RANGE[scene]
@@ -219,6 +236,9 @@ export default function LivingScene({ balance, scene = 'kust', strong, still = f
     const cast = CAST[scene]
     const kust = scene === 'kust'
     const terr = scene === 'terrassen'
+    const para = scene === 'paradiso'
+    // Zonder gekozen doelen laten we er drie zien, als belofte van wat kan
+    const emblems = (emblemKey ? emblemKey.split(',') : ['e_medal', 'e_book', 'e_sun']) as Emblem[]
     const tabs = tabsKey.split(',').map((x) => VIRTUE_TAB[x as SinId])
     const RIGE = { eye: cast.eye, cheek: cast.cheek ?? [0, 0, 1, 1], feet: cast.feet }
     const dpr = Math.min(2, window.devicePixelRatio || 1)
@@ -239,6 +259,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, still = f
       duif: [HTMLCanvasElement, HTMLCanvasElement] | null
       tab: Partial<Record<Tab, { base: HTMLCanvasElement; piece?: HTMLCanvasElement }>>
       tsV: number
+      emb: HTMLCanvasElement[]
       ground: HTMLCanvasElement
       char: HTMLCanvasElement
       cw: number
@@ -371,6 +392,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, still = f
           return out
         })(),
         tsV: Math.min(W * 0.42, H * 0.32),
+        emb: para ? emblems.map((e) => bake(img![e], W * 0.16 * dpr, W * 0.16 * dpr, 1)) : [],
         pil,
         traag: kust ? bake(img.traag, tsT * dpr, tsT * dpr, tB, 0.35) : ground,
         slinger: kust ? bake(img.slinger, img.slinger.width * sT * dpr, img.slinger.height * sT * dpr, tB, 0.35) : ground,
@@ -574,7 +596,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, still = f
       layer(0.35, () => (L!.groundArt ? inFrame(L!.groundArt) : ctx.drawImage(L!.ground, 0, 0, W, H)))
 
       // 4b · De randen: rotsen en riet, iets naar buiten geschoven zodat ze de taferelen omlijsten in plaats van bedekken
-      if (L.front && F) layer(0.45, () => {
+      if (L.front && F && !cast.frontOver) layer(0.45, () => {
         const sc = 1.25
         ctx.drawImage(L!.front!, F.x - (F.w * (sc - 1)) / 2, F.y + F.h * (1 - sc), F.w * sc, F.h * sc)
       })
@@ -807,6 +829,31 @@ export default function LivingScene({ balance, scene = 'kust', strong, still = f
         ctx.drawImage(L!.bell, bx, H * 0.975 - bw, bw, bw)
       })
 
+      // 7b · Paradiso: gloed en stralen achter je ideale zelf, ademend met zijn ademhaling
+      if (para) layer(0.6, () => {
+        const breathe = 0.5 + 0.5 * Math.sin((TAU * t) / cast.breath)
+        const cx = W * 0.47
+        const cy = H * 0.97 - L!.ch * 0.62
+        const gs = W * (1.05 + 0.04 * breathe)
+        ctx.save()
+        ctx.globalCompositeOperation = 'screen'
+        ctx.globalAlpha = 0.32 + 0.12 * breathe
+        ctx.translate(cx, cy)
+        ctx.rotate((t / 120) * TAU)
+        ctx.drawImage(img!.gloed, -gs / 2, -gs / 2, gs, gs)
+        ctx.restore()
+        ctx.save()
+        ctx.globalCompositeOperation = 'screen'
+        ctx.globalAlpha = 0.28 + 0.1 * Math.sin(t * 0.4)
+        const sw = W * 1.1
+        ctx.translate(W * 0.5, 0)
+        ctx.rotate(-0.35 + 0.02 * Math.sin(t * 0.07))
+        ctx.drawImage(img!.stralen, -sw * 0.15, -H * 0.1, sw, sw * 1.5)
+        ctx.restore()
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.globalAlpha = 1
+      })
+
       // 8 · Jij: de rig
       layer(0.76, () => {
         const { char, cw, ch } = L!
@@ -922,6 +969,37 @@ export default function LivingScene({ balance, scene = 'kust', strong, still = f
         ctx.globalCompositeOperation = 'source-over'
       })
 
+      // 9b · Paradiso: je doelen zweven als emblemen in een boog om je heen, elk in zijn eigen ritme
+      if (para && L.emb.length) layer(0.85, () => {
+        const n = L!.emb.length
+        const cx = W * 0.47
+        const cy = H * 0.97 - L!.ch * 0.7
+        L!.emb.forEach((cv, i) => {
+          const base = n === 1 ? -Math.PI / 2 : Math.PI + (Math.PI * (i + 0.5)) / n
+          const a = base + 0.05 * Math.sin(t * 0.3 + i)
+          const rx = W * 0.4
+          const ry = L!.ch * 0.42
+          const x = cx + Math.cos(a) * rx
+          const y = cy + Math.sin(a) * ry + Math.sin(t * (0.8 + i * 0.11) + i * 1.7) * H * 0.008
+          const sz = cv.width / dpr
+          const gl = ctx.createRadialGradient(x, y, 0, x, y, sz * 0.9)
+          gl.addColorStop(0, `rgba(255,255,255,${0.22 + 0.08 * Math.sin(t * 1.1 + i)})`)
+          gl.addColorStop(1, 'rgba(255,255,255,0)')
+          ctx.globalCompositeOperation = 'lighter'
+          ctx.fillStyle = gl
+          ctx.fillRect(x - sz, y - sz, sz * 2, sz * 2)
+          ctx.globalCompositeOperation = 'source-over'
+          ctx.save()
+          ctx.translate(x, y)
+          ctx.rotate(0.06 * Math.sin(t * 0.6 + i * 2))
+          ctx.drawImage(cv, -sz / 2, -sz / 2, sz, sz)
+          ctx.restore()
+        })
+      })
+
+      // 9c · De voorgrond vóór je, als die geen taferelen hoeft te omlijsten
+      if (L.front && F && cast.frontOver) layer(1.15, () => inFrame(L!.front))
+
       // 10 · Veren drijven omhoog naar het licht, stof hangt in de stralen
       layer(0.9, () => {
         const want = cast.feathers ? Math.round(4 + 6 * k) : 0
@@ -1036,7 +1114,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, still = f
       window.removeEventListener('deviceorientation', tilt)
       document.removeEventListener('visibilitychange', resume)
     }
-  }, [still, scene, tabsKey])
+  }, [still, scene, tabsKey, emblemKey])
 
   return <canvas ref={ref} className="scene-layer" aria-hidden="true" style={{ zIndex: 4, opacity: ready ? 1 : 0, transition: 'opacity .4s ease' }} />
 }
