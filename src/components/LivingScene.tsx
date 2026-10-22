@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FeatureId } from '../data/catalog'
+import type { ObjectId } from '../data/objects'
 import type { SceneId, SinId } from '../data/sins'
 
 /**
@@ -74,6 +75,38 @@ const FILES = {
   bat1: 'item-vleermuis-omhoog',
   bat2: 'item-vleermuis-omlaag',
   vlieg: 'item-vlieg',
+  o_telefoon: 'item-telefoon',
+  o_laptop: 'item-laptop',
+  o_asbak: 'item-asbak',
+  o_vape: 'item-vape',
+  o_drankfles: 'item-drankfles',
+  o_blikje: 'item-blikje',
+  o_fastfood: 'item-fastfood',
+  o_snoep: 'item-snoep',
+  o_dobbelstenen: 'item-dobbelstenen',
+  o_speelkaarten: 'item-speelkaarten',
+  o_munten: 'item-munten',
+  o_boodschappentas: 'item-boodschappentas',
+  o_wekker: 'item-wekker',
+  o_controller: 'item-controller',
+  o_afstandsbediening: 'item-afstandsbediening',
+  'o_gebroken-glas': 'item-gebroken-glas',
+  o_brief: 'item-brief',
+  s_hoogmoed: 'rig-hoogmoed-basis',
+  s_afgunst: 'rig-afgunst-basis',
+  s_toorn: 'rig-toorn-basis',
+  s_hebzucht: 'rig-hebzucht-basis',
+  s_hebzuchtD: 'rig-hebzucht-deel',
+  s_vraatzucht: 'rig-vraatzucht-basis',
+  s_lust: 'rig-lust-basis',
+  leeuw: 'item-leeuw',
+  luipaard: 'item-luipaard',
+  wolvin: 'item-wolvin',
+  raafZit: 'item-raaf-zittend',
+  raaf1: 'item-raaf-vleugels-omhoog',
+  raaf2: 'item-raaf-vleugels-omlaag',
+  mot: 'item-mot',
+  ogen: 'effect-ogen',
 } as const
 type Key = keyof typeof FILES
 
@@ -112,11 +145,17 @@ interface Cast {
 }
 const CAST: Record<SceneId, Cast> = {
   inferno: { use: ['rook', 'wervel', 'vlam1', 'vlam2', 'vonk', 'sintel', 'bat1', 'bat2', 'vlieg'], char: 'karakter-schim', far: 'achtergrond-inferno-1-ver', farHorizon: 0.557, mid: 'achtergrond-inferno-2-midden', ground: 'achtergrond-inferno-3-grond', front: 'achtergrond-inferno-4-voorgrond', frontOver: true, lightX: 0.5, size: 0.5, feet: 0.987, breath: 2.2, eye: [795, 262, 838, 292], cheek: [800, 300, 830, 310], phone: [700, 560], light: 0.3, farBright: 0.85, dark: 0.8, feathers: false, embers: true },
-  woud: { use: [], char: 'karakter-verdwaalde', far: '../dore/forest', size: 0.6, feet: 0.991, breath: 3.4, eye: [738, 184, 763, 199], cheek: [740, 205, 760, 212], phone: [790, 868], light: 0.4, farBright: 0.26, dark: 0.85, feathers: false, embers: false },
+  woud: { use: ['leeuw', 'luipaard', 'wolvin', 'raafZit', 'raaf1', 'raaf2', 'mot', 'ogen'], char: 'karakter-verdwaalde', far: '../dore/forest', size: 0.6, feet: 0.991, breath: 3.4, eye: [738, 184, 763, 199], cheek: [740, 205, 760, 212], phone: [790, 868], light: 0.4, farBright: 0.26, dark: 0.85, feathers: false, embers: false },
   kust: { use: ['boat', 'pil1', 'pil2', 'bell', 'phone', 'water', 'ijver', 'arm', 'traag', 'slinger'], char: 'karakter-balans', far: 'achtergrond-kust-1-ver', farHorizon: 0.64, mid: 'achtergrond-kust-2-midden', ground: 'achtergrond-kust-3-grond', front: 'achtergrond-kust-4-voorgrond', size: 0.62, feet: 0.955, breath: 4.2, eye: [572, 116, 594, 128], cheek: [575, 131, 592, 137], light: 1, farBright: 0.6, dark: 0.75, feathers: true, embers: false },
   terrassen: { use: ['engel', 'duif1', 'duif2', 'lichtje', 'ijver', 'arm', 'matigheidB', 'matigheidD', 'nederigheidB', 'nederigheidD', 'zuiverheidB', 'zuiverheidD', 'welwillendheidB', 'welwillendheidD', 'geduldB', 'vrijgevigheidB'], char: 'karakter-klimmer', far: 'achtergrond-terrassen-1-ver', farHorizon: 0.6, mid: 'achtergrond-terrassen-2-midden', front: 'achtergrond-terrassen-4-voorgrond', frameTop: 0.26, lightX: 0.22, size: 0.6, feet: 0.994, breath: 5, eye: [553, 112, 568, 121], cheek: [555, 124, 567, 130], light: 1.1, farBright: 0.55, dark: 0.6, feathers: true, embers: false },
   paradiso: { use: ['gloed', 'stralen', 'e_halo', 'e_medal', 'e_frost', 'e_flame', 'e_sun', 'e_book', 'e_dumbbell'], char: 'karakter-ideaal', far: 'achtergrond-paradiso-1-ver', farHorizon: 0.43, mid: 'achtergrond-paradiso-2-midden', ground: 'achtergrond-paradiso-3-grond', front: 'achtergrond-paradiso-4-voorgrond', frontOver: true, lightX: 0.5, size: 0.62, feet: 0.996, breath: 6, light: 1.2, farBright: 0.78, dark: 0.4, feathers: true, embers: false },
 }
+// Zondetaferelen (Inferno en het woud): per zonde welke beelden, en het deel dat beweegt
+const SIN_KEYS: Record<SinId, Key[]> = {
+  pride: ['s_hoogmoed'], envy: ['s_afgunst'], wrath: ['s_toorn'], sloth: ['traag', 'slinger'],
+  greed: ['s_hebzucht', 's_hebzuchtD'], gluttony: ['s_vraatzucht'], lust: ['s_lust'],
+}
+
 // Je doelen als embleem rond je ideale zelf (Paradiso)
 type Emblem = 'e_halo' | 'e_medal' | 'e_frost' | 'e_flame' | 'e_sun' | 'e_book' | 'e_dumbbell'
 const EMBLEM: Record<FeatureId, Emblem | null> = { halo: 'e_halo', medal: 'e_medal', frost: 'e_frost', flame: 'e_flame', sun: 'e_sun', book: 'e_book', dumbbell: 'e_dumbbell', abs: 'e_dumbbell', laurel: null }
@@ -156,7 +195,7 @@ const rand = (a: number, b: number) => a + Math.random() * (b - a)
 
 // Beelden worden één keer geladen en gedecodeerd en daarna bewaard, zodat de scène bij
 // terugkomen (of na het voorladen in App) meteen in het eerste beeld staat.
-const keysFor = (cast: Cast): Key[] => ['char', 'far', 'mist', 'veer', ...(cast.mid ? (['mid'] as Key[]) : []), ...(cast.ground ? (['ground'] as Key[]) : []), ...(cast.front ? (['front'] as Key[]) : []), ...cast.use]
+const keysFor = (cast: Cast, extra: Key[] = []): Key[] => [...extra, 'char', 'far', 'mist', 'veer', ...(cast.mid ? (['mid'] as Key[]) : []), ...(cast.ground ? (['ground'] as Key[]) : []), ...(cast.front ? (['front'] as Key[]) : []), ...cast.use]
 const urlFor = (cast: Cast, k: Key) => {
   const file = k === 'char' ? cast.char : k === 'far' ? cast.far : k === 'mid' ? cast.mid! : k === 'ground' ? cast.ground! : k === 'front' ? cast.front! : FILES[k]
   return `${ART}${file}.${k === 'far' && file.startsWith('../dore') ? 'jpg' : 'webp'}`
@@ -178,10 +217,10 @@ const loadImg = (url: string) => {
   }
   return p
 }
-const loadAll = (cast: Cast) =>
-  Promise.all(keysFor(cast).map((k) => loadImg(urlFor(cast, k)).then((im) => [k, im] as const))).then((list) => Object.fromEntries(list) as Record<Key, HTMLImageElement>)
-const cachedAll = (cast: Cast) =>
-  keysFor(cast).every((k) => loaded.has(urlFor(cast, k))) ? (Object.fromEntries(keysFor(cast).map((k) => [k, loaded.get(urlFor(cast, k))!])) as Record<Key, HTMLImageElement>) : null
+const loadAll = (cast: Cast, extra: Key[] = []) =>
+  Promise.all(keysFor(cast, extra).map((k) => loadImg(urlFor(cast, k)).then((im) => [k, im] as const))).then((list) => Object.fromEntries(list) as Record<Key, HTMLImageElement>)
+const cachedAll = (cast: Cast, extra: Key[] = []) =>
+  keysFor(cast, extra).every((k) => loaded.has(urlFor(cast, k))) ? (Object.fromEntries(keysFor(cast, extra).map((k) => [k, loaded.get(urlFor(cast, k))!])) as Record<Key, HTMLImageElement>) : null
 
 /** Laad de beelden van deze scènes alvast, de eerste eerst. */
 export const preloadScenes = (scenes: SceneId[]) => {
@@ -221,13 +260,16 @@ const bake = (im: CanvasImageSource, w: number, h: number, bright: number, soft 
 
 interface Particle { x: number; y: number; vx: number; vy: number; s: number; a: number; ph: number; rot: number }
 
-export default function LivingScene({ balance, scene = 'kust', strong, features, still = false }: { balance: number; scene?: SceneId; /** Je twee sterkste deugden (als zonde-id), voor de taferelen op de terrassen. */ strong?: SinId[]; /** Je doelen, als emblemen in Paradiso. */ features?: FeatureId[]; still?: boolean }) {
+export default function LivingScene({ balance, scene = 'kust', strong, features, objects, weak, still = false }: { balance: number; scene?: SceneId; /** Je twee sterkste deugden (als zonde-id), voor de taferelen op de terrassen. */ strong?: SinId[]; /** Je doelen, als emblemen in Paradiso. */ features?: FeatureId[]; /** De voorwerpen van je verleidingen, sterkste trek eerst. */ objects?: ObjectId[]; /** Je twee zwakste terrassen (zonde-id), als tafereel in Inferno en het woud. */ weak?: SinId[]; still?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const kRef = useRef(0.5)
   const pair = (strong?.length ? [...strong, 'sloth', 'envy'] : ['sloth', 'envy']).filter((x, i, a) => a.indexOf(x) === i).slice(0, 2) as SinId[]
   const tabsKey = pair.join(',')
+  const sinKey = (weak?.length ? [...weak, 'sloth', 'greed'] : ['sloth', 'greed']).filter((x, i, a) => a.indexOf(x) === i).slice(0, 2).join(',')
+  const objKey = (objects?.length ? objects : ['telefoon']).slice(0, 3).join(',')
+  const objKeys = [...objKey.split(',').map((o) => `o_${o}` as Key), ...(scene === 'inferno' || scene === 'woud' ? sinKey.split(',').flatMap((x) => SIN_KEYS[x as SinId]) : [])]
   const emblemKey = [...new Set((features ?? []).map((f) => EMBLEM[f]).filter(Boolean))].join(',')
-  const [ready, setReady] = useState(() => !!cachedAll(CAST[scene]))
+  const [ready, setReady] = useState(false)
   useEffect(() => {
     const [lo, hi] = RANGE[scene]
     kRef.current = clamp((balance - lo) / (hi - lo))
@@ -249,6 +291,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
     const terr = scene === 'terrassen'
     const para = scene === 'paradiso'
     const inf = scene === 'inferno'
+    const woud = scene === 'woud'
     // Zonder gekozen doelen laten we er drie zien, als belofte van wat kan
     const emblems = (emblemKey ? emblemKey.split(',') : ['e_medal', 'e_book', 'e_sun']) as Emblem[]
     const tabs = tabsKey.split(',').map((x) => VIRTUE_TAB[x as SinId])
@@ -272,7 +315,12 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
       tab: Partial<Record<Tab, { base: HTMLCanvasElement; piece?: HTMLCanvasElement }>>
       tsV: number
       emb: HTMLCanvasElement[]
+      sins: { id: SinId; base: HTMLCanvasElement; piece?: HTMLCanvasElement }[]
+      beasts: HTMLCanvasElement[]
+      ravens: [HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement] | null
+      mot: HTMLCanvasElement | null
       bats: [HTMLCanvasElement, HTMLCanvasElement] | null
+      objs: HTMLCanvasElement[]
       fly: HTMLCanvasElement | null
       ground: HTMLCanvasElement
       char: HTMLCanvasElement
@@ -418,6 +466,20 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
         tsI,
         bell: kust ? bake(img.bell, W * 0.12 * dpr, W * 0.12 * dpr, 0.8) : ground,
         phone: kust ? bake(img.phone, W * 0.16 * dpr, W * 0.16 * dpr, 0.6) : ground,
+        objs: objKeys.filter((k) => k.startsWith('o_')).map((k) => bake(img![k], W * 0.2 * dpr, W * 0.2 * dpr, inf ? 0.95 : 0.7)),
+        sins: inf || woud ? sinKey.split(',').map((id) => {
+          const sid = id as SinId
+          const ts = Math.min(W * 0.4, H * 0.3)
+          const sb = inf ? 0.62 : 0.42
+          const soft = woud ? 0.35 : 0.15
+          const [b, d] = SIN_KEYS[sid]
+          const pc = d ? img![d] : undefined
+          const pscale = sid === 'sloth' ? ts / 627 : ts / 627
+          return { id: sid, base: bake(img![b], ts * dpr, ts * dpr, sb, soft), piece: pc ? bake(pc, pc.width * pscale * dpr, pc.height * pscale * dpr, sb, soft) : undefined }
+        }) : [],
+        beasts: woud ? [bake(img!.luipaard, W * 0.3 * dpr, W * 0.3 * dpr, 0.3, 0.3), bake(img!.leeuw, W * 0.3 * dpr, W * 0.3 * dpr, 0.3, 0.3), bake(img!.wolvin, W * 0.3 * dpr, W * 0.3 * dpr, 0.3, 0.3)] : [],
+        ravens: woud ? [bake(img!.raafZit, W * 0.12 * dpr, W * 0.12 * dpr, 0.6), bake(img!.raaf1, W * 0.1 * dpr, W * 0.1 * dpr, 0.5), bake(img!.raaf2, W * 0.1 * dpr, W * 0.1 * dpr, 0.5)] : null,
+        mot: woud ? bake(img!.mot, W * 0.045 * dpr, W * 0.045 * dpr, 0.95) : null,
       }
     }
 
@@ -888,12 +950,13 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
           ctx.fillRect(x - rw, y * 4 - rw, rw * 2, rw * 2)
           ctx.restore()
         }
-        const pw = W * 0.16
-        const px = W * 0.05
+        // Het voorwerp van je sterkste verleiding
+        const pw = W * 0.19
+        const px = W * 0.03
         const py = H * 0.975 - pw * 0.85
         shadow(px + pw * 0.5, H * 0.965 * 1, pw * 0.55)
-        ctx.drawImage(L!.phone, px, py, pw, pw)
-        // Elke paar seconden licht het scherm op: de verleiding roept
+        ctx.drawImage(L!.objs[0], px, py, pw, pw)
+        // Elke paar seconden licht het op: de verleiding roept
         const ping = Math.max(0, Math.sin((TAU * t) / 7) - 0.86) / 0.14
         const gx = px + pw * 0.48
         const gy = py + pw * 0.45
@@ -908,6 +971,76 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
         const bx = W * 0.82
         shadow(bx + bw * 0.5, H * 0.968, bw * 0.55)
         ctx.drawImage(L!.bell, bx, H * 0.975 - bw, bw, bw)
+      })
+
+      // 7a · Het woud: de drie beesten van Dante sluipen om de beurt door het donker, ogen lichten op
+      if (woud && L.beasts.length) layer(0.3, () => {
+        const cycle = 21
+        const i = Math.floor(t / cycle) % 3
+        const p = (t % cycle) / cycle
+        const bv = L!.beasts[i]
+        const bw = bv.width / dpr
+        const dir = i % 2 ? -1 : 1
+        const x = dir > 0 ? -bw + p * (W + bw * 2) : W + bw - p * (W + bw * 2)
+        const y = H * 0.56 - bw * 0.85 + Math.abs(Math.sin(p * TAU * 6)) * -2
+        ctx.save()
+        ctx.globalAlpha = smooth(0, 0.12, p) * (1 - smooth(0.88, 1, p)) * 0.85
+        ctx.translate(x, y)
+        ctx.scale(dir, 1)
+        ctx.drawImage(bv, -bw / 2, 0, bw, bw)
+        ctx.restore()
+        ctx.globalAlpha = 1
+        // Ogen in het donker: een paar knippert op, op een vaste plek per keer
+        const ec = 5.5
+        const k2 = Math.floor(t / ec)
+        const pe = (t % ec) / ec
+        const ex = W * (0.12 + ((k2 * 0.37) % 0.76))
+        const ey = H * (0.32 + ((k2 * 0.23) % 0.22))
+        const blink = Math.abs(pe - 0.5) < 0.02 ? 0 : 1
+        const ea = smooth(0.1, 0.25, pe) * (1 - smooth(0.7, 0.85, pe)) * blink
+        if (ea > 0) {
+          const ew = W * 0.09
+          ctx.globalAlpha = ea * 0.9
+          ctx.drawImage(img!.ogen, ex - ew / 2, ey - ew * 0.2, ew, ew * (img!.ogen.height / img!.ogen.width))
+          ctx.globalAlpha = 1
+        }
+      })
+
+      // 7a' · Je twee zwakste terrassen als zondetafereel, links en rechts (Inferno scherp, het woud half in de mist)
+      if ((inf || woud) && L.sins.length) layer(0.55, () => {
+        const ts = Math.min(W * 0.4, H * 0.3)
+        const s = ts / 627
+        L!.sins.forEach((sn, i) => {
+          const x0 = i === 0 ? -W * 0.06 : W * 1.06 - ts
+          const y0 = onGround(inf ? 0.38 : 0.55) - ts
+          if (sn.id === 'sloth' && sn.piece) {
+            ctx.drawImage(sn.base, x0, y0, ts, ts)
+            const [px, py] = RIG.traag.pivot
+            const [qx, qy] = RIG.traag.piece
+            ctx.save()
+            ctx.translate(x0 + px * s, y0 + py * s)
+            ctx.rotate(Math.sin((TAU * t) / 2) * 0.13)
+            ctx.drawImage(sn.piece, (qx - px) * s, (qy - py) * s, sn.piece.width / dpr, sn.piece.height / dpr)
+            ctx.restore()
+          } else if (sn.id === 'greed' && sn.piece) {
+            // De weegschaal kantelt traag heen en weer: wat je wint, weegt nooit genoeg
+            ctx.drawImage(sn.base, x0, y0, ts, ts)
+            const [px, py] = [328, 108]
+            ctx.save()
+            ctx.translate(x0 + px * s, y0 + py * s)
+            ctx.rotate(0.035 * Math.sin((TAU * t) / 4.5))
+            ctx.drawImage(sn.piece, -px * s, -py * s, ts, ts)
+            ctx.restore()
+          } else {
+            // Geen los deel: het tafereel ademt zwaar, vanaf de grond
+            const b = 1 + 0.01 * Math.sin((TAU * t) / 4 + i)
+            ctx.save()
+            ctx.translate(x0 + ts / 2, y0 + ts)
+            ctx.scale(1, b)
+            ctx.drawImage(sn.base, -ts / 2, -ts, ts, ts)
+            ctx.restore()
+          }
+        })
       })
 
       // 7b · Paradiso: gloed en stralen achter je ideale zelf, ademend met zijn ademhaling
@@ -1052,6 +1185,67 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
         ctx.globalCompositeOperation = 'source-over'
       })
 
+      // 8b · Inferno: je verleidingen liggen om je heen op de vloer, en roepen om de beurt
+      if (inf && L.objs.length) layer(0.82, () => {
+        const spots = [[0.02, 0.99], [0.76, 0.995], [0.8, 0.86]] as const
+        L!.objs.forEach((cv, i) => {
+          const [fx, fy] = spots[i]
+          const ow = (cv.width / dpr) * (i === 2 ? 0.7 : 1)
+          const x = W * fx
+          const y = H * fy - ow * 0.8
+          const sg = ctx.createRadialGradient(x + ow / 2, H * fy - ow * 0.08, 0, x + ow / 2, H * fy - ow * 0.08, ow * 0.6)
+          sg.addColorStop(0, 'rgba(0,0,0,0.7)')
+          sg.addColorStop(1, 'rgba(0,0,0,0)')
+          ctx.fillStyle = sg
+          ctx.fillRect(x - ow * 0.1, H * fy - ow * 0.4, ow * 1.2, ow * 0.6)
+          const ping = Math.max(0, Math.sin((TAU * (t + i * 2.3)) / 6.5) - 0.86) / 0.14
+          if (ping > 0) {
+            const gl = ctx.createRadialGradient(x + ow / 2, y + ow / 2, 0, x + ow / 2, y + ow / 2, ow * 0.8)
+            gl.addColorStop(0, `rgba(255,255,255,${0.35 * ping})`)
+            gl.addColorStop(1, 'rgba(255,255,255,0)')
+            ctx.globalCompositeOperation = 'lighter'
+            ctx.fillStyle = gl
+            ctx.fillRect(x - ow * 0.3, y - ow * 0.3, ow * 1.6, ow * 1.6)
+            ctx.globalCompositeOperation = 'source-over'
+          }
+          ctx.drawImage(cv, x, y, ow, ow)
+        })
+      })
+
+      // 9a' · Het woud: een raaf zit hoog op de rand en vliegt soms op; een mot cirkelt om het telefoonlicht
+      if (woud && L.ravens) layer(0.7, () => {
+        const [sit, up, down] = L!.ravens!
+        const cyc = 16
+        const p = (t % cyc) / cyc
+        const sw = sit.width / dpr
+        if (p < 0.7) {
+          ctx.save()
+          ctx.translate(W * 0.84, H * 0.18)
+          ctx.rotate(0.03 * Math.sin(t * 0.8) + (Math.sin(t * 2.3) > 0.97 ? 0.08 : 0))
+          ctx.drawImage(sit, -sw / 2, -sw / 2, sw, sw)
+          ctx.restore()
+        } else {
+          const q = (p - 0.7) / 0.3
+          const fv = Math.floor(t / 0.12) % 2 ? up : down
+          const fw = fv.width / dpr
+          ctx.globalAlpha = 1 - smooth(0.85, 1, q)
+          ctx.drawImage(fv, W * 0.84 - q * W * 1.1 - fw / 2, H * 0.18 - q * H * 0.12 - fw / 2, fw, fw)
+          ctx.globalAlpha = 1
+        }
+        if (L!.mot && cast.phone) {
+          const s = L!.cw / 1024
+          const cx = W * 0.47 - L!.cw * 0.5 + cast.phone[0] * s
+          const cy = H * 0.97 - L!.ch * RIGE.feet + cast.phone[1] * s
+          const mz = L!.mot.width / dpr
+          const a = t * 2.4
+          ctx.save()
+          ctx.translate(cx + Math.cos(a) * W * 0.06 + Math.sin(t * 9) * 2, cy - H * 0.03 + Math.sin(a * 1.4) * H * 0.03)
+          ctx.scale(0.75 + 0.25 * Math.abs(Math.sin(t * 18)), 1)
+          ctx.drawImage(L!.mot, -mz / 2, -mz / 2, mz, mz)
+          ctx.restore()
+        }
+      })
+
       // 9a · Inferno: vliegen zoemen rond het licht van de telefoon
       if (inf && L.fly && cast.phone) layer(0.8, () => {
         const s = L!.cw / 1024
@@ -1183,9 +1377,9 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
       draw(performance.now())
       resume()
     }
-    const hit = cachedAll(cast)
+    const hit = cachedAll(cast, objKeys)
     if (hit) begin(hit)
-    else loadAll(cast)
+    else loadAll(cast, objKeys)
       .then((im) => { if (alive) begin(im) })
       .catch((e) => console.warn('Levende scène niet geladen.', e))
 
@@ -1216,7 +1410,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
       window.removeEventListener('deviceorientation', tilt)
       document.removeEventListener('visibilitychange', resume)
     }
-  }, [still, scene, tabsKey, emblemKey])
+  }, [still, scene, tabsKey, emblemKey, objKey, sinKey])
 
   return <canvas ref={ref} className="scene-layer" aria-hidden="true" style={{ zIndex: 4, opacity: ready ? 1 : 0, transition: 'opacity .4s ease' }} />
 }

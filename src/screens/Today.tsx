@@ -6,6 +6,7 @@ import MirrorNotes from '../components/MirrorNotes'
 import { RockIcon } from '../components/Jar'
 import { HabitRow, Icon, Sheet, Toast, useTween } from '../components/ui'
 import { ROCK_SHORT } from '../data/catalog'
+import { pullingObjects } from '../data/objects'
 import { SINS, stageFor } from '../data/sins'
 import { byRock, computeSeries, habitsFor, isDone, isNote, mirrorStreak, shadowCharge } from '../lib/score'
 import { addDays, buzz, setValue, todayISO, uid, update, useStore, type Habit } from '../lib/store'
@@ -39,6 +40,10 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
   const dayDelta = (point?.balance ?? 0) - (yesterdayPoint?.balance ?? 0)
   const streak = mirrorStreak(s)
   const charge = useMemo(() => shadowCharge(s).charge, [s])
+  // De voorwerpen van je verleidingen, die het hardst trekken eerst
+  const pulling = useMemo(() => pullingObjects(s), [s])
+  // Je twee zwakste terrassen: die staan als zondetafereel in Inferno en het woud
+  const weakest = useMemo(() => SINS.filter((x) => s.habits.some((h) => h.sin === x.id)).sort((a, b) => series.perSin[a.id] - series.perSin[b.id]).slice(0, 2).map((x) => x.id), [s, series])
   // Je twee sterkste deugden: die staan als tafereel op de terrassen
   const strongest = useMemo(() => SINS.filter((x) => s.habits.some((h) => h.sin === x.id)).sort((a, b) => series.perSin[b.id] - series.perSin[a.id]).slice(0, 2).map((x) => x.id), [s, series])
 
@@ -114,7 +119,7 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
       {/* De spiegel: in één oogopslag waar je staat. Deze kaart vult precies het scherm. */}
       <div className="card hero-card mt-24" style={{ padding: 0, overflow: 'hidden' }}>
         <div className="hero-scene">
-          <Scene balance={shown} onTap={() => openMirror(date)} shadow={charge} strong={strongest} features={s.avatar.features} />
+          <Scene balance={shown} onTap={() => openMirror(date)} shadow={charge} strong={strongest} features={s.avatar.features} objects={pulling} weak={weakest} />
         </div>
         <div style={{ padding: '24px 24px 16px' }}>
           <div className="hstack between" style={{ alignItems: 'flex-end', gap: 16 }}>

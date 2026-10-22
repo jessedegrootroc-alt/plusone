@@ -107,5 +107,33 @@
   },
   "vrijgevigheid": {
     "kind": "still"
+  },
+  "hebzucht": {
+    "piece": [
+      0,
+      0,
+      627,
+      627
+    ],
+    "kind": "tilt",
+    "pivot": [
+      328,
+      108
+    ]
+  },
+  "hoogmoed": {
+    "kind": "still"
+  },
+  "afgunst": {
+    "kind": "still"
+  },
+  "toorn": {
+    "kind": "still"
+  },
+  "vraatzucht": {
+    "kind": "still"
+  },
+  "lust": {
+    "kind": "still"
   }
 }

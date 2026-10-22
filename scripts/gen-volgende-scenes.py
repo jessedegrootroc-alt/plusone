@@ -118,4 +118,5 @@ for i, (title, why, moves, groups) in enumerate(PLAN, 1):
     if i <= 5:
         w(f'**Klaar met scène {i}?** Stuur me de beelden; dan bouw ik hem voordat je verder gaat.')
         w('')
-print('\n'.join(out))
+if __name__ == '__main__':
+    print('\n'.join(out))

@@ -190,11 +190,17 @@ for n in ['effect-vonk', 'effect-sintel']:
 for n, w in [('item-vleermuis-omhoog', 200), ('item-vleermuis-omlaag', 200), ('item-vlieg', 80)]:
     if os.path.exists(os.path.join(SRC, n + '.png')):
         save(load(n), n, w)
+# Voorwerpen van je verleidingen (scène 5): liggen in de scène als je die verleiding hebt
+for n in ['item-laptop', 'item-asbak', 'item-vape', 'item-drankfles', 'item-blikje', 'item-fastfood', 'item-snoep', 'item-dobbelstenen',
+          'item-speelkaarten', 'item-munten', 'item-boodschappentas', 'item-wekker', 'item-controller', 'item-afstandsbediening',
+          'item-gebroken-glas', 'item-brief']:
+    if os.path.exists(os.path.join(SRC, n + '.png')):
+        save(load(n), n, 300)
 if os.path.exists(os.path.join(SRC, 'item-tafereel-hoogmoed.png')):
     save(load('item-tafereel-hoogmoed'), 'item-tafereel-hoogmoed', 627)
 
 
-def rig_pair(name, without, box, kind, pivot=None):
+def rig_pair(name, without, box, kind, pivot=None, S=S):
     """Een tafereel met één bewegend deel: de basis is de versie zonder, het deel komt uit het verschil."""
     full = load(f'item-tafereel-{name}')
     base = load(without)
@@ -221,6 +227,26 @@ if os.path.exists(os.path.join(SRC, 'item-tafereel-matigheid.png')):
     for name in ['geduld', 'vrijgevigheid']:
         save(load(f'item-tafereel-{name}'), f'rig-{name}-basis', 627)
         rig[name] = {'kind': 'still'}
+
+# Zondetaferelen (1024 breed, op dezelfde maat als de rest gebracht: 627)
+if os.path.exists(os.path.join(SRC, 'item-tafereel-hebzucht.png')):
+    rig_pair('hebzucht', 'item-tafereel-hebzucht-zonder-balk', (0, 0, 1024, 1024), 'tilt', (536, 176), S=627 / 1024)
+    for name in ['hoogmoed', 'afgunst', 'toorn', 'vraatzucht', 'lust']:
+        if os.path.exists(os.path.join(SRC, f'item-tafereel-{name}.png')):
+            save(load(f'item-tafereel-{name}'), f'rig-{name}-basis', 627)
+            rig[name] = {'kind': 'still'}
+
+# De drie beesten van Dante, raven en de mot voor het woud; ogen wit op doorzichtig
+for n, w in [('item-leeuw', 300), ('item-luipaard', 300), ('item-wolvin', 300), ('item-raaf-zittend', 200),
+             ('item-raaf-vleugels-omhoog', 200), ('item-raaf-vleugels-omlaag', 200), ('item-mot', 90)]:
+    if os.path.exists(os.path.join(SRC, n + '.png')):
+        save(load(n), n, w)
+if os.path.exists(os.path.join(SRC, 'effect-ogen.png')):
+    lum = load('effect-ogen').convert('L')
+    lum = lum.crop(lum.point(lambda v: 255 if v > 24 else 0).getbbox())
+    white = Image.new('RGBA', lum.size, (255, 255, 255, 0))
+    white.putalpha(lum)
+    save(white, 'effect-ogen', 160)
 
 with open(os.path.join(OUT, 'rig.json'), 'w') as f:
     json.dump(rig, f, indent=2)
