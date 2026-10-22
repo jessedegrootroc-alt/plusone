@@ -109,11 +109,11 @@ function SinSheet({ id, value, onClose, onShadow }: { id: SinId; value: number; 
     <Sheet onClose={onClose}>
       <div className="stack gap-16">
         <div className="plate">
-          <img className="engraving" src={good ? meta.virtueImg : meta.sinImg} alt={`Gustave Doré — ${good ? meta.virtue : meta.sin}`} style={{ aspectRatio: '16 / 9', objectPosition: good ? meta.virtuePos : meta.sinPos }} />
+          <img className="engraving" src={good ? meta.virtueImg : meta.sinImg} alt={`Gustave Doré: ${good ? meta.virtue : meta.sin}`} style={{ aspectRatio: '16 / 9', objectPosition: good ? meta.virtuePos : meta.sinPos }} />
         </div>
         <div className="center stack gap-4">
           <div className="eyebrow">Terras {meta.numeral}</div>
-          <h2 className="h1">{meta.sin} <span className="red">—</span> {meta.virtue}</h2>
+          <h2 className="h1">{meta.sin} <span style={{ color: 'var(--ink-3)' }}>→</span> {meta.virtue}</h2>
           <div className="small">{meta.sinLatin} · {meta.virtueLatin}</div>
         </div>
         <RedLine value={value} compact />

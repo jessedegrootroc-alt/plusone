@@ -55,7 +55,7 @@ export default function Onboarding() {
   if (step === 0) {
     return (
       <div className="hero-img" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: '#0B0B0B' }}>
-        <img src={IMG.forest} alt="Gustave Doré — Dante verdwaald in het donkere woud" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '109%', objectPosition: 'center top' }} />
+        <img src={IMG.forest} alt="Gustave Doré: Dante verdwaald in het donkere woud" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '109%', objectPosition: 'center top' }} />
         <div style={{ position: 'relative', zIndex: 1, marginTop: 'auto', padding: '0 24px calc(env(safe-area-inset-bottom) + 32px)', color: '#F7F7F5', animation: 'fadeUp .8s var(--ease) both' }}>
           <div className="eyebrow" style={{ color: 'rgba(247, 247, 245, .65)' }}>Inferno · Canto I</div>
           <p className="italic" style={{ color: '#F7F7F5', fontSize: 20, lineHeight: '28px', margin: '8px 0 24px' }}>
@@ -96,7 +96,7 @@ export default function Onboarding() {
             </div>
             <div className="field">
               <label htmlFor="why">Waarom wil je veranderen?</label>
-              <textarea id="why" className="textarea" value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Niet wat je wilt bereiken — waaróm. Voor wie. Wat het je kost als je niks verandert." />
+              <textarea id="why" className="textarea" value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Niet wat je wilt bereiken, maar waaróm. Voor wie. Wat het je kost als je niks verandert." />
               <div className="small">Op zware dagen laten we je dit teruglezen. Schrijf het voor die dag.</div>
             </div>
           </div>
@@ -107,7 +107,7 @@ export default function Onboarding() {
             <div className="stack gap-8">
               <div className="eyebrow">Je schaduw</div>
               <h1 className="h1">Wat trekt je naar beneden?</h1>
-              <p className="lead">Kies wat écht speelt. Je hoeft niets uit te leggen — alleen te benoemen.</p>
+              <p className="lead">Kies wat écht speelt. Je hoeft niets uit te leggen, alleen te benoemen.</p>
             </div>
             <PickStep mode="vice" picked={picked} toggle={toggle} setAmount={setAmount} />
             <CustomChips list={vices} onRemove={(id) => setPicked((p) => { const n = { ...p }; delete n[id]; return n })} />
@@ -194,7 +194,7 @@ export default function Onboarding() {
               const meta = FEATURES.find((x) => x.id === f)!
               return (
                 <div key={f} className="field">
-                  <label htmlFor={'g' + f}>{meta.name} — <span style={{ fontWeight: 400 }}>{meta.meaning.toLowerCase()}</span></label>
+                  <label htmlFor={'g' + f}>{meta.name}: <span style={{ fontWeight: 400 }}>{meta.meaning.toLowerCase()}</span></label>
                   <input id={'g' + f} className="input" value={goals[f] ?? ''} placeholder={meta.placeholder} onChange={(e) => setGoals((g) => ({ ...g, [f]: e.target.value }))} />
                 </div>
               )
@@ -224,8 +224,8 @@ export default function Onboarding() {
         )}
       </div>
 
-      <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 0, width: '100%', maxWidth: 460, padding: '16px 20px calc(env(safe-area-inset-bottom) + 18px)', background: 'linear-gradient(180deg, rgba(11, 11, 11, 0), var(--paper) 28%)', zIndex: 10 }}>
-        {step === 3 && <div className="small center" style={{ marginBottom: 8 }}>{vices.length ? `${vices.length} gekozen` : 'Niks? Dan ben je eerlijk — of nog niet.'}</div>}
+      <div className="dock" style={{ position: 'fixed', left: 0, right: 0, margin: '0 auto', bottom: 0, width: '100%', maxWidth: 460, padding: '16px 20px calc(env(safe-area-inset-bottom) + 18px)', background: 'linear-gradient(180deg, rgba(11, 11, 11, 0), var(--paper) 28%)', zIndex: 10 }}>
+        {step === 3 && <div className="small center" style={{ marginBottom: 8 }}>{vices.length ? `${vices.length} gekozen` : 'Niks? Dan ben je eerlijk, of nog niet.'}</div>}
         {step === 4 && (
           <div className="small center" style={{ marginBottom: 8, color: virtues.length > 8 ? 'var(--ink)' : undefined, fontWeight: virtues.length > 8 ? 600 : undefined }}>
             {virtues.length > 8 ? `${virtues.length} gekozen. Ambitieus. Begin liever met ±5 en bouw op.` : `${virtues.length} gekozen`}
@@ -270,8 +270,8 @@ function Concept() {
         <div className="redline-labels"><span>Inferno</span><span>Paradiso</span></div>
       </div>
       <div className="stack gap-12">
-        <p className="lead">Elke dag weeg je je goede gewoontes tegen je verleidingen. Geef je toe, dan glijd je langzaam richting <b>de Schim</b> — gebogen, uitgehold, vastgeklampt aan het scherm. Houd je vol, dan groei je naar <b>je ideale zelf</b>.</p>
-        <p className="lead">De <b>morele lijn</b> loopt langs de zeven hoofdzonden en hun deugden — de terrassen van Dantes louteringsberg. Niet als preek, maar als kompas.</p>
+        <p className="lead">Elke dag weeg je je goede gewoontes tegen je verleidingen. Geef je toe, dan glijd je langzaam richting <b>de Schim</b>: gebogen, uitgehold, vastgeklampt aan het scherm. Houd je vol, dan groei je naar <b>je ideale zelf</b>.</p>
+        <p className="lead">De <b>morele lijn</b> loopt langs de zeven hoofdzonden, met tegenover elke zonde een deugd.</p>
       </div>
       <div className="stack gap-4">
         {SINS.map((s) => (

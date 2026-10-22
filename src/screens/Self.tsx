@@ -202,10 +202,10 @@ function UrgePatterns() {
   const when = top(log.map((e) => part(e.at)))
   const voice = top(log.filter((e) => e.voice !== undefined).map((e) => e.voice!))
   const rows: [string, string][] = [
-    ['Doorstaan', done.length ? `${resisted} van ${done.length} keer` : '—'],
-    ['Gemiddelde daling', avgDrop !== null ? `${avgDrop >= 0 ? '−' : '+'}${Math.abs(avgDrop).toFixed(1).replace('.', ',')} op 10` : '—'],
-    ['Meestal eronder', need ? NEED_BY_ID[need[0] as NeedId].label : '—'],
-    ['Meestal in de', when ? when[0] : '—'],
+    ['Doorstaan', done.length ? `${resisted} van ${done.length} keer` : 'nog niet'],
+    ['Gemiddelde daling', avgDrop !== null ? `${avgDrop >= 0 ? '−' : '+'}${Math.abs(avgDrop).toFixed(1).replace('.', ',')} op 10` : 'nog niet'],
+    ['Meestal eronder', need ? NEED_BY_ID[need[0] as NeedId].label : 'nog niet'],
+    ['Meestal in de', when ? when[0] : 'nog niet'],
   ]
   return (
     <>
@@ -253,7 +253,7 @@ function JourneySheet({ onClose }: { onClose: () => void }) {
       <div className="stack gap-16">
         <div className="center stack gap-4">
           <div className="eyebrow">De vijf platen</div>
-          <h2 className="h2">Waar je heen kunt — beide kanten op.</h2>
+          <h2 className="h2">Waar je heen kunt, beide kanten op.</h2>
         </div>
         <StagePlate balance={tb} style={{ width: '72%', margin: '0 auto' }} />
         <div className="caption">Plaat {st.plate} · {st.name} · {st.place}</div>

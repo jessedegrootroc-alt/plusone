@@ -52,6 +52,8 @@ p { margin: 0; }
 .screen > :nth-child(1) { --i: 0; } .screen > :nth-child(2) { --i: 1; } .screen > :nth-child(3) { --i: 2; } .screen > :nth-child(4) { --i: 3; }
 .screen > :nth-child(5) { --i: 4; } .screen > :nth-child(6) { --i: 5; } .screen > :nth-child(7) { --i: 6; } .screen > :nth-child(8) { --i: 7; }
 .screen > :nth-child(9) { --i: 8; } .screen > :nth-child(10) { --i: 9; } .screen > :nth-child(n + 11) { --i: 10; }
+/* Vaste balken (zoals de knop onderaan de onboarding) bewegen niet mee: een transform zou ze verschuiven */
+.screen > .dock { animation: fade 0.4s ease both; }
 
 /* ——— Typografie ——— */
 .eyebrow, .caption { font: var(--sm); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
