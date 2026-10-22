@@ -1,6 +1,6 @@
 # PlusOne: de volgende scènes, één beeld per stap
 
-Dit is wat er nog nodig is, in de volgorde waarin je het maakt: **70 beelden**, scène voor scène. De prompts zijn precies dezelfde als in [ART-PIPELINE.md](ART-PIPELINE.md); dit bestand zet alleen wat nog ontbreekt op volgorde. Na elke scène kun je stoppen: stuur me de beelden, dan bouw ik die scène.
+Dit is wat er nog nodig is, in de volgorde waarin je het maakt: **57 beelden**, scène voor scène. De prompts zijn precies dezelfde als in [ART-PIPELINE.md](ART-PIPELINE.md); dit bestand zet alleen wat nog ontbreekt op volgorde. Na elke scène kun je stoppen: stuur me de beelden, dan bouw ik die scène.
 
 ## Zo werkt het
 1. **Eén beeld per keer.** Plak één prompt, wacht op het beeld, sla het op, en ga pas dan naar de volgende stap.
@@ -269,143 +269,7 @@ Background: a real transparent background (PNG with alpha channel), not a checke
 
 ---
 
-## Scène 4 · Inferno (balans −100 tot −60)  ·  13 beelden
-De bodem. De Schim, scherp en dichtbij tussen je zondetaferelen. Als laatste, omdat je hier hopelijk het minst komt.
-
-*Wat je straks ziet:* Snelle, korte ademhaling, het telefoonlicht op zijn gezicht, sintels, vlammen, rook, een wervelwind, vleermuizen en vliegen.
-
-### Wezens en effecten
-In het gesprek **Items**.
-
-#### ☐ 23 · Wezen: vleermuis
-**Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-vleermuis-omhoog.png` · *ART-PIPELINE stap 93*
-```
-Draw one single creature, centered: a bat seen from the front, with both wings raised. Nothing else in the image, no ground, no shadow.
-Style: as defined in my style prompt.
-Size: 1024×1024 square.
-Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
-```
-
-#### ☐ 24 · Wezen: vleermuis, vleugels omlaag
-**Upload:** `item-vleermuis-omhoog.png` · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-vleermuis-omlaag.png` · *ART-PIPELINE stap 94*
-```
-Edit the attached image. Change only this: both wings are now pushed down. Keep everything else exactly the same: same creature, same size, same position, same lines.
-Style: as defined in my style prompt.
-Size: 1024×1024 square.
-Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
-```
-
-#### ☐ 25 · Wezen: vlieg
-**Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-vlieg.png` · *ART-PIPELINE stap 105*
-```
-Draw one single creature, centered: a single fly, seen from above. Nothing else in the image, no ground, no shadow.
-Style: as defined in my style prompt.
-Size: 1024×1024 square.
-Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
-```
-
-#### ☐ 26 · Effect: sintel
-**Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Effen zwart · **Opslaan als:** `effect-sintel.png` · *ART-PIPELINE stap 106*
-```
-Draw one light effect: one single glowing ember, small, in the center, drawn as WHITE engraved marks with a few radiating lines. Only white lines on black, nothing else in the image.
-Style: as defined in my style prompt.
-Size: 1024×1024 square.
-Background: a solid pure black background (#000000), no transparency.
-```
-
-#### ☐ 27 · Effect: vonk
-**Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Effen zwart · **Opslaan als:** `effect-vonk.png` · *ART-PIPELINE stap 107*
-```
-Draw one light effect: one single thin spark, in the center, drawn as WHITE engraved lines. Only white lines on black, nothing else in the image.
-Style: as defined in my style prompt.
-Size: 1024×1024 square.
-Background: a solid pure black background (#000000), no transparency.
-```
-
-#### ☐ 28 · Effect: vlam 1
-**Upload:** niets · **Formaat:** Staand (1024×1536) · **Achtergrond:** Effen zwart · **Opslaan als:** `effect-vlam-1.png` · *ART-PIPELINE stap 113*
-```
-Draw one light effect: one tall flame tongue leaning slightly left, drawn as WHITE engraved contours and inner lines, filling the middle of the image. Only white lines on black, nothing else in the image.
-Style: as defined in my style prompt.
-Size: 1024×1536 portrait.
-Background: a solid pure black background (#000000), no transparency.
-```
-
-#### ☐ 29 · Effect: vlam 2
-**Upload:** `effect-vlam-1.png` · **Formaat:** Staand (1024×1536) · **Achtergrond:** Effen zwart · **Opslaan als:** `effect-vlam-2.png` · *ART-PIPELINE stap 114*
-```
-Edit the attached image. Change only this: the flame now leans slightly to the right and its tip curls the other way, like the next moment of a flickering fire. Keep everything else exactly the same: same creature, same size, same position, same lines.
-Style: as defined in my style prompt.
-Size: 1024×1536 portrait.
-Background: a solid pure black background (#000000), no transparency.
-```
-
-#### ☐ 30 · Effect: rook (naadloos)
-**Upload:** niets · **Formaat:** Liggend (1536×1024) · **Achtergrond:** Effen zwart · **Opslaan als:** `effect-rook.png` · *ART-PIPELINE stap 116*
-```
-Draw one light effect: a band of slowly curling smoke and steam plumes rising upward, in WHITE engraved lines. The left and right edges must match perfectly so it can scroll endlessly. Only white lines on black, nothing else in the image.
-Style: as defined in my style prompt.
-Size: 1536×1024 landscape.
-Background: a solid pure black background (#000000), no transparency.
-```
-
-#### ☐ 31 · Effect: wervelwind (naadloos)
-**Upload:** niets · **Formaat:** Liggend (1536×1024) · **Achtergrond:** Effen zwart · **Opslaan als:** `effect-wervelwind.png` · *ART-PIPELINE stap 120*
-```
-Draw one light effect: a band of howling whirlwind: streaks of wind, swirling engraved lines and scraps of cloth, all in WHITE. The left and right edges must match perfectly. Only white lines on black, nothing else in the image.
-Style: as defined in my style prompt.
-Size: 1536×1024 landscape.
-Background: a solid pure black background (#000000), no transparency.
-```
-
-### Achtergrond, 4 lagen
-In het gesprek **Achtergronden**.
-
-#### ☐ 32 · Inferno: laag 1, de verte
-**Upload:** niets · **Formaat:** Staand (1024×1536) · **Achtergrond:** Geen (het hele beeld is gevuld) · **Opslaan als:** `achtergrond-inferno-1-ver.png` · *ART-PIPELINE stap 133*
-```
-Draw the farthest background layer of a scene. The pitch-black abyss at the bottom of Hell: a near-black void, and far away, barely visible, a colossal shadowy figure frozen waist-deep in a lake of ice. A faint cold glow rises from below.
-The horizon is at 60% of the image height. No characters.
-Style: as defined in my style prompt.
-Size: 1024×1536 portrait.
-Background: fully opaque, the whole canvas filled with the scene, no transparency.
-```
-
-#### ☐ 33 · Inferno: laag 2, het midden
-**Upload:** `achtergrond-inferno-1-ver.png` · **Formaat:** Staand (1024×1536) · **Achtergrond:** Transparant · **Opslaan als:** `achtergrond-inferno-2-midden.png` · *ART-PIPELINE stap 134*
-```
-Draw only the middle-distance layer that belongs in front of the attached background, with the same perspective and the same horizon: jagged black rock pillars and broken stone stairs descending into darkness.
-Leave open space on the left and right at about 75% of the image height. Do not redraw the sky or the far distance; that part stays transparent.
-Style: as defined in my style prompt.
-Size: 1024×1536 portrait.
-Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
-```
-
-#### ☐ 34 · Inferno: laag 3, de grond
-**Upload:** `achtergrond-inferno-1-ver.png` · **Formaat:** Staand (1024×1536) · **Achtergrond:** Transparant · **Opslaan als:** `achtergrond-inferno-3-grond.png` · *ART-PIPELINE stap 135*
-```
-Draw only the ground layer that belongs in front of the attached background: a wet, uneven cave floor of black rock with scattered stones, old bones and small puddles reflecting faint light, from the horizon down to the bottom edge.
-The center at about 88% of the image height is flat and calm, because a person stands there. Everything above the ground stays transparent.
-Style: as defined in my style prompt.
-Size: 1024×1536 portrait.
-Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
-```
-
-#### ☐ 35 · Inferno: laag 4, de voorgrond
-**Upload:** `achtergrond-inferno-1-ver.png` · **Formaat:** Staand (1024×1536) · **Achtergrond:** Transparant · **Opslaan als:** `achtergrond-inferno-4-voorgrond.png` · *ART-PIPELINE stap 136*
-```
-Draw only the foreground framing layer that belongs in front of the attached background: dripping stalactites from the top corners, rusted chains hanging on the left, sharp rocks in the bottom right. These are very dark, almost black silhouettes.
-The center 60% of the width stays completely empty and transparent.
-Style: as defined in my style prompt.
-Size: 1024×1536 portrait.
-Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
-```
-
-**Klaar met scène 4?** Stuur me de beelden; dan bouw ik hem voordat je verder gaat.
-
----
-
-## Scène 5 · Jouw voorwerpen  ·  34 beelden
+## Scène 4 · Jouw voorwerpen  ·  34 beelden
 Je eigen verleidingen en gewoontes liggen als voorwerp in de scène (zoals de telefoon en de kettlebell nu). **Maak alleen de voorwerpen die bij jouw gewoontes horen** en sla de rest over.
 
 *Wat je straks ziet:* Het voorwerp van een verleiding licht op als die roept; dat van een goede gewoonte komt in het licht als je hem doet.
@@ -413,7 +277,7 @@ Je eigen verleidingen en gewoontes liggen als voorwerp in de scène (zoals de te
 ### Bij je verleidingen
 In het gesprek **Items**.
 
-#### ☐ 36 · Item: laptop  ·  *hoort bij: porno, lust-scrollen, doomscrollen, schermtijd*
+#### ☐ 23 · Item: laptop  ·  *hoort bij: porno, lust-scrollen, doomscrollen, schermtijd*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-laptop.png` · *ART-PIPELINE stap 50*
 ```
 Draw one single object, centered: a half-open laptop, its screen glowing. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -422,7 +286,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 37 · Item: asbak  ·  *hoort bij: roken*
+#### ☐ 24 · Item: asbak  ·  *hoort bij: roken*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-asbak.png` · *ART-PIPELINE stap 51*
 ```
 Draw one single object, centered: a heavy ashtray overflowing with cigarette butts, next to a crushed cigarette pack. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -431,7 +295,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 38 · Item: vape  ·  *hoort bij: vapen, snus*
+#### ☐ 25 · Item: vape  ·  *hoort bij: vapen, snus*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-vape.png` · *ART-PIPELINE stap 52*
 ```
 Draw one single object, centered: a vape pen lying on its side. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -440,7 +304,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 39 · Item: drankfles  ·  *hoort bij: alcohol, meer dan 5 glazen*
+#### ☐ 26 · Item: drankfles  ·  *hoort bij: alcohol, meer dan 5 glazen*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-drankfles.png` · *ART-PIPELINE stap 53*
 ```
 Draw one single object, centered: an empty liquor bottle lying tipped over. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -449,7 +313,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 40 · Item: blikje  ·  *hoort bij: frisdrank, energydrank*
+#### ☐ 27 · Item: blikje  ·  *hoort bij: frisdrank, energydrank*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-blikje.png` · *ART-PIPELINE stap 54*
 ```
 Draw one single object, centered: a crushed energy-drink can. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -458,7 +322,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 41 · Item: fastfood  ·  *hoort bij: fastfood, eetbui, snaaien na 20:00*
+#### ☐ 28 · Item: fastfood  ·  *hoort bij: fastfood, eetbui, snaaien na 20:00*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-fastfood.png` · *ART-PIPELINE stap 55*
 ```
 Draw one single object, centered: a greasy crumpled fast-food bag with a few fries spilling out. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -467,7 +331,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 42 · Item: snoep  ·  *hoort bij: snoep, max. suiker*
+#### ☐ 29 · Item: snoep  ·  *hoort bij: snoep, max. suiker*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-snoep.png` · *ART-PIPELINE stap 56*
 ```
 Draw one single object, centered: a torn-open candy wrapper with sweets spilling out. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -476,7 +340,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 43 · Item: dobbelstenen  ·  *hoort bij: gokken / sportsbetting*
+#### ☐ 30 · Item: dobbelstenen  ·  *hoort bij: gokken / sportsbetting*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-dobbelstenen.png` · *ART-PIPELINE stap 57*
 ```
 Draw one single object, centered: a pair of dice. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -485,7 +349,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 44 · Item: speelkaarten  ·  *hoort bij: online casino / poker*
+#### ☐ 31 · Item: speelkaarten  ·  *hoort bij: online casino / poker*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-speelkaarten.png` · *ART-PIPELINE stap 58*
 ```
 Draw one single object, centered: a fanned-out hand of playing cards. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -494,7 +358,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 45 · Item: munten  ·  *hoort bij: koersen checken, krasloten*
+#### ☐ 32 · Item: munten  ·  *hoort bij: koersen checken, krasloten*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-munten.png` · *ART-PIPELINE stap 59*
 ```
 Draw one single object, centered: a small scattered pile of coins. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -503,7 +367,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 46 · Item: boodschappentas  ·  *hoort bij: impulsaankoop, Klarna*
+#### ☐ 33 · Item: boodschappentas  ·  *hoort bij: impulsaankoop, Klarna*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-boodschappentas.png` · *ART-PIPELINE stap 60*
 ```
 Draw one single object, centered: an overflowing shopping bag. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -512,7 +376,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 47 · Item: wekker  ·  *hoort bij: snoozen, na 23:30 naar bed*
+#### ☐ 34 · Item: wekker  ·  *hoort bij: snoozen, na 23:30 naar bed*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-wekker.png` · *ART-PIPELINE stap 61*
 ```
 Draw one single object, centered: a smashed alarm clock. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -521,7 +385,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 48 · Item: controller  ·  *hoort bij: gamen*
+#### ☐ 35 · Item: controller  ·  *hoort bij: gamen*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-controller.png` · *ART-PIPELINE stap 62*
 ```
 Draw one single object, centered: a game controller with a dangling cable. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -530,7 +394,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 49 · Item: afstandsbediening  ·  *hoort bij: series bingen*
+#### ☐ 36 · Item: afstandsbediening  ·  *hoort bij: series bingen*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-afstandsbediening.png` · *ART-PIPELINE stap 63*
 ```
 Draw one single object, centered: a TV remote control. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -539,7 +403,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 50 · Item: gebroken glas  ·  *hoort bij: woede, snauwen, online ruzie*
+#### ☐ 37 · Item: gebroken glas  ·  *hoort bij: woede, snauwen, online ruzie*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-gebroken-glas.png` · *ART-PIPELINE stap 64*
 ```
 Draw one single object, centered: a shattered drinking glass. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -548,7 +412,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 51 · Item: brief  ·  *hoort bij: roddelen, wrok*
+#### ☐ 38 · Item: brief  ·  *hoort bij: roddelen, wrok*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-brief.png` · *ART-PIPELINE stap 65*
 ```
 Draw one single object, centered: a torn, crumpled letter. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -557,7 +421,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 52 · Item: tijdschriften  ·  *hoort bij: vergelijken op social media*
+#### ☐ 39 · Item: tijdschriften  ·  *hoort bij: vergelijken op social media*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-tijdschriften.png` · *ART-PIPELINE stap 66*
 ```
 Draw one single object, centered: a stack of glossy magazines. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -566,7 +430,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 53 · Item: handspiegel  ·  *hoort bij: opscheppen, gelijk willen hebben*
+#### ☐ 40 · Item: handspiegel  ·  *hoort bij: opscheppen, gelijk willen hebben*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-handspiegel.png` · *ART-PIPELINE stap 67*
 ```
 Draw one single object, centered: a cracked hand mirror. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -575,7 +439,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 54 · Item: kroon  ·  *hoort bij: geen hulp vragen*
+#### ☐ 41 · Item: kroon  ·  *hoort bij: geen hulp vragen*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-kroon.png` · *ART-PIPELINE stap 68*
 ```
 Draw one single object, centered: a toppled golden crown lying on its side. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -584,7 +448,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 55 · Item: masker  ·  *hoort bij: liegen, excuses verzinnen*
+#### ☐ 42 · Item: masker  ·  *hoort bij: liegen, excuses verzinnen*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-masker.png` · *ART-PIPELINE stap 69*
 ```
 Draw one single object, centered: a smiling porcelain mask. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -596,7 +460,7 @@ Background: a real transparent background (PNG with alpha channel), not a checke
 ### Bij je goede gewoontes
 In het gesprek **Items**.
 
-#### ☐ 56 · Item: hardloopschoenen  ·  *hoort bij: hardlopen, stappen*
+#### ☐ 43 · Item: hardloopschoenen  ·  *hoort bij: hardlopen, stappen*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-hardloopschoenen.png` · *ART-PIPELINE stap 71*
 ```
 Draw one single object, centered: a pair of worn running shoes. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -605,7 +469,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 57 · Item: ijsbad  ·  *hoort bij: koude douche / ijsbad*
+#### ☐ 44 · Item: ijsbad  ·  *hoort bij: koude douche / ijsbad*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-ijsbad.png` · *ART-PIPELINE stap 72*
 ```
 Draw one single object, centered: a wooden tub of ice water with floating chunks of ice. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -614,7 +478,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 58 · Item: saunaemmer  ·  *hoort bij: sauna*
+#### ☐ 45 · Item: saunaemmer  ·  *hoort bij: sauna*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-saunaemmer.png` · *ART-PIPELINE stap 73*
 ```
 Draw one single object, centered: a wooden sauna bucket with a ladle. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -623,7 +487,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 59 · Item: saunastenen  ·  *hoort bij: sauna*
+#### ☐ 46 · Item: saunastenen  ·  *hoort bij: sauna*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-saunastenen.png` · *ART-PIPELINE stap 74*
 ```
 Draw one single object, centered: a heap of hot sauna stones. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -632,7 +496,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 60 · Item: boeken  ·  *hoort bij: lezen, iets nieuws geleerd*
+#### ☐ 47 · Item: boeken  ·  *hoort bij: lezen, iets nieuws geleerd*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-boeken.png` · *ART-PIPELINE stap 75*
 ```
 Draw one single object, centered: a stack of old books. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -641,7 +505,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 61 · Item: dagboek  ·  *hoort bij: journaling, dankbaarheid*
+#### ☐ 48 · Item: dagboek  ·  *hoort bij: journaling, dankbaarheid*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-dagboek.png` · *ART-PIPELINE stap 76*
 ```
 Draw one single object, centered: an open journal with a quill and an inkpot. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -650,7 +514,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 62 · Item: kaars  ·  *hoort bij: meditatie, box breathing*
+#### ☐ 49 · Item: kaars  ·  *hoort bij: meditatie, box breathing*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-kaars.png` · *ART-PIPELINE stap 77*
 ```
 Draw one single object, centered: a lit candle in a simple holder. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -659,7 +523,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 63 · Item: meditatiekussen  ·  *hoort bij: meditatie, Wim Hof*
+#### ☐ 50 · Item: meditatiekussen  ·  *hoort bij: meditatie, Wim Hof*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-meditatiekussen.png` · *ART-PIPELINE stap 78*
 ```
 Draw one single object, centered: a round meditation cushion. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -668,7 +532,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 64 · Item: fruitschaal  ·  *hoort bij: fruit, groente*
+#### ☐ 51 · Item: fruitschaal  ·  *hoort bij: fruit, groente*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-fruitschaal.png` · *ART-PIPELINE stap 79*
 ```
 Draw one single object, centered: a bowl of fruit. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -677,7 +541,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 65 · Item: waterkruik  ·  *hoort bij: water*
+#### ☐ 52 · Item: waterkruik  ·  *hoort bij: water*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-waterkruik.png` · *ART-PIPELINE stap 80*
 ```
 Draw one single object, centered: a clay water jug with a cup. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -686,7 +550,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 66 · Item: brood  ·  *hoort bij: zelf gekookt, eiwit*
+#### ☐ 53 · Item: brood  ·  *hoort bij: zelf gekookt, eiwit*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-brood.png` · *ART-PIPELINE stap 81*
 ```
 Draw one single object, centered: a loaf of bread broken in two. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -695,7 +559,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 67 · Item: spaarpot  ·  *hoort bij: geld opzij, no-spend-dag, uitgaven bijhouden*
+#### ☐ 54 · Item: spaarpot  ·  *hoort bij: geld opzij, no-spend-dag, uitgaven bijhouden*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-spaarpot.png` · *ART-PIPELINE stap 82*
 ```
 Draw one single object, centered: a glass jar of coins. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -704,7 +568,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 68 · Item: lantaarn  ·  *hoort bij: vroeg opstaan, ochtendlicht*
+#### ☐ 55 · Item: lantaarn  ·  *hoort bij: vroeg opstaan, ochtendlicht*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-lantaarn.png` · *ART-PIPELINE stap 83*
 ```
 Draw one single object, centered: an old iron lantern. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -713,7 +577,7 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-#### ☐ 69 · Item: pelgrimsstaf  ·  *hoort bij: wandeling in de natuur*
+#### ☐ 56 · Item: pelgrimsstaf  ·  *hoort bij: wandeling in de natuur*
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Transparant · **Opslaan als:** `item-pelgrimsstaf.png` · *ART-PIPELINE stap 84*
 ```
 Draw one single object, centered: a pilgrim's wooden staff. Seen from a slightly high angle, as if lying on the ground. Light from the upper left. No text or logos, no ground, no shadow, nothing else in the image.
@@ -722,11 +586,11 @@ Size: 1024×1024 square.
 Background: a real transparent background (PNG with alpha channel), not a checkerboard pattern.
 ```
 
-**Klaar met scène 5?** Stuur me de beelden; dan bouw ik hem voordat je verder gaat.
+**Klaar met scène 4?** Stuur me de beelden; dan bouw ik hem voordat je verder gaat.
 
 ---
 
-## 6 · Scènewissel  ·  1 beeld
+## Scène 5 · Scènewissel  ·  1 beeld
 Als je van de ene naar de andere scène gaat, neemt een inktvlek het beeld over.
 
 *Wat je straks ziet:* De vlek loopt uit over het scherm en trekt weer weg.
@@ -734,7 +598,7 @@ Als je van de ene naar de andere scène gaat, neemt een inktvlek het beeld over.
 ### Overgang
 In het gesprek **Items**.
 
-#### ☐ 70 · Scherm: inktvlek
+#### ☐ 57 · Scherm: inktvlek
 **Upload:** niets · **Formaat:** Vierkant (1024×1024) · **Achtergrond:** Effen wit · **Opslaan als:** `scherm-inktvlek.png` · *ART-PIPELINE stap 132*
 ```
 Draw one interface ornament in black ink: one enormous, irregular black ink blot with splattered edges, as if a bottle of ink has spilled across an engraving, filling most of the image.
@@ -742,4 +606,6 @@ Style: as defined in my style prompt.
 Size: 1024×1024 square.
 Background: a solid plain white background, no transparency.
 ```
+
+**Klaar met scène 5?** Stuur me de beelden; dan bouw ik hem voordat je verder gaat.
 

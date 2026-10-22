@@ -81,6 +81,10 @@ LAYERS = {
     'achtergrond-paradiso-2-midden': (False, False),
     'achtergrond-paradiso-3-grond': (False, False),
     'achtergrond-paradiso-4-voorgrond': (False, False),
+    'achtergrond-inferno-1-ver': (False, True),
+    'achtergrond-inferno-2-midden': (False, False),
+    'achtergrond-inferno-3-grond': (False, False),
+    'achtergrond-inferno-4-voorgrond': (False, False),
 }
 for n, (mirror, opaque) in LAYERS.items():
     if os.path.exists(os.path.join(SRC, n + '.png')):
@@ -171,6 +175,21 @@ for n in ['item-lauwerkrans', 'item-medaille', 'item-stralenkrans', 'item-ijsade
 for n, w in [('effect-gloed', 640), ('effect-stralen', 640)]:
     if os.path.exists(os.path.join(SRC, n + '.png')):
         save(load(n), n, w, rgb=True)
+# Inferno: rook, wervelwind en vlammen op zwart (de app mengt ze weg met 'screen'),
+# vonk en sintel wit op doorzichtig, en de wezens
+for n, w in [('effect-rook', 1024), ('effect-wervelwind', 1024), ('effect-vlam-1', 260), ('effect-vlam-2', 260)]:
+    if os.path.exists(os.path.join(SRC, n + '.png')):
+        save(load(n), n, w, rgb=True)
+for n in ['effect-vonk', 'effect-sintel']:
+    if os.path.exists(os.path.join(SRC, n + '.png')):
+        lum = load(n).convert('L')
+        lum = lum.crop(lum.point(lambda v: 255 if v > 24 else 0).getbbox())
+        white = Image.new('RGBA', lum.size, (255, 255, 255, 0))
+        white.putalpha(lum)
+        save(white, n, 80)
+for n, w in [('item-vleermuis-omhoog', 200), ('item-vleermuis-omlaag', 200), ('item-vlieg', 80)]:
+    if os.path.exists(os.path.join(SRC, n + '.png')):
+        save(load(n), n, w)
 if os.path.exists(os.path.join(SRC, 'item-tafereel-hoogmoed.png')):
     save(load('item-tafereel-hoogmoed'), 'item-tafereel-hoogmoed', 627)
 

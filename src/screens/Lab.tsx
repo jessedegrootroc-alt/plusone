@@ -21,7 +21,8 @@ export default function Lab() {
 }
 
 // De scènes waarvoor je eigen illustraties al klaar zijn, met het bereik van hun balans
-const MADE: { scene: 'kust' | 'terrassen' | 'paradiso'; title: string; range: [number, number]; start: number; tabs?: boolean; goals?: boolean }[] = [
+const MADE: { scene: 'inferno' | 'kust' | 'terrassen' | 'paradiso'; title: string; range: [number, number]; start: number; tabs?: boolean; goals?: boolean }[] = [
+  { scene: 'inferno', title: 'I · Inferno', range: [-100, -60], start: -80 },
   { scene: 'kust', title: 'III · De kust van de berg', range: [-20, 20], start: 0 },
   { scene: 'terrassen', title: 'IV · De terrassen', range: [20, 60], start: 40, tabs: true },
   { scene: 'paradiso', title: 'V · Paradiso', range: [60, 100], start: 85, goals: true },

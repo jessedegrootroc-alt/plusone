@@ -65,6 +65,15 @@ const FILES = {
   e_sun: 'item-dageraad',
   e_book: 'item-boek',
   e_dumbbell: 'item-halter',
+  rook: 'effect-rook',
+  wervel: 'effect-wervelwind',
+  vlam1: 'effect-vlam-1',
+  vlam2: 'effect-vlam-2',
+  vonk: 'effect-vonk',
+  sintel: 'effect-sintel',
+  bat1: 'item-vleermuis-omhoog',
+  bat2: 'item-vleermuis-omlaag',
+  vlieg: 'item-vlieg',
 } as const
 type Key = keyof typeof FILES
 
@@ -102,7 +111,7 @@ interface Cast {
   embers: boolean
 }
 const CAST: Record<SceneId, Cast> = {
-  inferno: { use: [], char: 'karakter-schim', far: '../dore/lucifer', size: 0.5, feet: 0.987, breath: 2.2, eye: [795, 262, 838, 292], cheek: [800, 300, 830, 310], phone: [700, 560], light: 0.15, farBright: 0.2, dark: 0.95, feathers: false, embers: true },
+  inferno: { use: ['rook', 'wervel', 'vlam1', 'vlam2', 'vonk', 'sintel', 'bat1', 'bat2', 'vlieg'], char: 'karakter-schim', far: 'achtergrond-inferno-1-ver', farHorizon: 0.557, mid: 'achtergrond-inferno-2-midden', ground: 'achtergrond-inferno-3-grond', front: 'achtergrond-inferno-4-voorgrond', frontOver: true, lightX: 0.5, size: 0.5, feet: 0.987, breath: 2.2, eye: [795, 262, 838, 292], cheek: [800, 300, 830, 310], phone: [700, 560], light: 0.3, farBright: 0.85, dark: 0.8, feathers: false, embers: true },
   woud: { use: [], char: 'karakter-verdwaalde', far: '../dore/forest', size: 0.6, feet: 0.991, breath: 3.4, eye: [738, 184, 763, 199], cheek: [740, 205, 760, 212], phone: [790, 868], light: 0.4, farBright: 0.26, dark: 0.85, feathers: false, embers: false },
   kust: { use: ['boat', 'pil1', 'pil2', 'bell', 'phone', 'water', 'ijver', 'arm', 'traag', 'slinger'], char: 'karakter-balans', far: 'achtergrond-kust-1-ver', farHorizon: 0.64, mid: 'achtergrond-kust-2-midden', ground: 'achtergrond-kust-3-grond', front: 'achtergrond-kust-4-voorgrond', size: 0.62, feet: 0.955, breath: 4.2, eye: [572, 116, 594, 128], cheek: [575, 131, 592, 137], light: 1, farBright: 0.6, dark: 0.75, feathers: true, embers: false },
   terrassen: { use: ['engel', 'duif1', 'duif2', 'lichtje', 'ijver', 'arm', 'matigheidB', 'matigheidD', 'nederigheidB', 'nederigheidD', 'zuiverheidB', 'zuiverheidD', 'welwillendheidB', 'welwillendheidD', 'geduldB', 'vrijgevigheidB'], char: 'karakter-klimmer', far: 'achtergrond-terrassen-1-ver', farHorizon: 0.6, mid: 'achtergrond-terrassen-2-midden', front: 'achtergrond-terrassen-4-voorgrond', frameTop: 0.26, lightX: 0.22, size: 0.6, feet: 0.994, breath: 5, eye: [553, 112, 568, 121], cheek: [555, 124, 567, 130], light: 1.1, farBright: 0.55, dark: 0.6, feathers: true, embers: false },
@@ -159,7 +168,9 @@ const loadImg = (url: string) => {
   if (!p) {
     p = new Promise<HTMLImageElement>((res, rej) => {
       const im = new Image()
-      im.onload = () => (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(() => { loaded.set(url, im); res(im) })
+      // decode() kan blijven hangen als de pagina op de achtergrond staat; na 400 ms gaan we toch door
+      const ready = () => { loaded.set(url, im); res(im) }
+      im.onload = () => Promise.race([im.decode ? im.decode() : Promise.resolve(), new Promise((r) => setTimeout(r, 400))]).catch(() => {}).then(ready)
       im.onerror = rej
       im.src = url
     })
@@ -237,6 +248,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
     const kust = scene === 'kust'
     const terr = scene === 'terrassen'
     const para = scene === 'paradiso'
+    const inf = scene === 'inferno'
     // Zonder gekozen doelen laten we er drie zien, als belofte van wat kan
     const emblems = (emblemKey ? emblemKey.split(',') : ['e_medal', 'e_book', 'e_sun']) as Emblem[]
     const tabs = tabsKey.split(',').map((x) => VIRTUE_TAB[x as SinId])
@@ -260,6 +272,8 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
       tab: Partial<Record<Tab, { base: HTMLCanvasElement; piece?: HTMLCanvasElement }>>
       tsV: number
       emb: HTMLCanvasElement[]
+      bats: [HTMLCanvasElement, HTMLCanvasElement] | null
+      fly: HTMLCanvasElement | null
       ground: HTMLCanvasElement
       char: HTMLCanvasElement
       cw: number
@@ -372,7 +386,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
           return bake(img.far, fw * dpr, fw * ratio * dpr, cast.farBright, 0.2)
         })(),
         frame,
-        mid: layerArt(img.mid, terr ? 0.62 : 0.5, 0.1),
+        mid: layerArt(img.mid, inf ? 0.85 : terr ? 0.62 : 0.5, 0.1),
         groundArt: layerArt(img.ground, 0.55),
         front: layerArt(img.front, 0.32),
         engel: terr && frame ? (() => { const eh = frame.h * 0.15; return bake(img.engel, eh * (img.engel.width / img.engel.height) * dpr, eh * dpr, 0.7, 0.2) })() : null,
@@ -392,6 +406,8 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
           return out
         })(),
         tsV: Math.min(W * 0.42, H * 0.32),
+        bats: inf ? [bake(img.bat1, W * 0.14 * dpr, W * 0.14 * dpr, 0.7), bake(img.bat2, W * 0.14 * dpr, W * 0.14 * dpr, 0.7)] : null,
+        fly: inf ? bake(img.vlieg, W * 0.035 * dpr, W * 0.035 * dpr, 0.9) : null,
         emb: para ? emblems.map((e) => bake(img![e], W * 0.16 * dpr, W * 0.16 * dpr, 1)) : [],
         pil,
         traag: kust ? bake(img.traag, tsT * dpr, tsT * dpr, tB, 0.35) : ground,
@@ -553,6 +569,39 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
         }
       })
 
+      // 2b' · Inferno: de wervelwind van Dante raast hoog door de lucht, en vleermuizen fladderen langs
+      if (inf) layer(0.1, () => {
+        const ww = W * 2
+        const wh = ww * (img!.wervel.height / img!.wervel.width)
+        const off = ((t * 40) % ww + ww) % ww
+        ctx.globalCompositeOperation = 'screen'
+        ctx.globalAlpha = 0.22 + 0.06 * Math.sin(t * 0.7)
+        ctx.drawImage(img!.wervel, -off, H * 0.1, ww, wh)
+        ctx.drawImage(img!.wervel, -off + ww, H * 0.1, ww, wh)
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.globalAlpha = 1
+      })
+      if (inf && L.bats) layer(0.3, () => {
+        for (const [period, offset, yy, dir] of [[13, 0, 0.2, 1], [17, 6, 0.32, -1]] as const) {
+          const tt = (t + offset) % period
+          const fly = 6
+          if (tt > fly) continue
+          const p = tt / fly
+          const frame = Math.floor(tt / 0.09) % 2
+          const bv = L!.bats![frame]
+          const bw = bv.width / dpr
+          const x = dir > 0 ? -bw + p * (W + bw * 2) : W + bw - p * (W + bw * 2)
+          const y = H * yy + Math.sin(p * TAU * 2.5) * H * 0.03
+          ctx.save()
+          ctx.globalAlpha = smooth(0, 0.06, p) * (1 - smooth(0.94, 1, p))
+          ctx.translate(x, y)
+          ctx.scale(dir * (0.8 + 0.2 * Math.sin(p * 9)), 1)
+          ctx.drawImage(bv, -bw / 2, -bw / 2, bw, bw)
+          ctx.restore()
+        }
+        ctx.globalAlpha = 1
+      })
+
       // 2c · Duiven vliegen langs het licht, met hun vleugels in twee standen
       if (terr && L.duif) layer(0.28, () => {
         for (const [period, offset, yy, dir] of [[19, 0, 0.16, 1], [27, 9, 0.26, -1]] as const) {
@@ -594,6 +643,38 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
 
       // 4 · De grond
       layer(0.35, () => (L!.groundArt ? inFrame(L!.groundArt) : ctx.drawImage(L!.ground, 0, 0, W, H)))
+
+      // 4a · Inferno: vlammen links en rechts van de trap, twee beelden om en om, met gloed en opstijgende sintels
+      if (inf) layer(0.4, () => {
+        for (const [fx, ph] of [[0.13, 0], [0.87, 1.7]] as const) {
+          const x = W * fx
+          const y = onGround(0.3)
+          const fl = Math.floor((t + ph) / 0.11) % 2 ? img!.vlam1 : img!.vlam2
+          const fw = W * 0.16 * (1 + 0.06 * Math.sin(t * 8 + ph))
+          const fh = fw * (fl.height / fl.width) * (1 + 0.1 * Math.sin(t * 6.3 + ph * 2))
+          const gl = ctx.createRadialGradient(x, y - fh * 0.3, 0, x, y - fh * 0.3, fw * 1.6)
+          gl.addColorStop(0, `rgba(255,255,255,${0.2 + 0.08 * Math.sin(t * 9 + ph)})`)
+          gl.addColorStop(1, 'rgba(255,255,255,0)')
+          ctx.globalCompositeOperation = 'lighter'
+          ctx.fillStyle = gl
+          ctx.fillRect(x - fw * 1.6, y - fh * 0.3 - fw * 1.6, fw * 3.2, fw * 3.2)
+          ctx.globalCompositeOperation = 'screen'
+          ctx.drawImage(fl, x - fw / 2, y - fh, fw, fh)
+          // sintels en vonken stijgen op uit het vuur
+          for (let i = 0; i < 5; i++) {
+            const life = 2.6
+            const age = ((t + ph * 3 + i * (life / 5)) % life) / life
+            const spr = i % 2 ? img!.sintel : img!.vonk
+            const sz = W * (0.035 - 0.02 * age)
+            const sx = x + Math.sin(age * 7 + i * 2 + ph) * fw * 0.5
+            const sy = y - fh * 0.6 - age * H * 0.35
+            ctx.globalAlpha = (1 - age) * 0.9
+            ctx.drawImage(spr, sx - sz / 2, sy - sz / 2, sz, sz)
+          }
+          ctx.globalAlpha = 1
+        }
+        ctx.globalCompositeOperation = 'source-over'
+      })
 
       // 4b · De randen: rotsen en riet, iets naar buiten geschoven zodat ze de taferelen omlijsten in plaats van bedekken
       if (L.front && F && !cast.frontOver) layer(0.45, () => {
@@ -959,14 +1040,35 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
         ctx.globalCompositeOperation = 'screen'
         for (const [speed, scale, y, alpha] of [[7, 1.8, 0.58, 0.5], [-4, 2.3, 0.66, 0.32]] as const) {
           const mw = W * scale
-          const mh = mw * (img!.mist.height / img!.mist.width)
+          // In Inferno kruipt rook over de grond in plaats van mist
+          const fog = inf ? img!.rook : img!.mist
+          const mh = mw * (fog.height / fog.width)
           const off = (((t * speed) % mw) + mw) % mw
-          ctx.globalAlpha = alpha
-          ctx.drawImage(img!.mist, -off, H * y, mw, mh)
-          ctx.drawImage(img!.mist, -off + mw, H * y, mw, mh)
+          ctx.globalAlpha = alpha * (inf ? 0.7 : 1)
+          ctx.drawImage(fog, -off, H * y, mw, mh)
+          ctx.drawImage(fog, -off + mw, H * y, mw, mh)
         }
         ctx.globalAlpha = 1
         ctx.globalCompositeOperation = 'source-over'
+      })
+
+      // 9a · Inferno: vliegen zoemen rond het licht van de telefoon
+      if (inf && L.fly && cast.phone) layer(0.8, () => {
+        const s = L!.cw / 1024
+        const cx = W * 0.47 - L!.cw * 0.5 + cast.phone![0] * s
+        const cy = H * 0.97 - L!.ch * RIGE.feet + cast.phone![1] * s
+        const fz = L!.fly!.width / dpr
+        for (let i = 0; i < 3; i++) {
+          const sp = 2.1 + i * 0.7
+          const a = t * sp + i * 2.1
+          const x = cx + Math.cos(a) * W * (0.07 + 0.02 * i) + Math.sin(t * 13 + i) * 1.5
+          const y = cy - H * 0.04 + Math.sin(a * 1.3) * H * (0.03 + 0.01 * i) + Math.cos(t * 11 + i) * 1.5
+          ctx.save()
+          ctx.translate(x, y)
+          ctx.rotate(a + Math.PI / 2)
+          ctx.drawImage(L!.fly!, -fz / 2, -fz / 2, fz, fz)
+          ctx.restore()
+        }
       })
 
       // 9b · Paradiso: je doelen zweven als emblemen in een boog om je heen, elk in zijn eigen ritme
