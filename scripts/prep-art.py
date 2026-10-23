@@ -85,6 +85,11 @@ LAYERS = {
     'achtergrond-inferno-2-midden': (False, False),
     'achtergrond-inferno-3-grond': (False, False),
     'achtergrond-inferno-4-voorgrond': (False, False),
+    'achtergrond-terrassen-3-grond': (False, False),
+    'achtergrond-woud-1-ver': (False, True),
+    'achtergrond-woud-2-midden': (False, False),
+    'achtergrond-woud-3-grond': (False, False),
+    'achtergrond-woud-4-voorgrond': (False, False),
 }
 for n, (mirror, opaque) in LAYERS.items():
     if os.path.exists(os.path.join(SRC, n + '.png')):
@@ -177,6 +182,15 @@ for n, w in [('effect-gloed', 640), ('effect-stralen', 640)]:
         save(load(n), n, w, rgb=True)
 # Inferno: rook, wervelwind en vlammen op zwart (de app mengt ze weg met 'screen'),
 # vonk en sintel wit op doorzichtig, en de wezens
+# Regen op zwart (naadloos), de inktvlek zwart op wit wordt zwart op doorzichtig voor de scènewissel
+if os.path.exists(os.path.join(SRC, 'effect-regen.png')):
+    save(load('effect-regen'), 'effect-regen', 768, rgb=True)
+if os.path.exists(os.path.join(SRC, 'scherm-inktvlek.png')):
+    ink = Image.eval(load('scherm-inktvlek').convert('L'), lambda v: 255 - v)
+    blot = Image.new('RGBA', ink.size, (0, 0, 0, 0))
+    blot.putalpha(ink)
+    save(blot, 'scherm-inktvlek', 900)
+
 for n, w in [('effect-rook', 1024), ('effect-wervelwind', 1024), ('effect-vlam-1', 260), ('effect-vlam-2', 260)]:
     if os.path.exists(os.path.join(SRC, n + '.png')):
         save(load(n), n, w, rgb=True)
@@ -193,7 +207,10 @@ for n, w in [('item-vleermuis-omhoog', 200), ('item-vleermuis-omlaag', 200), ('i
 # Voorwerpen van je verleidingen (scène 5): liggen in de scène als je die verleiding hebt
 for n in ['item-laptop', 'item-asbak', 'item-vape', 'item-drankfles', 'item-blikje', 'item-fastfood', 'item-snoep', 'item-dobbelstenen',
           'item-speelkaarten', 'item-munten', 'item-boodschappentas', 'item-wekker', 'item-controller', 'item-afstandsbediening',
-          'item-gebroken-glas', 'item-brief']:
+          'item-gebroken-glas', 'item-brief', 'item-tijdschriften', 'item-handspiegel', 'item-kroon', 'item-masker',
+          'item-hardloopschoenen', 'item-ijsbad', 'item-saunaemmer', 'item-saunastenen', 'item-boeken', 'item-dagboek',
+          'item-kaars', 'item-meditatiekussen', 'item-fruitschaal', 'item-waterkruik', 'item-brood', 'item-spaarpot',
+          'item-lantaarn', 'item-pelgrimsstaf', 'item-kettlebell']:
     if os.path.exists(os.path.join(SRC, n + '.png')):
         save(load(n), n, 300)
 if os.path.exists(os.path.join(SRC, 'item-tafereel-hoogmoed.png')):

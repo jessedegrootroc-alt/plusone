@@ -29,7 +29,8 @@ const MADE: { scene: 'inferno' | 'woud' | 'kust' | 'terrassen' | 'paradiso'; tit
   { scene: 'terrassen', title: 'IV · De terrassen', range: [20, 60], start: 40, tabs: true },
   { scene: 'paradiso', title: 'V · Paradiso', range: [60, 100], start: 85, goals: true },
 ]
-const OBJECTS: ObjectId[] = ['telefoon', 'laptop', 'asbak', 'vape', 'drankfles', 'blikje', 'fastfood', 'snoep', 'dobbelstenen', 'speelkaarten', 'munten', 'boodschappentas', 'wekker', 'controller', 'afstandsbediening', 'gebroken-glas', 'brief']
+const OBJECTS: ObjectId[] = ['telefoon', 'laptop', 'asbak', 'vape', 'drankfles', 'blikje', 'fastfood', 'snoep', 'dobbelstenen', 'speelkaarten', 'munten', 'boodschappentas', 'wekker', 'controller', 'afstandsbediening', 'gebroken-glas', 'brief', 'tijdschriften', 'handspiegel', 'kroon', 'masker']
+const GOOD_OBJECTS: ObjectId[] = ['kettlebell', 'hardloopschoenen', 'ijsbad', 'saunaemmer', 'saunastenen', 'boeken', 'dagboek', 'kaars', 'meditatiekussen', 'fruitschaal', 'waterkruik', 'brood', 'spaarpot', 'lantaarn', 'pelgrimsstaf']
 const SIN_NAMES: { id: SinId; name: string }[] = [
   { id: 'sloth', name: 'Traagheid' }, { id: 'greed', name: 'Hebzucht' }, { id: 'lust', name: 'Lust' }, { id: 'gluttony', name: 'Vraatzucht' },
   { id: 'wrath', name: 'Toorn' }, { id: 'envy', name: 'Afgunst' }, { id: 'pride', name: 'Hoogmoed' },
@@ -58,18 +59,24 @@ export function Gallery() {
 function GalleryScene({ scene, title, range, start, tabs, goals, objs, sins }: (typeof MADE)[number]) {
   const [b, setB] = useState(start)
   const [pick, setPick] = useState<SinId[]>(['sloth', 'envy'])
-  const [feat, setFeat] = useState<FeatureId[]>(['medal', 'book', 'sun'])
+  const [feat, setFeat] = useState<FeatureId[]>(['laurel', 'medal', 'sun'])
   const [obj, setObj] = useState<ObjectId[]>(['telefoon', 'drankfles', 'dobbelstenen'])
   const [weak, setWeak] = useState<SinId[]>(['greed', 'lust'])
+  const [good, setGood] = useState<ObjectId>('kettlebell')
   const toggle = (id: SinId) => setPick((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id].slice(-2)))
   return (
     <div className="stack gap-12">
       <div className="h2">{title}</div>
       <div className="scene" style={{ aspectRatio: '9 / 14', maxHeight: '82dvh', borderRadius: 24 }}>
-        <LivingScene key={scene + pick.join()} scene={scene} balance={b} strong={pick} features={feat} objects={obj} weak={weak} />
+        <LivingScene key={scene + pick.join()} scene={scene} balance={b} strong={pick} features={feat} objects={obj} virtueObject={good} weak={weak} />
       </div>
       <div className="hstack between small"><span>{range[0] > 0 ? '+' : ''}{range[0]}</span><span>Balans {b > 0 ? '+' : ''}{b}</span><span>{range[1] > 0 ? '+' : ''}{range[1]}</span></div>
       <input type="range" min={range[0]} max={range[1]} value={b} onChange={(e) => setB(Number(e.target.value))} style={{ width: '100%', accentColor: '#F2F2F2' }} aria-label={`Balans ${title}`} />
+      {scene === 'kust' && (
+        <div className="chips">
+          {GOOD_OBJECTS.map((o) => <button key={o} className={`chip ${good === o ? 'on' : ''}`} onClick={() => setGood(o)}>{o}</button>)}
+        </div>
+      )}
       {sins && (
         <div className="chips">
           {SIN_NAMES.map((v) => <button key={v.id} className={`chip ${weak.includes(v.id) ? 'on' : ''}`} onClick={() => setWeak((p) => (p.includes(v.id) ? p.filter((x) => x !== v.id) : [...p, v.id].slice(-2)))}>{v.name}</button>)}
@@ -82,7 +89,7 @@ function GalleryScene({ scene, title, range, start, tabs, goals, objs, sins }: (
       )}
       {goals && (
         <div className="chips">
-          {FEATURES.filter((f) => f.id !== 'laurel').map((f) => <button key={f.id} className={`chip ${feat.includes(f.id) ? 'on' : ''}`} onClick={() => setFeat((p) => (p.includes(f.id) ? p.filter((x) => x !== f.id) : [...p, f.id]))}>{f.name}</button>)}
+          {FEATURES.map((f) => <button key={f.id} className={`chip ${feat.includes(f.id) ? 'on' : ''}`} onClick={() => setFeat((p) => (p.includes(f.id) ? p.filter((x) => x !== f.id) : [...p, f.id]))}>{f.name}</button>)}
         </div>
       )}
       {tabs && (

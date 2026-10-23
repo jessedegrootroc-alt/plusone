@@ -40,7 +40,7 @@ out = []
 w = out.append
 w('# Nog te doen: illustraties')
 w('')
-w(f'Nog **{total} beelden**. Werk van boven naar beneden en maak **één beeld per keer** in ChatGPT. '
+w(f'Nog **{total} {"beeld" if total == 1 else "beelden"}**. Werk van boven naar beneden en maak **één beeld per keer** in ChatGPT. '
   'Stuur me de beelden na elk blok, dan bouw ik ze in.')
 w('')
 w('**Zo werk je:** open in ChatGPT een gesprek *Items* en een gesprek *Achtergronden*, en plak in elk eerst dezelfde stijlprompt als bij je eerdere beelden. '

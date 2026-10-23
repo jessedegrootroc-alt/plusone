@@ -66,6 +66,7 @@ const FILES = {
   e_sun: 'item-dageraad',
   e_book: 'item-boek',
   e_dumbbell: 'item-halter',
+  e_laurel: 'item-lauwerkrans',
   rook: 'effect-rook',
   wervel: 'effect-wervelwind',
   vlam1: 'effect-vlam-1',
@@ -107,6 +108,26 @@ const FILES = {
   raaf2: 'item-raaf-vleugels-omlaag',
   mot: 'item-mot',
   ogen: 'effect-ogen',
+  regen: 'effect-regen',
+  o_tijdschriften: 'item-tijdschriften',
+  o_handspiegel: 'item-handspiegel',
+  o_kroon: 'item-kroon',
+  o_masker: 'item-masker',
+  o_kettlebell: 'item-kettlebell',
+  o_hardloopschoenen: 'item-hardloopschoenen',
+  o_ijsbad: 'item-ijsbad',
+  o_saunaemmer: 'item-saunaemmer',
+  o_saunastenen: 'item-saunastenen',
+  o_boeken: 'item-boeken',
+  o_dagboek: 'item-dagboek',
+  o_kaars: 'item-kaars',
+  o_meditatiekussen: 'item-meditatiekussen',
+  o_fruitschaal: 'item-fruitschaal',
+  o_waterkruik: 'item-waterkruik',
+  o_brood: 'item-brood',
+  o_spaarpot: 'item-spaarpot',
+  o_lantaarn: 'item-lantaarn',
+  o_pelgrimsstaf: 'item-pelgrimsstaf',
 } as const
 type Key = keyof typeof FILES
 
@@ -145,10 +166,10 @@ interface Cast {
 }
 const CAST: Record<SceneId, Cast> = {
   inferno: { use: ['rook', 'wervel', 'vlam1', 'vlam2', 'vonk', 'sintel', 'bat1', 'bat2', 'vlieg'], char: 'karakter-schim', far: 'achtergrond-inferno-1-ver', farHorizon: 0.557, mid: 'achtergrond-inferno-2-midden', ground: 'achtergrond-inferno-3-grond', front: 'achtergrond-inferno-4-voorgrond', frontOver: true, lightX: 0.5, size: 0.5, feet: 0.987, breath: 2.2, eye: [795, 262, 838, 292], cheek: [800, 300, 830, 310], phone: [700, 560], light: 0.3, farBright: 0.85, dark: 0.8, feathers: false, embers: true },
-  woud: { use: ['leeuw', 'luipaard', 'wolvin', 'raafZit', 'raaf1', 'raaf2', 'mot', 'ogen'], char: 'karakter-verdwaalde', far: '../dore/forest', size: 0.6, feet: 0.991, breath: 3.4, eye: [738, 184, 763, 199], cheek: [740, 205, 760, 212], phone: [790, 868], light: 0.4, farBright: 0.26, dark: 0.85, feathers: false, embers: false },
+  woud: { use: ['leeuw', 'luipaard', 'wolvin', 'raafZit', 'raaf1', 'raaf2', 'mot', 'ogen', 'regen'], char: 'karakter-verdwaalde', far: 'achtergrond-woud-1-ver', farHorizon: 0.55, mid: 'achtergrond-woud-2-midden', ground: 'achtergrond-woud-3-grond', front: 'achtergrond-woud-4-voorgrond', lightX: 0.5, size: 0.6, feet: 0.991, breath: 3.4, eye: [738, 184, 763, 199], cheek: [740, 205, 760, 212], phone: [790, 868], light: 0.4, farBright: 0.62, dark: 0.75, feathers: false, embers: false },
   kust: { use: ['boat', 'pil1', 'pil2', 'bell', 'phone', 'water', 'ijver', 'arm', 'traag', 'slinger'], char: 'karakter-balans', far: 'achtergrond-kust-1-ver', farHorizon: 0.64, mid: 'achtergrond-kust-2-midden', ground: 'achtergrond-kust-3-grond', front: 'achtergrond-kust-4-voorgrond', size: 0.62, feet: 0.955, breath: 4.2, eye: [572, 116, 594, 128], cheek: [575, 131, 592, 137], light: 1, farBright: 0.6, dark: 0.75, feathers: true, embers: false },
-  terrassen: { use: ['engel', 'duif1', 'duif2', 'lichtje', 'ijver', 'arm', 'matigheidB', 'matigheidD', 'nederigheidB', 'nederigheidD', 'zuiverheidB', 'zuiverheidD', 'welwillendheidB', 'welwillendheidD', 'geduldB', 'vrijgevigheidB'], char: 'karakter-klimmer', far: 'achtergrond-terrassen-1-ver', farHorizon: 0.6, mid: 'achtergrond-terrassen-2-midden', front: 'achtergrond-terrassen-4-voorgrond', frameTop: 0.26, lightX: 0.22, size: 0.6, feet: 0.994, breath: 5, eye: [553, 112, 568, 121], cheek: [555, 124, 567, 130], light: 1.1, farBright: 0.55, dark: 0.6, feathers: true, embers: false },
-  paradiso: { use: ['gloed', 'stralen', 'e_halo', 'e_medal', 'e_frost', 'e_flame', 'e_sun', 'e_book', 'e_dumbbell'], char: 'karakter-ideaal', far: 'achtergrond-paradiso-1-ver', farHorizon: 0.43, mid: 'achtergrond-paradiso-2-midden', ground: 'achtergrond-paradiso-3-grond', front: 'achtergrond-paradiso-4-voorgrond', frontOver: true, lightX: 0.5, size: 0.62, feet: 0.996, breath: 6, light: 1.2, farBright: 0.78, dark: 0.4, feathers: true, embers: false },
+  terrassen: { use: ['engel', 'duif1', 'duif2', 'lichtje', 'ijver', 'arm', 'matigheidB', 'matigheidD', 'nederigheidB', 'nederigheidD', 'zuiverheidB', 'zuiverheidD', 'welwillendheidB', 'welwillendheidD', 'geduldB', 'vrijgevigheidB'], char: 'karakter-klimmer', far: 'achtergrond-terrassen-1-ver', farHorizon: 0.6, mid: 'achtergrond-terrassen-2-midden', ground: 'achtergrond-terrassen-3-grond', front: 'achtergrond-terrassen-4-voorgrond', frameTop: 0.26, lightX: 0.22, size: 0.6, feet: 0.994, breath: 5, eye: [553, 112, 568, 121], cheek: [555, 124, 567, 130], light: 1.1, farBright: 0.55, dark: 0.6, feathers: true, embers: false },
+  paradiso: { use: ['gloed', 'stralen', 'e_laurel', 'e_halo', 'e_medal', 'e_frost', 'e_flame', 'e_sun', 'e_book', 'e_dumbbell'], char: 'karakter-ideaal', far: 'achtergrond-paradiso-1-ver', farHorizon: 0.43, mid: 'achtergrond-paradiso-2-midden', ground: 'achtergrond-paradiso-3-grond', front: 'achtergrond-paradiso-4-voorgrond', frontOver: true, lightX: 0.5, size: 0.62, feet: 0.996, breath: 6, light: 1.2, farBright: 0.78, dark: 0.4, feathers: true, embers: false },
 }
 // Zondetaferelen (Inferno en het woud): per zonde welke beelden, en het deel dat beweegt
 const SIN_KEYS: Record<SinId, Key[]> = {
@@ -157,8 +178,8 @@ const SIN_KEYS: Record<SinId, Key[]> = {
 }
 
 // Je doelen als embleem rond je ideale zelf (Paradiso)
-type Emblem = 'e_halo' | 'e_medal' | 'e_frost' | 'e_flame' | 'e_sun' | 'e_book' | 'e_dumbbell'
-const EMBLEM: Record<FeatureId, Emblem | null> = { halo: 'e_halo', medal: 'e_medal', frost: 'e_frost', flame: 'e_flame', sun: 'e_sun', book: 'e_book', dumbbell: 'e_dumbbell', abs: 'e_dumbbell', laurel: null }
+type Emblem = 'e_halo' | 'e_medal' | 'e_frost' | 'e_flame' | 'e_sun' | 'e_book' | 'e_dumbbell' | 'e_laurel'
+const EMBLEM: Record<FeatureId, Emblem | null> = { halo: 'e_halo', medal: 'e_medal', frost: 'e_frost', flame: 'e_flame', sun: 'e_sun', book: 'e_book', dumbbell: 'e_dumbbell', abs: 'e_dumbbell', laurel: 'e_laurel' }
 
 const RANGE: Record<SceneId, [number, number]> = { inferno: [-100, -60], woud: [-60, -20], kust: [-20, 20], terrassen: [20, 60], paradiso: [60, 100] }
 
@@ -260,14 +281,15 @@ const bake = (im: CanvasImageSource, w: number, h: number, bright: number, soft 
 
 interface Particle { x: number; y: number; vx: number; vy: number; s: number; a: number; ph: number; rot: number }
 
-export default function LivingScene({ balance, scene = 'kust', strong, features, objects, weak, still = false }: { balance: number; scene?: SceneId; /** Je twee sterkste deugden (als zonde-id), voor de taferelen op de terrassen. */ strong?: SinId[]; /** Je doelen, als emblemen in Paradiso. */ features?: FeatureId[]; /** De voorwerpen van je verleidingen, sterkste trek eerst. */ objects?: ObjectId[]; /** Je twee zwakste terrassen (zonde-id), als tafereel in Inferno en het woud. */ weak?: SinId[]; still?: boolean }) {
+export default function LivingScene({ balance, scene = 'kust', strong, features, objects, virtueObject, weak, still = false }: { balance: number; scene?: SceneId; /** Je twee sterkste deugden (als zonde-id), voor de taferelen op de terrassen. */ strong?: SinId[]; /** Je doelen, als emblemen in Paradiso. */ features?: FeatureId[]; /** De voorwerpen van je verleidingen, sterkste trek eerst. */ objects?: ObjectId[]; /** Het voorwerp van je sterkste goede gewoonte (kust). */ virtueObject?: ObjectId; /** Je twee zwakste terrassen (zonde-id), als tafereel in Inferno en het woud. */ weak?: SinId[]; still?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const kRef = useRef(0.5)
   const pair = (strong?.length ? [...strong, 'sloth', 'envy'] : ['sloth', 'envy']).filter((x, i, a) => a.indexOf(x) === i).slice(0, 2) as SinId[]
   const tabsKey = pair.join(',')
   const sinKey = (weak?.length ? [...weak, 'sloth', 'greed'] : ['sloth', 'greed']).filter((x, i, a) => a.indexOf(x) === i).slice(0, 2).join(',')
   const objKey = (objects?.length ? objects : ['telefoon']).slice(0, 3).join(',')
-  const objKeys = [...objKey.split(',').map((o) => `o_${o}` as Key), ...(scene === 'inferno' || scene === 'woud' ? sinKey.split(',').flatMap((x) => SIN_KEYS[x as SinId]) : [])]
+  const virtueKey = `o_${virtueObject ?? 'kettlebell'}` as Key
+  const objKeys = [...objKey.split(',').map((o) => `o_${o}` as Key), ...(scene === 'kust' ? [virtueKey] : []), ...(scene === 'inferno' || scene === 'woud' ? sinKey.split(',').flatMap((x) => SIN_KEYS[x as SinId]) : [])]
   const emblemKey = [...new Set((features ?? []).map((f) => EMBLEM[f]).filter(Boolean))].join(',')
   const [ready, setReady] = useState(false)
   useEffect(() => {
@@ -292,8 +314,8 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
     const para = scene === 'paradiso'
     const inf = scene === 'inferno'
     const woud = scene === 'woud'
-    // Zonder gekozen doelen laten we er drie zien, als belofte van wat kan
-    const emblems = (emblemKey ? emblemKey.split(',') : ['e_medal', 'e_book', 'e_sun']) as Emblem[]
+    // Zonder gekozen doelen laten we er drie zien, als belofte van wat kan (de lauwerkrans voor discipline voorop)
+    const emblems = (emblemKey ? emblemKey.split(',') : ['e_laurel', 'e_medal', 'e_sun']) as Emblem[]
     const tabs = tabsKey.split(',').map((x) => VIRTUE_TAB[x as SinId])
     const RIGE = { eye: cast.eye, cheek: cast.cheek ?? [0, 0, 1, 1], feet: cast.feet }
     const dpr = Math.min(2, window.devicePixelRatio || 1)
@@ -321,6 +343,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
       mot: HTMLCanvasElement | null
       bats: [HTMLCanvasElement, HTMLCanvasElement] | null
       objs: HTMLCanvasElement[]
+      good: HTMLCanvasElement | null
       fly: HTMLCanvasElement | null
       ground: HTMLCanvasElement
       char: HTMLCanvasElement
@@ -434,8 +457,8 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
           return bake(img.far, fw * dpr, fw * ratio * dpr, cast.farBright, 0.2)
         })(),
         frame,
-        mid: layerArt(img.mid, inf ? 0.85 : terr ? 0.62 : 0.5, 0.1),
-        groundArt: layerArt(img.ground, 0.55),
+        mid: layerArt(img.mid, inf ? 0.85 : woud ? 0.55 : terr ? 0.62 : 0.5, 0.1),
+        groundArt: layerArt(img.ground, woud ? 0.5 : terr ? 0.7 : 0.55),
         front: layerArt(img.front, 0.32),
         engel: terr && frame ? (() => { const eh = frame.h * 0.15; return bake(img.engel, eh * (img.engel.width / img.engel.height) * dpr, eh * dpr, 0.7, 0.2) })() : null,
         duif: terr ? [bake(img.duif1, W * 0.08 * dpr, W * 0.08 * dpr, 0.85), bake(img.duif2, W * 0.08 * dpr, W * 0.08 * dpr, 0.85)] : null,
@@ -466,12 +489,13 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
         tsI,
         bell: kust ? bake(img.bell, W * 0.12 * dpr, W * 0.12 * dpr, 0.8) : ground,
         phone: kust ? bake(img.phone, W * 0.16 * dpr, W * 0.16 * dpr, 0.6) : ground,
-        objs: objKeys.filter((k) => k.startsWith('o_')).map((k) => bake(img![k], W * 0.2 * dpr, W * 0.2 * dpr, inf ? 0.95 : 0.7)),
+        good: kust ? bake(img![virtueKey], W * 0.17 * dpr, W * 0.17 * dpr, 0.85) : null,
+        objs: objKeys.filter((k) => k.startsWith('o_') && !(kust && k === virtueKey && !objKey.split(',').includes(k.slice(2)))).map((k) => bake(img![k], W * 0.2 * dpr, W * 0.2 * dpr, inf ? 0.95 : 0.7)),
         sins: inf || woud ? sinKey.split(',').map((id) => {
           const sid = id as SinId
           const ts = Math.min(W * 0.4, H * 0.3)
-          const sb = inf ? 0.62 : 0.42
-          const soft = woud ? 0.35 : 0.15
+          const sb = inf ? 0.62 : 0.9
+          const soft = woud ? 0.2 : 0.15
           const [b, d] = SIN_KEYS[sid]
           const pc = d ? img![d] : undefined
           const pscale = sid === 'sloth' ? ts / 627 : ts / 627
@@ -967,10 +991,18 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
         ctx.fillStyle = rg
         ctx.fillRect(gx - pw * 0.7, gy - pw * 0.7, pw * 1.4, pw * 1.4)
         ctx.globalCompositeOperation = 'source-over'
-        const bw = W * 0.12
-        const bx = W * 0.82
+        // Het voorwerp van je sterkste goede gewoonte, rechts in het licht; hoe hoger je balans, hoe meer het oplicht
+        const bw = W * 0.17
+        const bx = W * 0.8
         shadow(bx + bw * 0.5, H * 0.968, bw * 0.55)
-        ctx.drawImage(L!.bell, bx, H * 0.975 - bw, bw, bw)
+        const halo = ctx.createRadialGradient(bx + bw / 2, H * 0.975 - bw / 2, 0, bx + bw / 2, H * 0.975 - bw / 2, bw * 0.9)
+        halo.addColorStop(0, `rgba(255,255,255,${0.05 + 0.15 * k})`)
+        halo.addColorStop(1, 'rgba(255,255,255,0)')
+        ctx.globalCompositeOperation = 'lighter'
+        ctx.fillStyle = halo
+        ctx.fillRect(bx - bw * 0.4, H * 0.975 - bw * 1.4, bw * 1.8, bw * 1.8)
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.drawImage(L!.good ?? L!.bell, bx, H * 0.975 - bw, bw, bw)
       })
 
       // 7a · Het woud: de drie beesten van Dante sluipen om de beurt door het donker, ogen lichten op
@@ -1166,6 +1198,23 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
           ctx.fillRect(gx - cw * 0.32, gy - cw * 0.32, cw * 0.64, cw * 0.64)
           ctx.globalCompositeOperation = 'source-over'
         }
+      })
+
+      // 8c · Het woud: regen valt schuin en naadloos, twee lagen op verschillende snelheid
+      if (woud && img!.regen) layer(1.05, () => {
+        const rw = W * 1.2
+        const rh = rw * (img!.regen.height / img!.regen.width)
+        ctx.globalCompositeOperation = 'screen'
+        for (const [speed, alpha, sc] of [[620, 0.22, 1], [380, 0.12, 1.6]] as const) {
+          const h2 = rh * sc
+          const off = ((t * speed) % h2 + h2) % h2
+          ctx.globalAlpha = alpha
+          for (let x = -W * 0.1; x < W; x += rw * sc) {
+            for (let y = -h2 + off; y < H; y += h2) ctx.drawImage(img!.regen, x, y, rw * sc, h2)
+          }
+        }
+        ctx.globalAlpha = 1
+        ctx.globalCompositeOperation = 'source-over'
       })
 
       // 9 · Mist rond je enkels, twee lagen tegen elkaar in
@@ -1410,7 +1459,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
       window.removeEventListener('deviceorientation', tilt)
       document.removeEventListener('visibilitychange', resume)
     }
-  }, [still, scene, tabsKey, emblemKey, objKey, sinKey])
+  }, [still, scene, tabsKey, emblemKey, objKey, sinKey, virtueKey])
 
   return <canvas ref={ref} className="scene-layer" aria-hidden="true" style={{ zIndex: 4, opacity: ready ? 1 : 0, transition: 'opacity .4s ease' }} />
 }
