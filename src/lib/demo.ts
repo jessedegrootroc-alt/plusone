@@ -21,20 +21,14 @@ export const seedDemo = (mode: string) => {
     d.why = d.why || 'Ik ben het zat om de versie van mezelf te zijn die het opgeeft. Ik wil over een jaar terugkijken en trots zijn.'
     d.habits = habits.map((h) => (h.id.startsWith('workout-') ? { ...h, at: '06:30' } : h.id.startsWith('early-') ? { ...h, weight: 3, at: '06:00' } : h))
     d.notes = [
-      { id: 'n1', text: 'Je bent 12 kilo te zwaar en je weet het.', goal: '12 kilo eraf, elke ochtend om 6:30 trainen', sin: 'gluttony', domain: 'fysiek', steps: planFor('fysiek', '12 kilo eraf, elke ochtend om 6:30 trainen').map((p, i) => ({ ...p, doneAt: i < 2 ? start : undefined, startedAt: i === 2 ? addDays(todayISO(), -4) : undefined })), createdAt: start },
+      { id: 'n1', feature: 'abs', text: 'Je bent 12 kilo te zwaar en je weet het.', goal: '12 kilo eraf, elke ochtend om 6:30 trainen', sin: 'gluttony', domain: 'fysiek', steps: planFor('fysiek', '12 kilo eraf, elke ochtend om 6:30 trainen').map((p, i) => ({ ...p, doneAt: i < 2 ? start : undefined, startedAt: i === 2 ? addDays(todayISO(), -4) : undefined })), createdAt: start },
       { id: 'n2', text: 'Je zegt dat je een bedrijf wilt, maar je hebt nog niemand gebeld.', goal: '10 klanten benaderen', sin: 'sloth', domain: 'financieel', steps: planFor('financieel', '10 klanten benaderen').map((p, i) => ({ ...p, doneAt: i < 1 ? start : undefined, startedAt: i === 1 ? addDays(todayISO(), -9) : undefined })), createdAt: start },
-      { id: 'n3', text: 'Je zit elke avond met je hoofd in je telefoon. Je bent rusteloos en leeg.', sin: 'lust', domain: 'spiritueel', steps: planFor('spiritueel', '', 'stilte').map((p, i) => ({ ...p, startedAt: i === 0 ? todayISO() : undefined })), createdAt: start },
+      { id: 'n3', feature: 'halo', text: 'Je zit elke avond met je hoofd in je telefoon. Je bent rusteloos en leeg.', sin: 'lust', domain: 'spiritueel', steps: planFor('spiritueel', '', 'stilte').map((p, i) => ({ ...p, startedAt: i === 0 ? todayISO() : undefined })), createdAt: start },
+      { id: 'n4', feature: 'frost', text: 'Je rilt al bij een koude douche.', goal: '3 minuten in het ijsbad', sin: 'sloth', domain: 'fysiek', steps: planFor('fysiek', '3 minuten in het ijsbad').map((p) => ({ ...p, doneAt: start })), createdAt: start, doneAt: addDays(todayISO(), -6) },
     ]
     d.createdAt = start
     d.logs = {}
     d.avatar = { ...d.avatar, features: ['abs', 'medal', 'frost', 'laurel', 'sun'] }
-    d.goals = [
-      { id: 'g1', feature: 'abs', text: '12% vetpercentage voor juni' },
-      { id: 'g2', feature: 'medal', text: 'Halve marathon onder 1:50' },
-      { id: 'g3', feature: 'frost', text: '3 minuten in het ijsbad' },
-      { id: 'g4', feature: 'laurel', text: '100 dagen zonder porno' },
-      { id: 'g5', feature: 'sun', text: 'Elke werkdag om 5:30 op' },
-    ]
     d.jar = [
       { id: 'j0', text: 'Van de spiegel: Elke dag 10.000 stappen, drie maanden lang', date: addDays(todayISO(), -1) },
       { id: 'j1', text: 'Om 22:00 alsnog 5 km gelopen in de regen', date: addDays(todayISO(), -4) },

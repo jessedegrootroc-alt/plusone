@@ -86,6 +86,8 @@ export interface MirrorNote {
   domain?: Domain
   /** Waar je naartoe wilt, meetbaar ("12 kilo eraf"). De tekst zelf is de harde waarheid: waar je nu staat. */
   goal?: string
+  /** Het embleem dat je ideale zelf krijgt als je hem haalt (Medaille, Lauwerkrans, ...). */
+  feature?: FeatureId
   /** De ladder naar het doel: elke stap een eigen post-it met een termijn, steeds iets ongemakkelijker. */
   steps?: { text: string; days?: number; startedAt?: string; doneAt?: string }[]
   createdAt: string

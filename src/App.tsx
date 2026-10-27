@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { scrollToTop } from './lib/scroll'
+import { migrateGoals } from './lib/emblems'
 import { Icon } from './components/ui'
 import { preloadScenes } from './components/LivingScene'
 import { STAGES, stageFor } from './data/sins'
@@ -37,6 +38,9 @@ export default function App() {
   useEffect(() => {
     scrollToTop()
   }, [tab])
+
+  // Losse doelen van vroeger worden post-its op de spiegel, met hun embleem
+  useEffect(() => { migrateGoals(s) }, [s])
 
   // Van pagina wisselen: de oude vervaagt, de nieuwe komt op (View Transitions). De tabbalk blijft staan.
   // Zonder ondersteuning of met minder beweging: gewoon meteen.

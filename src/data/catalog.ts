@@ -191,6 +191,12 @@ export const FEATURES: FeatureMeta[] = [
   { id: 'book', name: 'Boek', meaning: 'Een geest die blijft leren', placeholder: 'Bijv. 24 boeken dit jaar' },
 ]
 
+/** Het voorwerp bij elk embleem, uit de scènes. */
+export const FEATURE_ART: Record<FeatureId, string> = {
+  abs: 'item-halter', dumbbell: 'item-halter', medal: 'item-medaille', laurel: 'item-lauwerkrans', halo: 'item-stralenkrans',
+  frost: 'item-ijsadem', flame: 'item-vuur', sun: 'item-dageraad', book: 'item-boek',
+}
+
 // Covey: eerst de grote stenen in de pot, dan het grind, dan het zand.
 // Bij goede gewoontes is het gewicht de grootte van de steen; bij verleidingen hoe zwaar ze wegen.
 export const ROCK: Record<1 | 2 | 3, string> = { 3: 'Grote steen', 2: 'Middelgrote steen', 1: 'Kleine steen' }

@@ -4,7 +4,8 @@ import { RockIcon } from '../components/Jar'
 import { HoldButton, Icon, Sheet, fmt, useTween } from '../components/ui'
 import { FEATURES, ROCK_PLURAL, ROCK_SHORT, type HabitTemplate } from '../data/catalog'
 import { IMG, SINS } from '../data/sins'
-import { DEFAULT_AVATAR, buzz, fromTemplate, todayISO, uid, update, type AvatarConfig, type Goal, type Habit } from '../lib/store'
+import { DEFAULT_AVATAR, buzz, fromTemplate, todayISO, update, type AvatarConfig, type Habit } from '../lib/store'
+import { noteFromGoal } from '../lib/emblems'
 import Builder from './Builder'
 import HabitEditor from './HabitEditor'
 import HabitPicker from '../components/HabitPicker'
@@ -40,13 +41,14 @@ export default function Onboarding() {
   const bigCount = virtues.filter((h) => h.weight === 3).length
 
   const finish = () => {
-    const goalList: Goal[] = avatar.features.map((f) => ({ id: uid(), feature: f, text: goals[f]?.trim() || FEATURES.find((x) => x.id === f)!.meaning }))
+    // Elk doel wordt meteen een post-it op je spiegel, met het embleem als beloning
+    const notes = avatar.features.map((f) => noteFromGoal({ feature: f, text: goals[f]?.trim() || FEATURES.find((x) => x.id === f)!.meaning }))
     update((d) => {
       d.name = name.trim()
       d.why = why.trim()
       d.habits = Object.values(picked)
       d.avatar = avatar
-      d.goals = goalList
+      d.notes = notes
       d.createdAt = todayISO()
       d.onboarded = true
     })
@@ -183,7 +185,7 @@ export default function Onboarding() {
             <div className="stack gap-8">
               <div className="eyebrow">Je doelen</div>
               <h1 className="h1">Maak het meetbaar.</h1>
-              <p className="lead">Elk kenmerk van je ideale zelf krijgt een concreet doel. Vaag is vrijblijvend.</p>
+              <p className="lead">Elk kenmerk van je ideale zelf krijgt een concreet doel. Het komt als post-it op je spiegel, met de stappen ernaartoe.</p>
             </div>
             {avatar.features.length === 0 && (
               <div className="card" style={{ padding: 16 }}>

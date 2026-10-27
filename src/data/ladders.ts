@@ -387,3 +387,15 @@ export const planFor = (domain: Domain, goal: string, truth = ''): { text: strin
 /** Een termijn in woorden: vandaag, binnen 3 dagen, binnen 2 weken. */
 export const termLabel = (days: number) =>
   days <= 1 ? 'vandaag' : days < 7 ? `binnen ${days} dagen` : days === 7 ? 'binnen een week' : days < 63 ? `binnen ${Math.round(days / 7)} weken` : `binnen ${Math.round(days / 30)} maanden`
+
+// Een eerste gok voor de zonde op basis van de woorden; zonder treffer de zonde die bij het onderdeel hoort.
+const HINTS: [SinId, RegExp][] = [
+  ['gluttony', /kilo|zwaar|eten|suiker|drank|alcohol|roken|vape|snack|bier/i],
+  ['lust', /porno|scroll|telefoon|scherm|instagram|tiktok|seks/i],
+  ['greed', /geld|schuld|gok|kopen|uitgeven|sparen|crypto/i],
+  ['wrath', /boos|woede|ruzie|schreeuw|geduld|snauw/i],
+  ['envy', /vergelijk|jaloers|klagen|roddel/i],
+  ['pride', /excuus|excuses|hulp|sorry|gelijk|ego|liegen/i],
+  ['sloth', /trainen|sport|bedrijf|bel|uitstel|lui|opstaan|bed|werk|lezen|leren/i],
+]
+export const guessSin = (text: string, domain?: Domain): SinId | undefined => HINTS.find(([, re]) => re.test(text))?.[0] ?? (domain ? DOMAIN_BY_ID[domain].sin : undefined)

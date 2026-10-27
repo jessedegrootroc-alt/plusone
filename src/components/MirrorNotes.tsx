@@ -1,7 +1,8 @@
 import { useState, type CSSProperties } from 'react'
-import { DOMAINS, DOMAIN_BY_ID, guessDomain, planFor, termLabel, type Domain } from '../data/ladders'
+import { DOMAINS, DOMAIN_BY_ID, guessDomain, guessSin, planFor, termLabel, type Domain } from '../data/ladders'
 import { SINS, SIN_BY_ID, type SinId } from '../data/sins'
 import { paperFor } from '../lib/paper'
+import { FEATURES, FEATURE_ART, type FeatureId } from '../data/catalog'
 import { BoardCols } from './Pinboard'
 import { noteHabitId, stepHabitId, stepWeight } from '../lib/score'
 import { addDays, buzz, setValue, todayISO, uid, update, useStore, type MirrorNote } from '../lib/store'
@@ -10,17 +11,6 @@ import { HoldButton, Icon, Sheet } from './ui'
 /** Hooguit twee per onderdeel: als alles moet, gebeurt er niets. */
 const MAX_PER = 2
 
-// Een eerste gok voor de zonde op basis van de woorden; zonder treffer de zonde die bij het onderdeel hoort.
-const HINTS: [SinId, RegExp][] = [
-  ['gluttony', /kilo|zwaar|eten|suiker|drank|alcohol|roken|vape|snack|bier/i],
-  ['lust', /porno|scroll|telefoon|scherm|instagram|tiktok|seks/i],
-  ['greed', /geld|schuld|gok|kopen|uitgeven|sparen|crypto/i],
-  ['wrath', /boos|woede|ruzie|schreeuw|geduld|snauw/i],
-  ['envy', /vergelijk|jaloers|klagen|roddel/i],
-  ['pride', /excuus|excuses|hulp|sorry|gelijk|ego|liegen/i],
-  ['sloth', /trainen|sport|bedrijf|bel|uitstel|lui|opstaan|bed|werk|lezen|leren/i],
-]
-const guessSin = (text: string, domain?: Domain): SinId | undefined => HINTS.find(([, re]) => re.test(text))?.[0] ?? (domain ? DOMAIN_BY_ID[domain].sin : undefined)
 
 const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5)
 
@@ -100,6 +90,7 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
               return (
                 <div key={`${n.id}:${st.i}`} className="jar-note mnote" style={{ '--rot': `${p.rot}deg`, '--dx': `${p.dx}px`, '--tint': p.tint, '--pin': `${p.pin}%`, '--tape': `${p.tape}deg`, animationDelay: `${Math.min(i, 8) * 70}ms` } as CSSProperties}>
                   <span className="tape" aria-hidden="true" />
+                  {n.feature && <img className="mnote-emblem" src={`/art/${FEATURE_ART[n.feature]}.webp`} alt="" />}
                   <button className="mnote-open" onClick={() => setFocus(n.id)}>
                     <span className="jar-kind">{dom ? dom.name : 'Kies een onderdeel'}</span>
                     <span className="mnote-truth">{n.text}</span>
@@ -169,6 +160,7 @@ function FocusSheet({ n, date, onEdit, onClose }: { n: MirrorNote; date: string;
           <div className="eyebrow">{dom ? dom.name : 'De spiegel'}</div>
           <p className="lead" style={{ color: 'var(--ink)' }}>{n.text}</p>
           {n.goal && <div className="small">Doel: <b style={{ color: 'var(--ink-2)' }}>{n.goal}</b></div>}
+          {n.feature && <div className="small hstack" style={{ gap: 8 }}><img src={`/art/${FEATURE_ART[n.feature]}.webp`} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} /> Beloning: {FEATURES.find((f) => f.id === n.feature)!.name.toLowerCase()} voor je ideale zelf</div>}
         </div>
 
         {/* De stap van nu als eigen post-it; de vorige scheurt eraf */}
@@ -226,6 +218,7 @@ export function NoteSheet({ note, preset, presetSin, onClose }: { note?: MirrorN
   const s = useStore()
   const [text, setText] = useState(note?.text ?? '')
   const [goal, setGoal] = useState(note?.goal ?? '')
+  const [feature, setFeature] = useState<FeatureId | undefined>(note?.feature)
   const [domain, setDomain] = useState<Domain | undefined>(note?.domain ?? preset)
   const [domTouched, setDomTouched] = useState(!!(note?.domain ?? preset))
   const [sin, setSin] = useState<SinId | undefined>(note?.sin ?? presetSin)
@@ -245,8 +238,8 @@ export function NoteSheet({ note, preset, presetSin, onClose }: { note?: MirrorN
       if (note) {
         const x = d.notes.find((y) => y.id === note.id)!
         const reset = x.domain !== dom || (x.goal ?? '') !== goal.trim() || !x.steps?.length
-        Object.assign(x, { text: text.trim(), goal: goal.trim() || undefined, sin: shownSin, domain: dom, steps: reset ? fresh(todayISO()) : x.steps })
-      } else d.notes.push({ id: uid(), text: text.trim(), goal: goal.trim() || undefined, sin: shownSin, domain: dom, steps: fresh(todayISO()), createdAt: todayISO() })
+        Object.assign(x, { text: text.trim(), goal: goal.trim() || undefined, feature, sin: shownSin, domain: dom, steps: reset ? fresh(todayISO()) : x.steps })
+      } else d.notes.push({ id: uid(), text: text.trim(), goal: goal.trim() || undefined, feature, sin: shownSin, domain: dom, steps: fresh(todayISO()), createdAt: todayISO() })
     })
     onClose()
   }
@@ -312,6 +305,19 @@ export function NoteSheet({ note, preset, presetSin, onClose }: { note?: MirrorN
             ))}
           </div>
         )}
+
+        {/* Het embleem dat je ideale zelf krijgt als je hem haalt: zo bouw je Paradiso uit wat je echt deed */}
+        <div className="field">
+          <label>Beloning als je hem haalt <span style={{ fontWeight: 400, color: 'var(--ink-3)' }}>(mag ook leeg)</span></label>
+          <div className="chips scroll">
+            {FEATURES.filter((f) => f.id !== 'dumbbell').map((f) => (
+              <button key={f.id} className={`chip emblem ${feature === f.id ? 'on' : ''}`} aria-pressed={feature === f.id} onClick={() => setFeature((x) => (x === f.id ? undefined : f.id))}>
+                <img src={`/art/${FEATURE_ART[f.id]}.webp`} alt="" /> {f.name}
+              </button>
+            ))}
+          </div>
+          {feature && <div className="small">Haal je hem, dan staat {FEATURES.find((f) => f.id === feature)!.name.toLowerCase()} bij je ideale zelf in Paradiso.</div>}
+        </div>
 
         <button className={note ? 'btn soft' : 'btn'} disabled={!text.trim() || !dom || !shownSin || full} onClick={save}>{note ? 'Opslaan' : 'Plak hem op de spiegel'}</button>
         {note && (

@@ -8,6 +8,7 @@ import { HabitRow, Icon, Sheet, Toast, useTween } from '../components/ui'
 import { ROCK_SHORT } from '../data/catalog'
 import { pullingObjects, strongestVirtueObject } from '../data/objects'
 import { SINS, stageFor } from '../data/sins'
+import { earnedFeatures } from '../lib/emblems'
 import { byRock, computeSeries, habitsFor, isDone, isNote, mirrorStreak, shadowCharge } from '../lib/score'
 import { addDays, buzz, setValue, todayISO, uid, update, useStore, type Habit } from '../lib/store'
 
@@ -120,7 +121,7 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
       {/* De spiegel: in één oogopslag waar je staat. Deze kaart vult precies het scherm. */}
       <div className="card hero-card" style={{ padding: 0, overflow: 'hidden' }}>
         <div className="hero-scene">
-          <Scene balance={shown} onTap={() => openMirror(date)} shadow={charge} strong={strongest} features={s.avatar.features} objects={pulling} virtueObject={goodObject} weak={weakest} />
+          <Scene balance={shown} onTap={() => openMirror(date)} shadow={charge} strong={strongest} features={earnedFeatures(s)} objects={pulling} virtueObject={goodObject} weak={weakest} />
         </div>
         <div style={{ padding: '24px 24px 16px' }}>
           <div className="hstack between" style={{ alignItems: 'flex-end', gap: 16 }}>

@@ -1,22 +1,23 @@
 import { useMemo, useState } from 'react'
 import Plate, { StagePlate } from '../components/Plate'
 import { Icon, Sheet, useTween } from '../components/ui'
-import { FEATURES, ROCK } from '../data/catalog'
+import { ROCK } from '../data/catalog'
 import HabitPicker from '../components/HabitPicker'
 import Pinboard from '../components/Pinboard'
 import LivingScene from '../components/LivingScene'
 import { pullingObjects, strongestVirtueObject } from '../data/objects'
 import Trophies from '../components/Trophies'
 import { enableMotion, motionOn, needsPermission } from '../lib/motion'
+import { aimedFeatures, earnedFeatures } from '../lib/emblems'
 import { IMG, SINS, SIN_BY_ID, STAGES, stageFor, type SinId } from '../data/sins'
 import { computeSeries } from '../lib/score'
-import { fromTemplate, resetAll, uid, update, useStore, type AvatarConfig, type Habit } from '../lib/store'
+import { fromTemplate, resetAll, update, useStore, type AvatarConfig, type Habit } from '../lib/store'
 import Builder from './Builder'
 import HabitEditor from './HabitEditor'
 import { NEED_BY_ID, VOICES, type NeedId } from '../data/urge'
 import { SHADOW } from '../data/shadow'
 
-type Panel = null | { t: 'builder' } | { t: 'habit'; h?: Habit; kind: 'vice' | 'virtue' } | { t: 'catalog'; kind: 'vice' | 'virtue' } | { t: 'preview' } | { t: 'why' } | { t: 'goal'; id?: string } | { t: 'reset' }
+type Panel = null | { t: 'builder' } | { t: 'habit'; h?: Habit; kind: 'vice' | 'virtue' } | { t: 'catalog'; kind: 'vice' | 'virtue' } | { t: 'preview' } | { t: 'why' } | { t: 'reset' }
 
 export default function Self({ openShadow }: { openShadow: () => void }) {
   const s = useStore()
@@ -26,7 +27,9 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
   const close = () => setPanel(null)
   const [askMotion, setAskMotion] = useState(() => needsPermission() && !motionOn())
 
-  // Wat de levende scènes nodig hebben, net als op Vandaag
+  // Wat de levende scènes nodig hebben, net als op Vandaag. Emblemen: nu wat je verdiende, je ideale zelf alles waar je naartoe werkt
+  const earned = earnedFeatures(s)
+  const aimed = aimedFeatures(s)
   const pulling = useMemo(() => pullingObjects(s), [s])
   const goodObject = useMemo(() => strongestVirtueObject(s), [s])
   const bySin = (dir: 1 | -1) => SINS.filter((x) => s.habits.some((h) => h.sin === x.id)).sort((a, b) => dir * (series.perSin[a.id] - series.perSin[b.id])).slice(0, 2).map((x) => x.id)
@@ -53,13 +56,13 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
           {/* Dezelfde levende scènes als op Vandaag: waar je nu staat, en Paradiso als je ideale zelf */}
           <div className="stack gap-8">
             <div className="mini-scene" role="img" aria-label={`Nu: ${stageFor(series.balance).name}`}>
-              <LivingScene scene={stageFor(series.balance).scene} balance={series.balance} strong={strongest} features={s.avatar.features} objects={pulling} virtueObject={goodObject} weak={weakest} />
+              <LivingScene scene={stageFor(series.balance).scene} balance={series.balance} strong={strongest} features={earned} objects={pulling} virtueObject={goodObject} weak={weakest} />
             </div>
             <div className="caption">Nu · {stageFor(series.balance).name}</div>
           </div>
           <div className="stack gap-8">
             <div className="mini-scene" role="img" aria-label="Je ideale zelf: Paradiso">
-              <LivingScene scene="paradiso" balance={100} strong={strongest} features={s.avatar.features} />
+              <LivingScene scene="paradiso" balance={100} strong={strongest} features={aimed} />
             </div>
             <div className="caption">Je ideale zelf</div>
           </div>
@@ -84,25 +87,6 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
         <p className="italic" style={{ margin: 0 }}>{s.why || 'Nog niet ingevuld. Schrijf het voor de dag dat je het nodig hebt.'}</p>
       </div>
 
-      <div className="group-title"><h2 className="h2">Doelen</h2><button className="link" onClick={() => setPanel({ t: 'goal' })}>Nieuw</button></div>
-      <div className="list">
-        {s.goals.length === 0 && <div className="small">Kies kenmerken voor je ideale zelf en geef ze een doel.</div>}
-        {s.goals.map((g) => {
-          const f = FEATURES.find((x) => x.id === g.feature)!
-          return (
-            <div key={g.id} className={`row ${g.done ? 'done' : ''}`}>
-              <button className="grow" style={{ textAlign: 'left' }} onClick={() => setPanel({ t: 'goal', id: g.id })}>
-                <div className="name" style={{ textDecoration: g.done ? 'line-through' : undefined }}>{g.text}</div>
-                <div className="meta">{f.name}</div>
-              </button>
-              <button className={`check ${g.done ? 'on' : ''}`} aria-label="Behaald" onClick={() => update((d) => { const x = d.goals.find((y) => y.id === g.id)!; x.done = !x.done })}>
-                {g.done && Icon.check('#0B0B0B')}
-              </button>
-            </div>
-          )
-        })}
-      </div>
-
       <ShadowCard onOpen={openShadow} />
       <UrgePatterns />
 
@@ -124,7 +108,6 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
           <button className="btn mt-24" onClick={() => {
             update((d) => {
               d.avatar = draftAvatar
-              for (const f of draftAvatar.features) if (!d.goals.some((g) => g.feature === f)) d.goals.push({ id: uid(), feature: f, text: FEATURES.find((x) => x.id === f)!.meaning })
             })
             close()
           }}>Opslaan</button>
@@ -162,7 +145,6 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
 
       {panel?.t === 'why' && <WhySheet initial={s.why} onClose={close} />}
 
-      {panel?.t === 'goal' && <GoalSheet id={panel.id} onClose={close} />}
 
       {panel?.t === 'reset' && (
         <Sheet onClose={close}>
@@ -300,30 +282,3 @@ function WhySheet({ initial, onClose }: { initial: string; onClose: () => void }
   )
 }
 
-function GoalSheet({ id, onClose }: { id?: string; onClose: () => void }) {
-  const s = useStore()
-  const g = s.goals.find((x) => x.id === id)
-  const [text, setText] = useState(g?.text ?? '')
-  const [feature, setFeature] = useState(g?.feature ?? FEATURES[0].id)
-  const meta = FEATURES.find((x) => x.id === feature)!
-  return (
-    <Sheet onClose={onClose}>
-      <div className="stack gap-16">
-        <h2 className="h2">{g ? 'Doel aanpassen' : 'Nieuw doel'}</h2>
-        <div className="chips">
-          {FEATURES.map((f) => <button key={f.id} className={`chip ${feature === f.id ? 'on' : ''}`} onClick={() => setFeature(f.id)}>{f.name}</button>)}
-        </div>
-        <input className="input" value={text} onChange={(e) => setText(e.target.value)} placeholder={meta.placeholder} />
-        <button className="btn" disabled={!text.trim()} onClick={() => {
-          update((d) => {
-            if (g) Object.assign(d.goals.find((x) => x.id === g.id)!, { text: text.trim(), feature })
-            else d.goals.push({ id: uid(), text: text.trim(), feature })
-            if (!d.avatar.features.includes(feature)) d.avatar.features.push(feature)
-          })
-          onClose()
-        }}>Opslaan</button>
-        {g && <button className="btn ghost" onClick={() => { update((d) => { d.goals = d.goals.filter((x) => x.id !== g.id) }); onClose() }}>Verwijderen</button>}
-      </div>
-    </Sheet>
-  )
-}
