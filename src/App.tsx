@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
+import { scrollToTop } from './lib/scroll'
 import { Icon } from './components/ui'
 import { preloadScenes } from './components/LivingScene'
 import { STAGES, stageFor } from './data/sins'
@@ -34,7 +35,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    window.scrollTo(0, 0)
+    scrollToTop()
   }, [tab])
 
   // Van pagina wisselen: de oude vervaagt, de nieuwe komt op (View Transitions). De tabbalk blijft staan.
@@ -44,7 +45,7 @@ export default function App() {
     if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) return setTab(k)
     document.startViewTransition(() => {
       flushSync(() => setTab(k))
-      window.scrollTo(0, 0)
+      scrollToTop()
     })
   }
 

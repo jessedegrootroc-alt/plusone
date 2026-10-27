@@ -41,6 +41,13 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; }
+/* Vloeiend scrollen: sprongen (scrollIntoView, ankers) glijden; het muiswiel doet Lenis (lib/scroll) */
+html { scroll-behavior: smooth; }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+/* Een sheet scrollt zelf en geeft zijn scroll niet door aan de pagina erachter */
+.sheet { overscroll-behavior: contain; }
 body { background: #000; color: var(--ink); font: var(--b); -webkit-font-smoothing: antialiased; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 input, textarea { font: inherit; color: inherit; }

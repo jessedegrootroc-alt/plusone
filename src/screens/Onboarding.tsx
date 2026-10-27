@@ -8,6 +8,7 @@ import { DEFAULT_AVATAR, buzz, fromTemplate, todayISO, uid, update, type AvatarC
 import Builder from './Builder'
 import HabitEditor from './HabitEditor'
 import HabitPicker from '../components/HabitPicker'
+import { scrollToTop } from '../lib/scroll'
 
 const STEPS = 9
 
@@ -20,8 +21,8 @@ export default function Onboarding() {
   const [avatar, setAvatar] = useState<AvatarConfig>({ ...DEFAULT_AVATAR })
   const [goals, setGoals] = useState<Record<string, string>>({})
 
-  const next = () => { buzz(); setStep((s) => Math.min(STEPS - 1, s + 1)); window.scrollTo(0, 0) }
-  const back = () => { setStep((s) => Math.max(0, s - 1)); window.scrollTo(0, 0) }
+  const next = () => { buzz(); setStep((s) => Math.min(STEPS - 1, s + 1)); scrollToTop() }
+  const back = () => { setStep((s) => Math.max(0, s - 1)); scrollToTop() }
 
   const toggle = (t: HabitTemplate) => {
     buzz()
