@@ -19,8 +19,8 @@ const ICON: Record<Measure['key'], string> = {
 }
 
 /**
- * Je niveau als een klim: vier figuren op een helling, de jouwe in het licht, wie je was gedimd,
- * wie je kunt worden als donker silhouet. Daaronder de vier maatstaven als ringen rond hun voorwerp.
+ * Je niveau als een klim: vier stenen treden met op elke trede een figuur. Jij staat in het licht,
+ * wie je was is verbleekt, wie je kunt worden staat hogerop in de mist, als silhouet met een rand licht. Daaronder de vier maatstaven als ringen rond hun voorwerp.
  * De score telt op, de stip schuift naar je plek, de ringen tekenen zich; de zwakste ring licht op.
  */
 export default function LevelSheet({ level, onClose }: { level: GogginsLevel; onClose: () => void }) {
@@ -32,15 +32,27 @@ export default function LevelSheet({ level, onClose }: { level: GogginsLevel; on
   return (
     <Sheet onClose={onClose}>
       <div className="stack gap-24">
-        {/* De klim */}
-        <div className="lv-hero" aria-label={`Je niveau: ${level.name}, ${level.score} punten`}>
-          <span className="lv-light" style={{ left: `${12 + at * 25}%` }} aria-hidden="true" />
-          {FIGURES.map((f, i) => (
-            <figure key={f.name} className={`lv-fig ${i < at ? 'past' : i === at ? 'now' : 'next'}`} style={{ '--i': i } as CSSProperties}>
-              <img src={`/art/${f.img}.webp`} alt="" />
-              <figcaption>{f.name}</figcaption>
-            </figure>
-          ))}
+        {/* De klim: vier treden in steen, op elke trede een figuur. De camera duwt in op jouw trede,
+            het licht valt op jou, wie je kunt worden staat hoger op in de mist. */}
+        <div className="lv-stage" style={{ '--at': at } as CSSProperties} aria-label={`Je niveau: ${level.name}, ${level.score} punten`}>
+          <span className="lv-sky" aria-hidden="true" />
+          <div className="lv-world">
+            <span className="lv-rays" aria-hidden="true" />
+            {FIGURES.map((f, i) => (
+              <div key={f.name} className={`lv-step ${i < at ? 'past' : i === at ? 'now' : 'next'}`} style={{ '--i': i } as CSSProperties}>
+                <span className="lv-riser">{f.name}</span>
+              </div>
+            ))}
+            {FIGURES.map((f, i) => (
+              <figure key={f.name} className={`lv-fig ${i < at ? 'past' : i === at ? 'now' : 'next'}`} style={{ '--i': i } as CSSProperties}>
+                <span className="lv-shadow" aria-hidden="true" />
+                <img src={`/art/${f.img}.webp`} alt="" />
+              </figure>
+            ))}
+            <span className="lv-motes" aria-hidden="true">{[0, 1, 2, 3, 4].map((k) => <img key={k} src="/art/effect-stofje.webp" alt="" style={{ animationDelay: `${-k * 1.2}s`, left: `${30 + k * 10}%` }} />)}</span>
+          </div>
+          <span className="lv-mist" aria-hidden="true" />
+          <span className="lv-fade" aria-hidden="true" />
         </div>
 
         <div className="center stack gap-4">

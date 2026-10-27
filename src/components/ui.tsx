@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { Habit } from '../lib/store'
 import { buzz } from '../lib/store'
@@ -67,11 +67,34 @@ export function RedLine({ value, compact }: { value: number; compact?: boolean }
 export function Sheet({ onClose, children }: { onClose: () => void; children: ReactNode }) {
   // Wegvegen of Escape: eerst de sheet laten zakken, dan pas sluiten
   const [out, setOut] = useState(false)
+  const animated = useRef(false)
+  const scrimRef = useRef<HTMLDivElement>(null)
+  const sheetRef = useRef<HTMLDivElement>(null)
   const close = useCallback(() => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return onClose()
+    animated.current = true
     setOut(true)
     setTimeout(onClose, 260)
   }, [onClose])
+  // Sluit hij op een andere manier (Klaar, Opslaan, een stap gezet), dan verdwijnt hij niet in één klap:
+  // een kopie van hoe hij er nu uitziet zakt weg, terwijl de echte al weg is. Werkt voor elke sheet, hoe die ook sluit.
+  useLayoutEffect(() => {
+    const sheet = sheetRef.current
+    const scrim = scrimRef.current
+    return () => {
+      if (animated.current || !sheet || !scrim || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+      const top = sheet.scrollTop
+      const ghosts = [scrim, sheet].map((el) => {
+        const g = el.cloneNode(true) as HTMLElement
+        g.classList.add('out', 'ghost')
+        g.setAttribute('aria-hidden', 'true')
+        document.body.append(g)
+        return g
+      })
+      ghosts[1].scrollTop = top
+      setTimeout(() => ghosts.forEach((g) => g.remove()), 320)
+    }
+  }, [])
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === 'Escape' && close()
     window.addEventListener('keydown', k)
@@ -79,8 +102,8 @@ export function Sheet({ onClose, children }: { onClose: () => void; children: Re
   }, [close])
   return createPortal(
     <>
-      <div className={`scrim ${out ? 'out' : ''}`} onClick={close} />
-      <div className={`sheet ${out ? 'out' : ''}`} role="dialog" aria-modal="true">
+      <div ref={scrimRef} className={`scrim ${out ? 'out' : ''}`} onClick={close} />
+      <div ref={sheetRef} className={`sheet ${out ? 'out' : ''}`} role="dialog" aria-modal="true">
         <div className="grab" />
         {children}
       </div>

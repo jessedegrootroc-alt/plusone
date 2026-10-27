@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { Icon } from './components/ui'
 import { preloadScenes } from './components/LivingScene'
 import { STAGES, stageFor } from './data/sins'
@@ -36,6 +37,17 @@ export default function App() {
     window.scrollTo(0, 0)
   }, [tab])
 
+  // Van pagina wisselen: de oude vervaagt, de nieuwe komt op (View Transitions). De tabbalk blijft staan.
+  // Zonder ondersteuning of met minder beweging: gewoon meteen.
+  const go = (k: Tab) => {
+    if (k === tab) return
+    if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) return setTab(k)
+    document.startViewTransition(() => {
+      flushSync(() => setTab(k))
+      window.scrollTo(0, 0)
+    })
+  }
+
   // De levende scène alvast laden: eerst je eigen plek, daarna de buren en de rest
   useEffect(() => {
     if (!s.onboarded) return
@@ -51,13 +63,13 @@ export default function App() {
 
   return (
     <div className="app">
-      {tab === 'today' && <Today openMirror={setMirror} openUrge={() => setUrge(true)} openCompass={() => setTab('compass')} openShadow={(habitId) => setShadow({ habitId })} />}
+      {tab === 'today' && <Today openMirror={setMirror} openUrge={() => setUrge(true)} openCompass={() => go('compass')} openShadow={(habitId) => setShadow({ habitId })} />}
       {tab === 'compass' && <Compass openShadow={(sin) => setShadow({ sin })} />}
       {tab === 'self' && <Self openShadow={() => setShadow({})} />}
 
       <nav className="tabbar" aria-label="Hoofdmenu">
         {([['today', 'Spiegel', Icon.mirror], ['compass', 'Kompas', Icon.compass], ['self', 'Reis', Icon.path]] as const).map(([k, l, ic]) => (
-          <button key={k} className={`tab ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)} aria-current={tab === k ? 'page' : undefined}>
+          <button key={k} className={`tab ${tab === k ? 'on' : ''}`} onClick={() => go(k)} aria-current={tab === k ? 'page' : undefined}>
             <span className="tab-ico">{ic()}</span>
             <span>{l}</span>
           </button>

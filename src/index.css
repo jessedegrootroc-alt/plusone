@@ -283,19 +283,33 @@ button.card:active { transform: scale(0.985); }
 .next-grens .eyebrow, .next-grens .small { color: #595959; }
 .next-grens .btn { background: var(--paper); color: var(--ink); }
 /* ——— Je niveau: de klim van schim tot ridder ——— */
-.lv-hero { position: relative; height: 232px; margin: 0 calc(var(--gutter) * -1); overflow: hidden; background: radial-gradient(80% 70% at 50% 100%, rgba(242, 242, 242, 0.06), transparent 70%); }
-/* De helling: een lijn die van links naar rechts oploopt, met de figuren erop */
-.lv-hero::after { content: ''; position: absolute; left: 0; right: 0; bottom: 30px; height: 1px; background: linear-gradient(90deg, transparent, rgba(242, 242, 242, 0.25) 15%, rgba(242, 242, 242, 0.25) 85%, transparent); transform: rotate(-6deg); transform-origin: 0 100%; }
-.lv-light { position: absolute; bottom: 20px; width: 160px; height: 220px; margin-left: -80px; background: radial-gradient(50% 60% at 50% 100%, rgba(242, 242, 242, 0.2), transparent 70%); animation: pathGlow 6s ease-in-out infinite; transition: left 1s var(--ease); }
-.lv-fig { position: absolute; bottom: calc(36px + var(--i) * 13px); left: calc(12% + var(--i) * 25%); width: 72px; margin: 0 0 0 -36px; display: flex; flex-direction: column; align-items: center; gap: var(--s1); animation: lvIn 0.7s var(--ease) both; animation-delay: calc(var(--i) * 90ms); }
-.lv-fig img { width: 100%; height: 108px; object-fit: contain; object-position: bottom; transform-origin: 50% 100%; }
-.lv-fig figcaption { font: var(--sm); font-size: 11px; color: var(--ink-3); white-space: nowrap; }
-.lv-fig.past img { opacity: 0.35; filter: grayscale(1); }
-/* Wie je kunt worden: een donker silhouet met een dunne rand licht */
-.lv-fig.next img { filter: brightness(0) drop-shadow(0 0 1px rgba(242, 242, 242, 0.55)); opacity: 0.85; }
-.lv-fig.now { width: 104px; margin-left: -52px; }
-.lv-fig.now img { height: 156px; animation: lvBreath 6s ease-in-out infinite; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.8)); }
-.lv-fig.now figcaption { color: var(--ink); font-weight: 600; font-size: 13px; }
+/* Het toneel: lucht, vier treden, figuren erop. --at is jouw trede (0 tot 3). */
+.lv-stage { --H: 236px; --step: 26px; --base: 36px; position: relative; height: var(--H); margin: calc(var(--s3) * -1) calc(var(--gutter) * -1) 0; overflow: hidden; isolation: isolate; }
+.lv-sky { position: absolute; inset: 0; background: url(/art/achtergrond-terrassen-1-ver.webp) center 25% / cover no-repeat; filter: brightness(0.38) contrast(1.05); translate: calc(var(--tx) * var(--par) * -0.3) 0; }
+/* De camera duwt bij het openen in op jouw trede, en ademt daarna mee met de telefoon */
+.lv-world { position: absolute; inset: 0; transform-origin: calc(12.5% + var(--at) * 25%) 70%; animation: lvCam 1.6s var(--ease) both; translate: calc(var(--tx) * var(--par) * -0.6) 0; }
+/* Treden: steen met een lichte bovenrand en gravure-arcering op de voorkant */
+.lv-step { position: absolute; left: calc(var(--i) * 25%); width: calc(25% + 1px); bottom: 0; height: calc(var(--base) + var(--i) * var(--step)); background: linear-gradient(180deg, #2A2A2A 0, #1A1A1A 6px, #121212 40%, #0D0D0D); box-shadow: inset 0 1px 0 rgba(242, 242, 242, 0.35), inset 1px 0 0 rgba(0, 0, 0, 0.6); animation: lvRise 0.8s var(--ease) both; animation-delay: calc(var(--i) * 80ms); }
+.lv-step::after { content: ''; position: absolute; inset: 8px 0 0; background: var(--hatch-light); opacity: 0.5; }
+.lv-step.now { background: linear-gradient(180deg, #3A3A3A 0, #222 6px, #161616 40%, #0E0E0E); box-shadow: inset 0 1.5px 0 rgba(242, 242, 242, 0.7); }
+.lv-riser { position: absolute; left: 0; right: 0; top: 10px; z-index: 1; text-align: center; font: var(--sm); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.lv-step.now .lv-riser { color: var(--ink); }
+/* Figuren: voeten precies op de trede */
+.lv-fig { position: absolute; bottom: calc(var(--base) + var(--i) * var(--step) - 4px); left: calc(12.5% + var(--i) * 25%); width: 86px; height: 120px; margin: 0 0 0 -43px; animation: lvIn 0.8s var(--ease) both; animation-delay: calc(200ms + var(--i) * 90ms); }
+.lv-fig img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 100%; }
+.lv-shadow { position: absolute; left: 18%; right: 18%; bottom: -3px; height: 8px; border-radius: 50%; background: radial-gradient(rgba(0, 0, 0, 0.9), transparent 70%); }
+.lv-fig.past img { filter: grayscale(1) brightness(0.55); opacity: 0.7; }
+/* Wie je kunt worden: donker, met een rand licht en hoe hoger, hoe dieper in de mist */
+.lv-fig.next img { filter: brightness(0.08) drop-shadow(0 0 1.5px rgba(242, 242, 242, 0.6)) drop-shadow(0 0 8px rgba(242, 242, 242, 0.12)); opacity: calc(1 - (var(--i) - var(--at)) * 0.18); }
+.lv-fig.now { width: 116px; height: 168px; margin-left: -58px; z-index: 2; }
+.lv-fig.now img { filter: drop-shadow(0 0 1px rgba(242, 242, 242, 0.5)) drop-shadow(0 10px 14px rgba(0, 0, 0, 0.8)); animation: lvBreath 6s ease-in-out infinite; }
+/* Licht van boven op jouw trede, met stof dat erin zweeft */
+.lv-rays { position: absolute; top: -20%; left: calc(12.5% + var(--at) * 25%); width: 220px; height: 120%; margin-left: -110px; background: url(/art/effect-stralen.webp) center top / cover no-repeat; mix-blend-mode: screen; opacity: 0.4; -webkit-mask-image: linear-gradient(180deg, #000 30%, transparent 85%); mask-image: linear-gradient(180deg, #000 30%, transparent 85%); animation: psRays 6s ease-in-out infinite alternate; }
+.lv-motes { position: absolute; inset: 0; left: calc(var(--at) * 25%); width: 25%; mix-blend-mode: screen; pointer-events: none; }
+.lv-motes img { position: absolute; bottom: 40%; width: 5px; opacity: 0; animation: medalDust 6s linear infinite; }
+.lv-mist { position: absolute; left: -10%; right: -10%; bottom: 0; height: 100px; background: url(/art/effect-mist.webp) repeat-x center bottom / auto 100%; mix-blend-mode: screen; opacity: 0.18; -webkit-mask-image: linear-gradient(90deg, transparent 30%, #000 70%); mask-image: linear-gradient(90deg, transparent 30%, #000 70%); animation: psMist 12s ease-in-out infinite alternate; pointer-events: none; }
+/* Naar het papier van de sheet toe vervagen, boven en onder */
+.lv-fade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, var(--paper) 0%, transparent 18%, transparent 90%, var(--paper) 100%); }
 .lv-score { display: flex; align-items: baseline; justify-content: center; gap: var(--s1); font: 600 48px/56px var(--sans); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .lv-score small { font: var(--sm); color: var(--ink-3); letter-spacing: 0; }
 .lv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
@@ -306,10 +320,12 @@ button.card:active { transform: scale(0.985); }
 .lv-ring-art img { position: absolute; inset: 14px; width: 52px; height: 52px; object-fit: contain; }
 .lv-pct { font: 600 20px/28px var(--sans); font-variant-numeric: tabular-nums; }
 .lv-label { font: var(--sm); font-weight: 600; color: var(--ink); }
+@keyframes lvCam { from { transform: scale(1.14) translateY(8px); } to { transform: none; } }
+@keyframes lvRise { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes lvIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 @keyframes lvBreath { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.015); } }
 @keyframes lvPulse { 0%, 100% { box-shadow: inset 0 0 0 1.5px rgba(242, 242, 242, 0.9); } 50% { box-shadow: inset 0 0 0 1.5px rgba(242, 242, 242, 0.35), 0 0 0 4px rgba(242, 242, 242, 0.06); } }
-@media (prefers-reduced-motion: reduce) { .lv-fig, .lv-fig.now img, .lv-light, .lv-ring.weak { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .lv-world, .lv-step, .lv-fig, .lv-fig.now img, .lv-rays, .lv-motes img, .lv-mist, .lv-ring.weak { animation: none !important; } }
 .grens-row { display: flex; align-items: center; gap: var(--s3); width: 100%; margin-top: var(--s4); padding: var(--s4) var(--s2) 0; border-top: 1px solid var(--line); text-align: left; color: var(--ink-3); }
 .grens-icon { flex: none; width: 48px; height: 48px; object-fit: contain; }
 .grens-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--s2); }
@@ -413,6 +429,13 @@ button.card:active { transform: scale(0.985); }
 .day .dot { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font: var(--sm); font-weight: 600; box-shadow: inset 0 0 0 1px var(--line); border: 0 !important; transition: background-color 0.3s ease, color 0.3s ease; }
 
 /* ——— Tabbalk ——— */
+/* Van pagina wisselen: de oude pagina vervaagt en zakt iets weg, de nieuwe vervaagt in (de kaarten komen daarna zelf op).
+   De tabbalk heeft een eigen naam, zodat hij stil blijft staan. */
+::view-transition-old(root) { animation: vtOut 0.22s ease both; }
+::view-transition-new(root) { animation: vtIn 0.34s var(--ease) both; }
+@keyframes vtOut { to { opacity: 0; transform: scale(0.985); } }
+@keyframes vtIn { from { opacity: 0; } }
+.tabbar { view-transition-name: tabbar; }
 .tabbar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 460px; z-index: 20; display: flex; justify-content: space-around; padding: var(--s2) var(--s3) calc(env(safe-area-inset-bottom) + var(--s2)); background: #0B0B0B; border-top: 1px solid var(--line); }
 .tab { display: flex; flex-direction: column; align-items: center; gap: var(--s1); width: 80px; padding: var(--s1) 0; font: var(--sm); font-weight: 600; color: var(--ink-3); transition: color 0.2s; }
 .tab.on { color: var(--ink); }
@@ -529,6 +552,8 @@ button.card:active { transform: scale(0.985); }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 .sheet.out { animation: sheetDown 0.28s cubic-bezier(0.4, 0, 1, 1) both; }
 .scrim.out { animation: fadeOut 0.28s ease both; }
+/* De kopie die wegzakt als een sheet direct sluit: alleen beeld, niet aan te raken */
+.ghost { pointer-events: none; }
 @keyframes pop { 0% { transform: scale(0.4); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 
