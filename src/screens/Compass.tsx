@@ -10,7 +10,7 @@ import { SINS, SIN_BY_ID, type SinId } from '../data/sins'
 import { computeSeries, isDone } from '../lib/score'
 import { gogginsLevel } from '../lib/level'
 import LevelSheet from '../components/LevelSheet'
-import { addDays, todayISO, useStore } from '../lib/store'
+import { addDays, buzz, todayISO, uid, update, useStore } from '../lib/store'
 
 function History({ points }: { points: { date: string; balance: number }[] }) {
   const data = points.slice(-30)
@@ -36,7 +36,7 @@ export default function Compass({ openShadow }: { openShadow: (sin?: SinId) => v
   const series = useMemo(() => computeSeries(s), [s])
   const [open, setOpen] = useState<SinId | null>(null)
   const [grens, setGrens] = useState(false)
-  const [noteFor, setNoteFor] = useState<SinId | null>(null)
+  const [noteFor, setNoteFor] = useState<{ sin: SinId; goal?: string } | null>(null)
   const [showLevel, setShowLevel] = useState(false)
   const level = useMemo(() => gogginsLevel(s), [s])
   const ordered = [...SINS].sort((a, b) => series.perSin[a.id] - series.perSin[b.id])
@@ -107,9 +107,64 @@ export default function Compass({ openShadow }: { openShadow: (sin?: SinId) => v
       </div>
 
       {grens && <GrensDetails onClose={() => setGrens(false)} />}
-      {open && <SinSheet id={open} value={series.perSin[open]} before={series.points.length > 7 ? series.points[series.points.length - 8].perSin[open] : null} onClose={() => setOpen(null)} onShadow={() => { const x = open; setOpen(null); openShadow(x) }} onNote={() => { setNoteFor(open); setOpen(null) }} />}
-      {noteFor && <NoteSheet presetSin={noteFor} onClose={() => setNoteFor(null)} />}
+      {open && <SinSheet id={open} value={series.perSin[open]} before={series.points.length > 7 ? series.points[series.points.length - 8].perSin[open] : null} onClose={() => setOpen(null)} onShadow={() => { const x = open; setOpen(null); openShadow(x) }} onNote={(goal) => { setNoteFor({ sin: open, goal }); setOpen(null) }} />}
+      {noteFor && <NoteSheet presetSin={noteFor.sin} presetGoal={noteFor.goal} onClose={() => setNoteFor(null)} />}
       {showLevel && <LevelSheet level={level} onClose={() => setShowLevel(false)} />}
+    </div>
+  )
+}
+
+// Vervolgstappen per terras, oplopend: iets voor nu (twee minuten), iets voor vandaag, en een doel voor deze week.
+// Zoals Goggins: niet erover nadenken, maar meteen iets doen dat een beetje pijn doet.
+const NEXT: Record<SinId, [now: string, today: string, week: string]> = {
+  pride: ['Stuur iemand één vraag: wat kan ik beter doen?', 'Geef één keer hardop toe dat je ongelijk had', 'Vraag iemand die verder is om eerlijke feedback op je werk'],
+  envy: ['Schrijf drie dingen op die jij hebt en een ander niet', 'Feliciteer oprecht iemand met iets waar je jaloers op bent', 'Ontvolg of demp een week iedereen met wie je je vergelijkt'],
+  wrath: ['Adem vijf keer: vier tellen in, zes tellen uit', 'Bij je eerstvolgende ergernis: tel tot tien, dan pas praten', 'Maak het goed met iemand tegen wie je uitviel'],
+  sloth: ['Doe twee minuten aan het ding dat je uitstelt. Nu.', 'Het zwaarste ding van vandaag als eerste, voor je telefoon', 'Vijf dagen achter elkaar op dezelfde tijd op, zonder snooze'],
+  greed: ['Kijk je laatste tien uitgaven na en streep er één door', 'Geef iets weg, tijd, geld of hulp, zonder dat iemand het weet', 'Een week alleen kopen wat vooraf op je lijstje stond'],
+  gluttony: ['Drink een groot glas water en wacht tien minuten', 'Eén maaltijd zonder scherm, langzaam, tot je 80% vol bent', 'Zeven dagen geen suiker en geen alcohol'],
+  lust: ['Leg je telefoon nu in een andere kamer', 'Vannacht slaapt je telefoon buiten je slaapkamer', 'Een week maximaal 30 minuten per dag op je zwakste app'],
+}
+
+/**
+ * Drie stappen om direct impact te maken. Nu en vandaag gaan met één tik als steen in je dag (en tellen
+ * op dit terras mee); deze week wordt een post-it op je spiegel, met een ladder ernaartoe.
+ */
+function NextSteps({ id, onWeek }: { id: SinId; onWeek: (goal: string) => void }) {
+  const s = useStore()
+  const today = todayISO()
+  const rocks = s.logs[today]?.rocks ?? []
+  const [now, day, week] = NEXT[id]
+  const onDay = (text: string) => rocks.some((r) => r.text === text)
+  const add = (text: string, size: 1 | 2) => {
+    if (onDay(text)) return
+    buzz(12)
+    update((d) => { ((d.logs[today] ??= { v: {} }).rocks ??= []).push({ id: 'rock-' + uid(), text, size, sin: id }) })
+  }
+  const rows: { when: string; text: string; done: boolean; act: () => void; cta: string }[] = [
+    { when: 'Nu · 2 minuten', text: now, done: onDay(now), act: () => add(now, 1), cta: 'In je dag' },
+    { when: 'Vandaag', text: day, done: onDay(day), act: () => add(day, 2), cta: 'In je dag' },
+    { when: 'Deze week', text: week, done: (s.notes ?? []).some((n) => !n.doneAt && n.goal === week), act: () => onWeek(week), cta: 'Op je spiegel' },
+  ]
+  return (
+    <div className="stack gap-12">
+      <div className="section-head" style={{ margin: 0 }}><h3 className="h2">Doe dit nu</h3><span className="small">telt hier mee</span></div>
+      <div className="list next-steps">
+        {rows.map((r, i) => (
+          <div key={r.when} className="row next-step">
+            <span className="next-n" aria-hidden="true">{i + 1}</span>
+            <div className="grow stack gap-8">
+              <div>
+                <div className="meta">{r.when}</div>
+                <div className="name">{r.text}</div>
+              </div>
+              {r.done
+                ? <span className="next-done">{Icon.check()} {r.cta === 'In je dag' ? 'Staat in je dag' : 'Staat op je spiegel'}</span>
+                : <button className="pill" onClick={r.act}>{Icon.plus()} {r.cta}</button>}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -130,7 +185,7 @@ const SMOES: Record<SinId, [lie: string, answer: string]> = {
  * dan de smoes die je jezelf vertelt, dan het bewijs van de afgelopen week, en dan wat je nu doet.
  * Geen uitleg vooraf; wat de zonde is staat onderaan, voor wie het wil weten.
  */
-function SinSheet({ id, value, before, onClose, onShadow, onNote }: { id: SinId; value: number; before: number | null; onClose: () => void; onShadow: () => void; onNote: () => void }) {
+function SinSheet({ id, value, before, onClose, onShadow, onNote }: { id: SinId; value: number; before: number | null; onClose: () => void; onShadow: () => void; onNote: (goal?: string) => void }) {
   const s = useStore()
   const meta = SIN_BY_ID[id]
   const hs = s.habits.filter((h) => h.sin === id)
@@ -168,6 +223,9 @@ function SinSheet({ id, value, before, onClose, onShadow, onNote }: { id: SinId;
           <p className="lead">{answer}</p>
         </div>
 
+        {/* Vervolgstappen: nu, vandaag, deze week. Eén tik en het staat in je dag of op je spiegel */}
+        <NextSteps id={id} onWeek={(goal) => onNote(goal)} />
+
         {/* Het bewijs: geen gevoel, maar wat je deed */}
         <div className="stack gap-12">
           <div className="section-head" style={{ margin: 0 }}><h3 className="h2">Het bewijs</h3><span className="small">7 dagen</span></div>
@@ -203,7 +261,7 @@ function SinSheet({ id, value, before, onClose, onShadow, onNote }: { id: SinId;
 
         {/* Wat je nu doet */}
         <div className="stack gap-12">
-          <button className="btn" onClick={onNote}>Zet het op je spiegel</button>
+          <button className="btn" onClick={() => onNote()}>Zet het op je spiegel</button>
           <button className="btn ghost" onClick={onShadow}>Praat met je schaduw</button>
         </div>
 

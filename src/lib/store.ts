@@ -46,6 +46,8 @@ export interface DayRock {
   at?: string
   /** Het ongemak van vandaag: iets wat je niet wilt doen, en toch doet. */
   suck?: boolean
+  /** Komt hij van een terras (een vervolgstap), dan telt hij daar mee. */
+  sin?: SinId
 }
 
 export interface DayLog {

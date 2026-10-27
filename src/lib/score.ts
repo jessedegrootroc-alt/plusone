@@ -2,7 +2,7 @@ import { SINS, type SinId } from '../data/sins'
 import type { AreaId } from '../data/growth'
 import { addDays, todayISO, type Challenge, type DayLog, type DayRock, type Habit, type MirrorNote, type State } from './store'
 
-export const rockHabit = (r: DayRock): Habit => ({ id: r.id, name: r.text, sin: 'sloth', kind: 'virtue', type: 'do', weight: r.size, at: r.at })
+export const rockHabit = (r: DayRock): Habit => ({ id: r.id, name: r.text, sin: r.sin ?? 'sloth', kind: 'virtue', type: 'do', weight: r.size, at: r.at })
 
 /** Het id waaronder een post-it als gewoonte in je dag staat. */
 export const noteHabitId = (n: MirrorNote) => `note:${n.id}`

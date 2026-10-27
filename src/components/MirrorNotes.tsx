@@ -214,10 +214,10 @@ function FocusSheet({ n, date, onEdit, onClose }: { n: MirrorNote; date: string;
 }
 
 /** Een post-it schrijven of bewerken. Vanaf een terras komt de zonde al ingevuld mee. */
-export function NoteSheet({ note, preset, presetSin, onClose }: { note?: MirrorNote; preset?: Domain; presetSin?: SinId; onClose: () => void }) {
+export function NoteSheet({ note, preset, presetSin, presetGoal, onClose }: { note?: MirrorNote; preset?: Domain; presetSin?: SinId; presetGoal?: string; onClose: () => void }) {
   const s = useStore()
   const [text, setText] = useState(note?.text ?? '')
-  const [goal, setGoal] = useState(note?.goal ?? '')
+  const [goal, setGoal] = useState(note?.goal ?? presetGoal ?? '')
   const [feature, setFeature] = useState<FeatureId | undefined>(note?.feature)
   const [domain, setDomain] = useState<Domain | undefined>(note?.domain ?? preset)
   const [domTouched, setDomTouched] = useState(!!(note?.domain ?? preset))
