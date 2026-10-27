@@ -540,7 +540,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
       ctx.clearRect(0, 0, W, H)
 
       // Camera: ademt en drijft. Parallax volgt de vinger, zacht nagetrokken.
-      pSmooth = { x: pSmooth.x + (pointer.x - pSmooth.x) * Math.min(1, dt * 3), y: pSmooth.y + (pointer.y - pSmooth.y) * Math.min(1, dt * 3) }
+      pSmooth = { x: pSmooth.x + (pointer.x - pSmooth.x) * Math.min(1, dt * 1.5), y: pSmooth.y + (pointer.y - pSmooth.y) * Math.min(1, dt * 1.5) }
       const zoom = 1.02 + 0.015 * Math.sin((TAU * t) / 24)
       const camX = Math.sin((TAU * t) / 31) * 4 + pSmooth.x * 16
       const camY = Math.sin((TAU * t) / 23) * 2.5 + pSmooth.y * 10
@@ -1443,17 +1443,21 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
     ro.observe(c)
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; resume() })
     io.observe(c)
+    // Parallax volgt alleen een muis. Een vinger op de scène is scrollen: die mag het beeld niet laten verspringen.
     const move = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return
       const r = c.getBoundingClientRect()
       pointer = { x: (e.clientX - r.left) / r.width - 0.5, y: (e.clientY - r.top) / r.height - 0.5 }
     }
     const leave = () => { pointer = { x: 0, y: 0 } }
+    // Kantelen geeft een zachte parallax, maar alleen links-rechts: voor- en achterover kantel je vanzelf bij het scrollen
     const tilt = (e: DeviceOrientationEvent) => {
-      if (e.gamma == null || e.beta == null) return
-      pointer = { x: clamp(e.gamma / 50, -0.5, 0.5), y: clamp((e.beta - 45) / 60, -0.5, 0.5) }
+      if (e.gamma == null) return
+      pointer = { x: clamp(e.gamma / 60, -0.4, 0.4), y: 0 }
     }
     c.addEventListener('pointermove', move)
     c.addEventListener('pointerleave', leave)
+    c.addEventListener('pointercancel', leave)
     window.addEventListener('deviceorientation', tilt)
     document.addEventListener('visibilitychange', resume)
     return () => {
@@ -1463,6 +1467,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
       io.disconnect()
       c.removeEventListener('pointermove', move)
       c.removeEventListener('pointerleave', leave)
+      c.removeEventListener('pointercancel', leave)
       window.removeEventListener('deviceorientation', tilt)
       document.removeEventListener('visibilitychange', resume)
     }
