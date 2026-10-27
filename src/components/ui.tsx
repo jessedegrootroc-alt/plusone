@@ -15,7 +15,7 @@ export const Icon = {
   mirror: () => <Ico name="mirror" size={24} />,
   compass: () => <Ico name="compass" size={24} />,
   self: () => <Ico name="user" size={24} />,
-  path: () => <Ico name="path" size={24} />,
+  mountain: () => <Ico name="mountain" size={24} />,
   wave: () => <Ico name="urge" size={18} />,
 }
 

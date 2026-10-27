@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { AREAS, AREA_BY_ID, CHALLENGES, ENERGY, FEAR, FELT, type AreaId, type Size } from '../data/growth'
-import { MAX_OPEN, growthOf, insightsOf, levelsOf, nextSuggestion } from '../lib/growth'
+import { LEVELS, MAX_OPEN, growthOf, insightsOf, levelsOf, nextSuggestion } from '../lib/growth'
 import { addDays, buzz, todayISO, uid, update, useStore, type Challenge } from '../lib/store'
 import { grensHabitId, grensWeight } from '../lib/score'
 import { Icon, Sheet } from './ui'
@@ -349,7 +349,11 @@ export function GrensDetails({ onClose }: { onClose: () => void }) {
   const [pick, setPick] = useState<null | { preset?: Parameters<typeof ChallengeSheet>[0]['preset'] }>(null)
   const [felt, setFelt] = useState<Challenge | null>(null)
   const openAreas = new Set(g.open.map((c) => c.area))
-  const known = levels.filter((l) => l.points > 0 || openAreas.has(l.area)).length
+  const lit = levels.filter((l) => l.points > 0 || openAreas.has(l.area)).sort((a, b) => b.points - a.points)
+  const fog = levels.filter((l) => !lit.includes(l))
+  const known = lit.length
+  const [showFog, setShowFog] = useState(false)
+  const pickArea = (area: AreaId) => { const n = nextSuggestion(s, [area]); setPick({ preset: n ?? { area, title: '', step: '', size: 'klein' } }) }
 
   return (
     <>
@@ -366,23 +370,39 @@ export function GrensDetails({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* De kaart: zeventien plekken, verlicht of in de mist */}
+        {/* Waar je groeit: alleen de plekken waar je al was, elk met zijn trap en wat de volgende trede is.
+            De rest van de kaart is één regel; open hem pas als je een nieuwe plek wilt kiezen. */}
         <div className="stack gap-12">
-          <div className="section-head" style={{ margin: 0 }}><h3 className="h2">Je kaart</h3><span className="small">{known} van {levels.length} ontdekt</span></div>
-          <div className="area-map">
-            {levels.map((l) => {
+          <div className="section-head" style={{ margin: 0 }}><h3 className="h2">Waar je groeit</h3><span className="small">{known} van {levels.length} plekken</span></div>
+          <div className="list">
+            {lit.map((l) => {
               const a = AREA_BY_ID[l.area]
-              const lit = l.points > 0 || openAreas.has(l.area)
+              const up = LEVELS[l.level + 1]
               return (
-                <button key={l.area} className={`area-cell ${lit ? 'lit' : 'fog'}`} onClick={() => { const n = nextSuggestion(s, [l.area]); setPick({ preset: n ?? { area: l.area, title: '', step: '', size: 'klein' } }) }} aria-label={`${a.name}: ${l.name}. Tik voor een grens hier.`}>
-                  <span className="area-name">{a.name}</span>
-                  {lit && <Stairs level={l.level} toNext={l.toNext} />}
-                  {openAreas.has(l.area) && <i className="area-open" aria-hidden="true" />}
+                <button key={l.area} className="row" onClick={() => pickArea(l.area)} aria-label={`${a.name}: ${l.name}. Tik voor een grens hier.`}>
+                  <Stairs level={l.level} toNext={l.toNext} />
+                  <div className="grow">
+                    <div className="name">{a.name}{openAreas.has(l.area) && <span className="area-dot" aria-label="staat een grens open" />}</div>
+                    <div className="meta">{l.level === 0 ? 'Je eerste grens hier staat open' : `${l.name}${up ? ` · nog ${l.need} tot ${up.name.toLowerCase()}` : ' · nieuwe comfortzone, zoek verderop'}`}</div>
+                  </div>
+                  <span style={{ color: 'var(--ink-3)', display: 'grid' }}>{Icon.plus()}</span>
                 </button>
               )
             })}
+            <button className="row" onClick={() => setShowFog((x) => !x)} aria-expanded={showFog}>
+              <span className="fog-swatch" aria-hidden="true" />
+              <div className="grow">
+                <div className="name">Onbekend terrein</div>
+                <div className="meta">{fog.length} plekken waar je nog nooit kwam</div>
+              </div>
+              <span className={`chev ${showFog ? 'open' : ''}`} style={{ color: 'var(--ink-3)', display: 'grid' }}>{Icon.next()}</span>
+            </button>
           </div>
-          <p className="small" style={{ margin: 0 }}>Vijf treden per plek. Op de bovenste is het je nieuwe comfortzone: zoek dan verderop.</p>
+          {showFog && (
+            <div className="chips">
+              {fog.map((l) => <button key={l.area} className="chip add" onClick={() => pickArea(l.area)}>{AREA_BY_ID[l.area].name}</button>)}
+            </div>
+          )}
         </div>
 
         {/* Het voorstel: de stilste plek, op jouw niveau */}

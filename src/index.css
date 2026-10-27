@@ -270,15 +270,8 @@ button.card:active { transform: scale(0.985); }
 .proof-days i.lost { box-shadow: inset 0 0 0 1.5px var(--ink-3); background: repeating-linear-gradient(-45deg, transparent 0 2px, rgba(128, 128, 128, 0.7) 2px 3px); }
 .zone-card { display: flex; align-items: center; gap: var(--s4); padding: var(--s4); border-radius: var(--r-lg); background: var(--paper-2); }
 .zone-dot { animation: pathGlow 3s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
-/* De kaart van je leven: verlichte plekken met een trap, de rest in de mist */
-.area-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
-.area-cell { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: var(--s2); min-height: 72px; padding: var(--s3); border-radius: var(--r-md); text-align: left; transition: transform 0.15s var(--ease); }
-.area-cell:active { transform: scale(0.96); }
-.area-cell.lit { background: var(--paper-2); box-shadow: inset 0 0 0 1px rgba(242, 242, 242, 0.12); }
-.area-cell.fog { background: repeating-linear-gradient(-45deg, transparent 0 5px, rgba(242, 242, 242, 0.04) 5px 6px); box-shadow: inset 0 0 0 1px var(--line); }
-.area-name { font: var(--sm); font-weight: 600; color: var(--ink); hyphens: auto; -webkit-hyphens: auto; }
-.area-cell.fog .area-name { color: var(--ink-3); font-weight: 400; }
-.area-open { position: absolute; top: var(--s2); right: var(--s2); width: 6px; height: 6px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px rgba(242, 242, 242, 0.15); }
+.area-dot { display: inline-block; width: 6px; height: 6px; margin-left: var(--s2); vertical-align: middle; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px rgba(242, 242, 242, 0.15); }
+.fog-swatch { flex: none; width: 44px; height: 20px; border-radius: 4px; background: repeating-linear-gradient(-45deg, transparent 0 4px, rgba(242, 242, 242, 0.12) 4px 5px); box-shadow: inset 0 0 0 1px var(--line); }
 .next-grens { display: flex; flex-direction: column; gap: var(--s1); padding: var(--s5); border-radius: var(--r-lg); background: var(--ink); color: var(--paper); }
 .next-grens .eyebrow, .next-grens .small { color: #595959; }
 .next-grens .btn { background: var(--paper); color: var(--ink); }
