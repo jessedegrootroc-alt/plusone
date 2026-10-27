@@ -282,6 +282,34 @@ button.card:active { transform: scale(0.985); }
 .next-grens { display: flex; flex-direction: column; gap: var(--s1); padding: var(--s5); border-radius: var(--r-lg); background: var(--ink); color: var(--paper); }
 .next-grens .eyebrow, .next-grens .small { color: #595959; }
 .next-grens .btn { background: var(--paper); color: var(--ink); }
+/* ——— Je niveau: de klim van schim tot ridder ——— */
+.lv-hero { position: relative; height: 232px; margin: 0 calc(var(--gutter) * -1); overflow: hidden; background: radial-gradient(80% 70% at 50% 100%, rgba(242, 242, 242, 0.06), transparent 70%); }
+/* De helling: een lijn die van links naar rechts oploopt, met de figuren erop */
+.lv-hero::after { content: ''; position: absolute; left: 0; right: 0; bottom: 30px; height: 1px; background: linear-gradient(90deg, transparent, rgba(242, 242, 242, 0.25) 15%, rgba(242, 242, 242, 0.25) 85%, transparent); transform: rotate(-6deg); transform-origin: 0 100%; }
+.lv-light { position: absolute; bottom: 20px; width: 160px; height: 220px; margin-left: -80px; background: radial-gradient(50% 60% at 50% 100%, rgba(242, 242, 242, 0.2), transparent 70%); animation: pathGlow 6s ease-in-out infinite; transition: left 1s var(--ease); }
+.lv-fig { position: absolute; bottom: calc(36px + var(--i) * 13px); left: calc(12% + var(--i) * 25%); width: 72px; margin: 0 0 0 -36px; display: flex; flex-direction: column; align-items: center; gap: var(--s1); animation: lvIn 0.7s var(--ease) both; animation-delay: calc(var(--i) * 90ms); }
+.lv-fig img { width: 100%; height: 108px; object-fit: contain; object-position: bottom; transform-origin: 50% 100%; }
+.lv-fig figcaption { font: var(--sm); font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.lv-fig.past img { opacity: 0.35; filter: grayscale(1); }
+/* Wie je kunt worden: een donker silhouet met een dunne rand licht */
+.lv-fig.next img { filter: brightness(0) drop-shadow(0 0 1px rgba(242, 242, 242, 0.55)); opacity: 0.85; }
+.lv-fig.now { width: 104px; margin-left: -52px; }
+.lv-fig.now img { height: 156px; animation: lvBreath 6s ease-in-out infinite; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.8)); }
+.lv-fig.now figcaption { color: var(--ink); font-weight: 600; font-size: 13px; }
+.lv-score { display: flex; align-items: baseline; justify-content: center; gap: var(--s1); font: 600 48px/56px var(--sans); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.lv-score small { font: var(--sm); color: var(--ink-3); letter-spacing: 0; }
+.lv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+.lv-ring { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--s4) var(--s3); border-radius: var(--r-lg); background: var(--card); text-align: center; }
+.lv-ring.weak { box-shadow: inset 0 0 0 1.5px var(--ink); animation: lvPulse 3s ease-in-out infinite; }
+.lv-ring-art { position: relative; width: 80px; height: 80px; margin-bottom: var(--s2); }
+.lv-ring-art svg { position: absolute; inset: 0; }
+.lv-ring-art img { position: absolute; inset: 14px; width: 52px; height: 52px; object-fit: contain; }
+.lv-pct { font: 600 20px/28px var(--sans); font-variant-numeric: tabular-nums; }
+.lv-label { font: var(--sm); font-weight: 600; color: var(--ink); }
+@keyframes lvIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes lvBreath { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.015); } }
+@keyframes lvPulse { 0%, 100% { box-shadow: inset 0 0 0 1.5px rgba(242, 242, 242, 0.9); } 50% { box-shadow: inset 0 0 0 1.5px rgba(242, 242, 242, 0.35), 0 0 0 4px rgba(242, 242, 242, 0.06); } }
+@media (prefers-reduced-motion: reduce) { .lv-fig, .lv-fig.now img, .lv-light, .lv-ring.weak { animation: none !important; } }
 .grens-row { display: flex; align-items: center; gap: var(--s3); width: 100%; margin-top: var(--s4); padding: var(--s4) var(--s2) 0; border-top: 1px solid var(--line); text-align: left; color: var(--ink-3); }
 .grens-icon { flex: none; width: 48px; height: 48px; object-fit: contain; }
 .grens-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--s2); }

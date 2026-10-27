@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import { SINS, type SinId } from '../data/sins'
 import { artFor } from '../data/tableaux'
+import type { GogginsLevel } from '../lib/level'
 
 const INK = '#F2F2F2'
 const INK_2 = '#B3B3B3'
@@ -25,24 +26,6 @@ const arc = (x: number, y: number, r: number, f: number) => {
 }
 
 const fmt = (v: number) => `${v >= 0.5 ? '+' : v <= -0.5 ? '−' : ''}${Math.abs(Math.round(v))}`
-
-/**
- * Waar je staat, zoals Goggins het zou zeggen. Het doel is niet evenwicht of "lekker in balans":
- * gemiddeld is het gevaarlijkste wat je kunt zijn. Het doel is ongewoon worden, en dan een beest.
- * Gemeten aan het gemiddelde van je terrassen (−100 tot 100).
- */
-const LEVELS = [
-  { min: -101, name: 'Zacht', next: 'gemiddeld' },
-  { min: -10, name: 'Gemiddeld', next: 'ongewoon' },
-  { min: 20, name: 'Ongewoon', next: 'beest' },
-  { min: 50, name: 'Beest', next: null },
-] as const
-export const levelOf = (values: number[]) => {
-  const mean = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0
-  const i = LEVELS.findLastIndex((l) => mean >= l.min)
-  const up = LEVELS[i + 1]
-  return { name: LEVELS[i].name, mean, to: up ? Math.max(1, Math.ceil(up.min - mean)) : 0, next: LEVELS[i].next }
-}
 
 /** Groeit bij het openen vanaf de nullijn naar buiten, terras na terras. */
 const STAGGER = 0.08
@@ -71,14 +54,16 @@ const useGrow = (ms = 900) => {
 /**
  * De mandala van het Zelf: je zeven terrassen als medaillons in een kring, getekend in de stijl van de scènes.
  * Leef je de deugd, dan zie je de deugd; wint de zonde, dan staat de zonde in het medaillon, donkerder.
- * De boog om een medaillon is hoe sterk. In het midden wat je bent: zacht, gemiddeld, ongewoon of een beest.
+ * De boog om een medaillon is hoe sterk. De medaillons zijn de kaart: wáár je werkt.
+ * In het midden je niveau (zacht, gemiddeld, ongewoon, beest), gemeten zoals Goggins dat doet: óf je het doet.
+ * Tik het midden voor de vier maatstaven.
  * Tik een medaillon en het midden vertelt over dat terras; nog een tik opent het.
  */
-export default function Mandala({ values, active, onPick }: { values: Record<SinId, number>; active: Set<SinId>; onPick: (s: SinId) => void }) {
+export default function Mandala({ values, active, onPick, level, onLevel }: { values: Record<SinId, number>; active: Set<SinId>; onPick: (s: SinId) => void; level: GogginsLevel; onLevel: () => void }) {
   const id = useId().replace(/:/g, '')
   const grow = useGrow()
   const [sel, setSel] = useState<SinId | null>(null)
-  const lv = levelOf(SINS.filter((s) => active.has(s.id)).map((s) => values[s.id]))
+  const lv = level
   const picked = sel ? SINS.find((s) => s.id === sel)! : null
   const tap = (s: SinId) => (sel === s ? onPick(s) : setSel(s))
 
@@ -119,7 +104,7 @@ export default function Mandala({ values, active, onPick }: { values: Record<Sin
       })}
 
       {/* Het midden: wat je bent en hoe ver het volgende is, of het terras dat je aantikt */}
-      <g onClick={() => (sel ? onPick(sel) : undefined)} style={{ cursor: sel ? 'pointer' : 'default' }}>
+      <g onClick={() => (sel ? onPick(sel) : onLevel())} style={{ cursor: 'pointer' }} role="button" aria-label={sel ? 'Open dit terras' : `Je niveau: ${lv.name}. Tik voor de vier maatstaven`}>
         <circle cx={C.x} cy={C.y} r={48} fill="transparent" />
         <text x={C.x} y={C.y + 6} textAnchor="middle" fill={INK} style={{ fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 28, letterSpacing: '-0.02em' }}>
           {picked ? (active.has(picked.id) ? fmt(values[picked.id]) : '–') : lv.name}

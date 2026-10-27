@@ -8,6 +8,8 @@ import { MONTH_GOAL, growthOf } from '../lib/growth'
 import { Icon, RedLine, Sheet } from '../components/ui'
 import { SINS, SIN_BY_ID, type SinId } from '../data/sins'
 import { computeSeries, isDone } from '../lib/score'
+import { gogginsLevel } from '../lib/level'
+import LevelSheet from '../components/LevelSheet'
 import { addDays, todayISO, useStore } from '../lib/store'
 
 function History({ points }: { points: { date: string; balance: number }[] }) {
@@ -35,6 +37,8 @@ export default function Compass({ openShadow }: { openShadow: (sin?: SinId) => v
   const [open, setOpen] = useState<SinId | null>(null)
   const [grens, setGrens] = useState(false)
   const [noteFor, setNoteFor] = useState<SinId | null>(null)
+  const [showLevel, setShowLevel] = useState(false)
+  const level = useMemo(() => gogginsLevel(s), [s])
   const ordered = [...SINS].sort((a, b) => series.perSin[a.id] - series.perSin[b.id])
   const weakest = ordered.find((x) => s.habits.some((h) => h.sin === x.id))
   const active = new Set(SINS.filter((x) => s.habits.some((h) => h.sin === x.id)).map((x) => x.id))
@@ -51,7 +55,7 @@ export default function Compass({ openShadow }: { openShadow: (sin?: SinId) => v
       </div>
 
       <div className="card" style={{ padding: '16px 8px 16px' }}>
-        <Mandala values={series.perSin} active={active} onPick={setOpen} />
+        <Mandala values={series.perSin} active={active} onPick={setOpen} level={level} onLevel={() => setShowLevel(true)} />
         {/* De grens: hoe vaak je de afgelopen 30 dagen uit je comfortzone ging. Acht vakjes in vier weken van twee. */}
         <button className="grens-row" onClick={() => setGrens(true)} aria-label={`Uit je comfortzone: ${g.month.length} van ${MONTH_GOAL} grenzen verlegd in 30 dagen. Open per plek.`}>
           <img src="/art/item-pelgrimsstaf.webp" alt="" className="grens-icon" />
@@ -105,6 +109,7 @@ export default function Compass({ openShadow }: { openShadow: (sin?: SinId) => v
       {grens && <GrensDetails onClose={() => setGrens(false)} />}
       {open && <SinSheet id={open} value={series.perSin[open]} before={series.points.length > 7 ? series.points[series.points.length - 8].perSin[open] : null} onClose={() => setOpen(null)} onShadow={() => { const x = open; setOpen(null); openShadow(x) }} onNote={() => { setNoteFor(open); setOpen(null) }} />}
       {noteFor && <NoteSheet presetSin={noteFor} onClose={() => setNoteFor(null)} />}
+      {showLevel && <LevelSheet level={level} onClose={() => setShowLevel(false)} />}
     </div>
   )
 }
