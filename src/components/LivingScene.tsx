@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FeatureId } from '../data/catalog'
 import type { ObjectId } from '../data/objects'
 import type { SceneId, SinId } from '../data/sins'
-import { getMotion } from '../lib/motion'
+import { cameraAt } from '../lib/motion'
 
 /**
  * De kust van de berg (balans −20 tot +20), als levende scène in de stijl van Darkest Dungeon.
@@ -538,11 +538,8 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, W, H)
 
-      // Camera: ademt en drijft, en volgt de stand van je telefoon (of de muis), al gladgestreken in lib/motion
-      const m = getMotion()
-      const zoom = 1.02 + 0.015 * Math.sin((TAU * t) / 24)
-      const camX = Math.sin((TAU * t) / 31) * 4 + m.x * 8
-      const camY = Math.sin((TAU * t) / 23) * 2.5 + m.y * 8
+      // Camera: ademt en drijft, en volgt de stand van je telefoon (of de muis). Gedeeld met de andere scènes, zie lib/motion
+      const { x: camX, y: camY, zoom } = cameraAt(t)
       const layer = (depth: number, fn: () => void) => {
         ctx.save()
         ctx.translate(W / 2 - camX * depth, H * 0.62 - camY * depth)

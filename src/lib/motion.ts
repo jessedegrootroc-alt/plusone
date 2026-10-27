@@ -96,3 +96,15 @@ export const motionOn = () => listening
 
 /** De gladgestreken stand, -1 tot 1, voor wie zelf tekent (de canvas-scènes). */
 export const getMotion = () => cur
+
+const TAU = Math.PI * 2
+/**
+ * De camera van de levende scènes: hij ademt en drijft langzaam (drie golven die nooit gelijk lopen),
+ * en schuift mee met de stand van je telefoon. Eén bron, zodat elke scène in de app precies zo beweegt.
+ * x en y in pixels voor een laag op diepte 1; zoom rond 1,02.
+ */
+export const cameraAt = (t: number) => ({
+  x: Math.sin((TAU * t) / 31) * 4 + cur.x * 8,
+  y: Math.sin((TAU * t) / 23) * 2.5 + cur.y * 8,
+  zoom: 1.02 + 0.015 * Math.sin((TAU * t) / 24),
+})

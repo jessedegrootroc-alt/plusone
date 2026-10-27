@@ -26,12 +26,22 @@ const arc = (x: number, y: number, r: number, f: number) => {
 
 const fmt = (v: number) => `${v >= 0.5 ? '+' : v <= -0.5 ? '−' : ''}${Math.abs(Math.round(v))}`
 
-/** Hoe gelijkmatig je zeven terrassen ontwikkeld zijn (0–100). Jung: heelheid, geen perfectie. */
-export const evenness = (values: number[]) => {
-  if (values.length < 2) return 100
-  const m = values.reduce((a, b) => a + b, 0) / values.length
-  const sd = Math.sqrt(values.reduce((a, b) => a + (b - m) ** 2, 0) / values.length)
-  return Math.max(0, Math.min(100, Math.round(100 - sd)))
+/**
+ * Waar je staat, zoals Goggins het zou zeggen. Het doel is niet evenwicht of "lekker in balans":
+ * gemiddeld is het gevaarlijkste wat je kunt zijn. Het doel is ongewoon worden, en dan een beest.
+ * Gemeten aan het gemiddelde van je terrassen (−100 tot 100).
+ */
+const LEVELS = [
+  { min: -101, name: 'Zacht', next: 'gemiddeld' },
+  { min: -10, name: 'Gemiddeld', next: 'ongewoon' },
+  { min: 20, name: 'Ongewoon', next: 'beest' },
+  { min: 50, name: 'Beest', next: null },
+] as const
+export const levelOf = (values: number[]) => {
+  const mean = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0
+  const i = LEVELS.findLastIndex((l) => mean >= l.min)
+  const up = LEVELS[i + 1]
+  return { name: LEVELS[i].name, mean, to: up ? Math.max(1, Math.ceil(up.min - mean)) : 0, next: LEVELS[i].next }
 }
 
 /** Groeit bij het openen vanaf de nullijn naar buiten, terras na terras. */
@@ -61,19 +71,19 @@ const useGrow = (ms = 900) => {
 /**
  * De mandala van het Zelf: je zeven terrassen als medaillons in een kring, getekend in de stijl van de scènes.
  * Leef je de deugd, dan zie je de deugd; wint de zonde, dan staat de zonde in het medaillon, donkerder.
- * De boog om een medaillon is hoe sterk. In het midden alleen je evenwicht: verder niets, de beelden zeggen genoeg.
+ * De boog om een medaillon is hoe sterk. In het midden wat je bent: zacht, gemiddeld, ongewoon of een beest.
  * Tik een medaillon en het midden vertelt over dat terras; nog een tik opent het.
  */
 export default function Mandala({ values, active, onPick }: { values: Record<SinId, number>; active: Set<SinId>; onPick: (s: SinId) => void }) {
   const id = useId().replace(/:/g, '')
   const grow = useGrow()
   const [sel, setSel] = useState<SinId | null>(null)
-  const ev = evenness(SINS.filter((s) => active.has(s.id)).map((s) => values[s.id]))
+  const lv = levelOf(SINS.filter((s) => active.has(s.id)).map((s) => values[s.id]))
   const picked = sel ? SINS.find((s) => s.id === sel)! : null
   const tap = (s: SinId) => (sel === s ? onPick(s) : setSel(s))
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', display: 'block', touchAction: 'manipulation' }} role="img" aria-label={`Mandala van je zeven terrassen, ${ev}% evenwicht`}>
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', display: 'block', touchAction: 'manipulation' }} role="img" aria-label={`Mandala van je zeven terrassen: ${lv.name.toLowerCase()}`}>
       <defs>
         {SINS.map((s, i) => {
           const [x, y] = pt(ang(i), RING)
@@ -81,7 +91,7 @@ export default function Mandala({ values, active, onPick }: { values: Record<Sin
         })}
       </defs>
 
-      {/* Tik naast de mandala: terug naar je evenwicht */}
+      {/* Tik naast de mandala: terug naar wat je bent */}
       <rect width={W} height={H} fill="transparent" onClick={() => setSel(null)} />
 
       {/* De zeven medaillons */}
@@ -108,14 +118,14 @@ export default function Mandala({ values, active, onPick }: { values: Record<Sin
         )
       })}
 
-      {/* Het midden: je evenwicht, of het terras dat je aantikt */}
+      {/* Het midden: wat je bent en hoe ver het volgende is, of het terras dat je aantikt */}
       <g onClick={() => (sel ? onPick(sel) : undefined)} style={{ cursor: sel ? 'pointer' : 'default' }}>
         <circle cx={C.x} cy={C.y} r={48} fill="transparent" />
         <text x={C.x} y={C.y + 6} textAnchor="middle" fill={INK} style={{ fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 28, letterSpacing: '-0.02em' }}>
-          {picked ? (active.has(picked.id) ? fmt(values[picked.id]) : '–') : `${ev}%`}
+          {picked ? (active.has(picked.id) ? fmt(values[picked.id]) : '–') : lv.name}
         </text>
         <text x={C.x} y={C.y + 28} textAnchor="middle" fill={INK_3} style={{ fontFamily: 'var(--sans)', fontSize: 13 }}>
-          {picked ? 'tik om te openen' : 'evenwicht'}
+          {picked ? 'tik om te openen' : lv.next ? `nog ${lv.to} tot ${lv.next}` : 'en nooit klaar'}
         </text>
       </g>
     </svg>

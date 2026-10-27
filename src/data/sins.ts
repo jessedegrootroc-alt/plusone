@@ -171,7 +171,7 @@ export interface Stage {
 export const STAGES: Stage[] = [
   { min: -101, plate: 'I', name: 'De Schim', scene: 'inferno', place: 'Inferno', realm: 'Inferno', line: 'Opgejaagd door je eigen schaduwen. Dit ben jij niet. Dit is wat er overblijft als je het opgeeft.', img: IMG.haunted },
   { min: -60, plate: 'II', name: 'De Verdwaalde', scene: 'woud', place: 'Het donkere woud', realm: 'Inferno', line: 'Je weet de weg nog. Eén goede dag en je ziet het licht weer.', img: IMG.forest },
-  { min: -20, plate: 'III', name: 'In balans', scene: 'kust', place: 'De kust van de berg', realm: 'Purgatorio', line: 'Aan de voet van de berg. Hier begint het werk.', img: IMG.shore },
+  { min: -20, plate: 'III', name: 'De Gemiddelde', scene: 'kust', place: 'De kust van de berg', realm: 'Purgatorio', line: 'Comfortabel, aan de voet van de berg. Hier blijven de meesten staan. Jij niet.', img: IMG.shore },
   { min: 20, plate: 'IV', name: 'De Klimmer', scene: 'terrassen', place: 'De terrassen', realm: 'Purgatorio', line: 'Je lichaam volgt je keuzes. Blijf klimmen.', img: IMG.climb },
   { min: 60, plate: 'V', name: 'Je Ideale Zelf', scene: 'paradiso', place: 'Paradiso', realm: 'Paradiso', line: 'Je bent er. En je bent nooit klaar.', img: IMG.knight },
 ]
