@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import { SINS, type SinId } from '../data/sins'
 import { artFor } from '../data/tableaux'
+import { arc } from '../lib/arc'
 import type { GogginsLevel } from '../lib/level'
 
 const INK = '#F2F2F2'
@@ -16,14 +17,6 @@ const SPAN = (Math.PI * 2) / 7
 
 const pt = (a: number, r: number) => [C.x + Math.cos(a) * r, C.y + Math.sin(a) * r]
 const ang = (i: number) => -Math.PI / 2 + i * SPAN
-
-/** Een boog rond (x, y), met de klok mee vanaf boven, voor een deel `f` van de cirkel. */
-const arc = (x: number, y: number, r: number, f: number) => {
-  const a = Math.min(f, 0.9999) * Math.PI * 2
-  const ex = x + Math.sin(a) * r
-  const ey = y - Math.cos(a) * r
-  return `M ${x} ${y - r} A ${r} ${r} 0 ${a > Math.PI ? 1 : 0} 1 ${ex} ${ey}`
-}
 
 const fmt = (v: number) => `${v >= 0.5 ? '+' : v <= -0.5 ? '−' : ''}${Math.abs(Math.round(v))}`
 
@@ -95,7 +88,8 @@ export default function Mandala({ values, active, onPick, level, onLevel }: { va
             <image href={artFor(s.id, v)} x={x - MED * 1.1} y={y - MED * 1.1} width={MED * 2.2} height={MED * 2.2} preserveAspectRatio="xMidYMid slice" clipPath={`url(#m${id}${i})`} opacity={!on ? 0.22 : dark ? 0.55 : 1} />
             {isSel && <circle cx={x} cy={y} r={MED} fill="none" stroke={INK} strokeWidth="1.5" />}
             {/* De boog: hoe sterk, rond vanaf boven. Wit voor de deugd, grijs voor de zonde */}
-            {on && Math.abs(v) > 0.5 && <path d={arc(x, y, ARC, (Math.abs(v) / 100) * k)} fill="none" stroke={dark ? INK_3 : INK} strokeWidth="2" strokeLinecap="round" />}
+            {/* Wint de deugd: een doorgetrokken boog met de klok mee. Wint de zonde: gestippeld, de andere kant op */}
+            {on && Math.abs(v) > 0.5 && <path d={arc(x, y, ARC, (Math.abs(v) / 100) * k, dark)} fill="none" stroke={dark ? INK_2 : INK} strokeWidth="2" strokeLinecap={dark ? 'butt' : 'round'} strokeDasharray={dark ? '2 3' : undefined} />}
             <text x={x} y={y + ARC + 16} textAnchor="middle" fill={!on ? INK_3 : isSel ? INK : INK_2} style={{ fontFamily: 'var(--sans)', fontWeight: isSel ? 600 : 400, fontSize: 13, transition: 'fill .3s' }}>
               {dark ? s.sin : s.virtue}
             </text>
@@ -110,7 +104,7 @@ export default function Mandala({ values, active, onPick, level, onLevel }: { va
           {picked ? (active.has(picked.id) ? fmt(values[picked.id]) : '–') : lv.name}
         </text>
         <text x={C.x} y={C.y + 28} textAnchor="middle" fill={INK_3} style={{ fontFamily: 'var(--sans)', fontSize: 13 }}>
-          {picked ? 'tik om te openen' : lv.next ? `nog ${lv.to} tot ${lv.next}` : 'en nooit klaar'}
+          {picked ? 'tik om te openen' : lv.next ? `nog ${lv.to} ${lv.to === 1 ? 'punt' : 'punten'} tot ${lv.next}` : 'en nooit klaar'}
         </text>
       </g>
     </svg>

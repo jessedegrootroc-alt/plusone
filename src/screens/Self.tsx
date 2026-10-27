@@ -7,6 +7,7 @@ import Pinboard from '../components/Pinboard'
 import LivingScene from '../components/LivingScene'
 import { pullingObjects, strongestVirtueObject } from '../data/objects'
 import Trophies from '../components/Trophies'
+import Account from '../components/Account'
 import { enableMotion, motionOn, needsPermission } from '../lib/motion'
 import { aimedFeatures, earnedFeatures } from '../lib/emblems'
 import { IMG, SINS, SIN_BY_ID, STAGES, stageFor, type SinId } from '../data/sins'
@@ -96,6 +97,8 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
       <HabitList list={virtues} onEdit={(h) => setPanel({ t: 'habit', h, kind: 'virtue' })} />
       <div className="group-title"><h2 className="h2">Verleidingen</h2><button className="link" onClick={() => setPanel({ t: 'catalog', kind: 'vice' })}>Toevoegen</button></div>
       <HabitList list={vices} onEdit={(h) => setPanel({ t: 'habit', h, kind: 'vice' })} />
+
+      <Account />
 
       <div className="divider" />
       <p className="small center">Illustraties: Gustave Doré (1832–1883) voor Dantes <i>Divina Commedia</i>. Publiek domein, via Wikimedia Commons. Je gegevens blijven op dit apparaat.</p>

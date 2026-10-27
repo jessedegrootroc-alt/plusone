@@ -326,6 +326,11 @@ button.card:active { transform: scale(0.985); }
 @keyframes lvBreath { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.015); } }
 @keyframes lvPulse { 0%, 100% { box-shadow: inset 0 0 0 1.5px rgba(242, 242, 242, 0.9); } 50% { box-shadow: inset 0 0 0 1.5px rgba(242, 242, 242, 0.35), 0 0 0 4px rgba(242, 242, 242, 0.06); } }
 @media (prefers-reduced-motion: reduce) { .lv-world, .lv-step, .lv-fig, .lv-fig.now img, .lv-rays, .lv-motes img, .lv-mist, .lv-ring.weak { animation: none !important; } }
+.motion-prompt { display: flex; gap: var(--s4); align-items: flex-start; margin-bottom: var(--s4); }
+.motion-phone { flex: none; color: var(--ink); }
+.motion-phone rect { transform-origin: 20px 20px; animation: phoneTilt 3s ease-in-out infinite alternate; }
+@keyframes phoneTilt { from { transform: rotate(-12deg); } to { transform: rotate(12deg); } }
+@media (prefers-reduced-motion: reduce) { .motion-phone rect { animation: none; } }
 .grens-row { display: flex; align-items: center; gap: var(--s3); width: 100%; margin-top: var(--s4); padding: var(--s4) var(--s2) 0; border-top: 1px solid var(--line); text-align: left; color: var(--ink-3); }
 .grens-icon { flex: none; width: 48px; height: 48px; object-fit: contain; }
 .grens-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--s2); }
@@ -471,11 +476,6 @@ button.card:active { transform: scale(0.985); }
 .hero-img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11, 11, 11, 0.1) 0%, rgba(11, 11, 11, 0) 24%, rgba(11, 11, 11, 0.72) 56%, rgba(11, 11, 11, 0.96) 100%); }
 /* ——— Je schaduw als scène: één achtergrond, alles op een maat van 12 s ——— */
 .ps { position: relative; display: block; width: 100%; height: 300px; padding: 0; overflow: hidden; text-align: left; background: #050505; isolation: isolate; }
-.ps-bg { position: absolute; inset: -8px -16px; background: url(/art/achtergrond-terrassen-1-ver.webp) center 30% / cover no-repeat; filter: brightness(0.7) contrast(0.95); }
-/* Van schaduw naar licht: links bijna zwart, rechts open */
-.ps-shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.55) 40%, rgba(0, 0, 0, 0.1) 75%, transparent 100%); }
-.ps-rays { position: absolute; right: -12%; top: -12%; width: 72%; height: 95%; background: url(/art/effect-stralen.webp) no-repeat 0 0 / cover; transform: scaleX(-1); mix-blend-mode: screen; opacity: 0.3; animation: psRays 6s ease-in-out infinite alternate; pointer-events: none; }
-.ps-glow { position: absolute; right: -40px; bottom: 0; width: 240px; height: 240px; background: url(/art/effect-gloed.webp) center / contain no-repeat; mix-blend-mode: screen; opacity: 0.3; animation: psGlow 6s ease-in-out infinite; }
 .ps-fig { position: absolute; bottom: 6px; width: 150px; height: 150px; }
 .ps-fig.sin { left: 2%; filter: brightness(0.62) contrast(1.15); }
 .ps-fig.virtue { right: 2%; }
@@ -484,24 +484,21 @@ button.card:active { transform: scale(0.985); }
 .ps-art img { position: absolute; left: 0; top: 0; max-width: none; }
 .ps-shadow { position: absolute; left: 12%; right: 12%; bottom: 0; height: 16px; border-radius: 50%; background: radial-gradient(rgba(0, 0, 0, 0.85), transparent 70%); }
 .ps-path { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.ps-mist { position: absolute; left: -20%; right: -20%; bottom: -24px; height: 120px; background: url(/art/effect-mist.webp) repeat-x center bottom / auto 100%; mix-blend-mode: screen; opacity: 0.22; -webkit-mask-image: linear-gradient(90deg, #000 30%, transparent 72%); mask-image: linear-gradient(90deg, #000 30%, transparent 72%); animation: psMist 12s ease-in-out infinite alternate; pointer-events: none; }
-.ps-motes img { position: absolute; bottom: 14%; width: 6px; mix-blend-mode: screen; opacity: 0; animation: medalDust 6s linear infinite; }
 .ps-vignette { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, transparent 34%), radial-gradient(120% 90% at 55% 70%, transparent 55%, rgba(0, 0, 0, 0.7)); }
 .ps .txt { position: absolute; left: var(--s5); right: var(--s5); top: var(--s5); z-index: 3; display: flex; flex-direction: column; gap: var(--s1); }
 /* Dezelfde camera als de levende scène op Vandaag (lib/motion cameraAt): elke laag op een diepte --d
    schuift tegen de camera in en zoomt mee rond hetzelfde punt (midden, 62% hoogte).
    'translate' en 'scale' staan los van 'transform', dus de eigen animaties van de lagen lopen gewoon door. */
 .ps { --cx: 0; --cy: 0; --cz: 0; }
+.ps-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .ps-cam { position: absolute; inset: 0; pointer-events: none; transform-origin: 50% 62%; translate: calc(var(--cx) * var(--d) * -1px) calc(var(--cy) * var(--d) * -1px); scale: calc(1 + var(--cz) * (0.3 + var(--d))); }
-/* Een laag met translate/scale blendt alleen binnen zichzelf; licht (stralen, mist, stof) daarom als geheel 'screen' over de scène */
-.ps-cam.screen { mix-blend-mode: screen; }
 .medal-art { translate: calc(var(--tx) * var(--par) * 0.5) calc(var(--ty) * var(--par) * 0.5); }
 .medal-sheen { translate: calc(var(--tx) * var(--par) * -1.5) 0; }
 @keyframes psRays { from { opacity: 0.22; } to { opacity: 0.42; } }
 @keyframes psGlow { 0%, 100% { opacity: 0.24; transform: scale(1); } 50% { opacity: 0.38; transform: scale(1.06); } }
 @keyframes psBreath { 0%, 100% { transform: scale(var(--k)); } 50% { transform: translateY(-3px) scale(var(--k)); } }
 @keyframes psMist { from { transform: translateX(-18px); } to { transform: translateX(18px); } }
-@media (prefers-reduced-motion: reduce) { .ps *, .ps-motes img { animation: none !important; } .ps-path image { display: none; } }
+@media (prefers-reduced-motion: reduce) { .ps * { animation: none !important; } .ps-path image { display: none; } }
 .sin-head { position: relative; height: 128px; border-radius: var(--r-md); overflow: hidden; margin-bottom: var(--s3); }
 .sin-head img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.1); }
 .sin-head::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11, 11, 11, 0.88) 0%, rgba(11, 11, 11, 0.24) 76%); }
@@ -567,14 +564,15 @@ button.card:active { transform: scale(0.985); }
 
 /* ——— De eerste kaart: past altijd volledig in beeld ——— */
 /* Boven: schermmarge 24 + kop 48 + afstand 24. Onder: tabbalk ±84 + lucht 24. */
-.hero-card { display: flex; flex-direction: column; height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 204px); min-height: 400px; }
-/* svh is de kleinste schermhoogte: verandert niet als de adresbalk bij het scrollen in- of uitschuift, dus de scène houdt één maat */
-@supports (height: 100svh) { .hero-card { height: calc(100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 204px); } }
+.hero-card { display: flex; flex-direction: column; height: calc(100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 204px); min-height: 400px; }
+/* --app-h is de schermhoogte bij het openen (main.tsx), vast tot je de telefoon draait. Niet elke browser houdt
+   svh stil bij het scrollen; zo groeit of krimpt de scène nooit als de adresbalk in- of uitschuift. */
+.hero-card { height: calc(var(--app-h, 100svh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 204px); }
 .hero-scene { position: relative; flex: 1; min-height: 160px; }
 .hero-scene .scene { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; max-height: none; }
 
 /* ——— De levende scène ——— */
-.scene { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 60svh; overflow: hidden; background: #000; border-radius: var(--r-lg) var(--r-lg) 0 0; cursor: default; isolation: isolate; }
+.scene { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: calc(var(--app-h, 100svh) * 0.6); overflow: hidden; background: #000; border-radius: var(--r-lg) var(--r-lg) 0 0; cursor: default; isolation: isolate; }
 .ink-wipe { position: absolute; inset: -25%; z-index: 6; pointer-events: none; background: url('/art/scherm-inktvlek.webp') center / contain no-repeat; }
 .ink-wipe.in { animation: inkIn 0.45s cubic-bezier(0.5, 0, 0.75, 0) both; }
 .ink-wipe.out { animation: inkOut 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }

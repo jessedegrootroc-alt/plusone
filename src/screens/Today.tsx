@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import BalanceMeter from '../components/BalanceMeter'
 import Scene from '../components/Scene'
+import MotionPrompt from '../components/MotionPrompt'
 import { GrensRow, TankStrip } from '../components/Grens'
 import MirrorNotes from '../components/MirrorNotes'
 import { RockIcon } from '../components/Jar'
@@ -117,6 +118,9 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
           </button>
         )}
       </div>
+
+      {/* Eén keer: mogen de scènes meebewegen met je telefoon? */}
+      <MotionPrompt />
 
       {/* De spiegel: in één oogopslag waar je staat. Deze kaart vult precies het scherm. */}
       <div className="card hero-card" style={{ padding: 0, overflow: 'hidden' }}>

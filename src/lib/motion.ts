@@ -72,6 +72,13 @@ const listen = () => {
 
 type IOSOrientation = typeof DeviceOrientationEvent & { requestPermission?: () => Promise<'granted' | 'denied'> }
 
+const CHOICE = 'plusone-motion' // 'on' als je beweging ooit aanzette, 'off' als je "niet nu" zei
+const readChoice = () => { try { return localStorage.getItem(CHOICE) } catch { return null } }
+const saveChoice = (v: 'on' | 'off') => { try { localStorage.setItem(CHOICE, v) } catch { /* geen opslag */ } }
+
+/** Op het beginscherm gezet en als app geopend (iOS of Android). */
+export const isInstalled = () => matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
+
 /** iOS vraagt toestemming, en alleen na een tik. */
 export const needsPermission = () => typeof DeviceOrientationEvent !== 'undefined' && typeof (DeviceOrientationEvent as IOSOrientation).requestPermission === 'function'
 
@@ -88,7 +95,31 @@ export const enableMotion = async () => {
     }
   }
   listen()
+  saveChoice('on')
   return true
+}
+
+/**
+ * Of de app moet vragen om beweging aan te zetten: alleen waar dat toestemming vraagt (iOS),
+ * via HTTPS (anders geeft de telefoon de sensoren nooit vrij), en als je nog niet "niet nu" zei.
+ */
+export const shouldAskMotion = () => running && !listening && needsPermission() && window.isSecureContext && readChoice() !== 'on' && readChoice() !== 'off'
+export const declineMotion = () => saveChoice('off')
+
+/**
+ * Heb je beweging eerder aangezet, dan geeft iOS hem bij een nieuwe start pas na je eerste aanraking weer vrij,
+ * zonder opnieuw te vragen. Luister daarom naar de eerste aanraking (touchend: op iOS komt een 'click' niet
+ * altijd door bij een tik op gewone tekst of een plaat).
+ */
+export const rearmMotion = () => {
+  if (!running || listening || !needsPermission() || readChoice() !== 'on') return
+  const go = () => {
+    window.removeEventListener('touchend', go, true)
+    window.removeEventListener('click', go, true)
+    void enableMotion()
+  }
+  window.addEventListener('touchend', go, true)
+  window.addEventListener('click', go, true)
 }
 
 /** Of de gyroscoop al meedoet. */

@@ -383,7 +383,7 @@ export function GrensDetails({ onClose }: { onClose: () => void }) {
                   <Stairs level={l.level} toNext={l.toNext} />
                   <div className="grow">
                     <div className="name">{a.name}{openAreas.has(l.area) && <span className="area-dot" aria-label="staat een grens open" />}</div>
-                    <div className="meta">{l.level === 0 ? 'Je eerste grens hier staat open' : `${l.name}${up ? ` · nog ${l.need} tot ${up.name.toLowerCase()}` : ' · nieuwe comfortzone, zoek verderop'}`}</div>
+                    <div className="meta">{l.level === 0 ? 'Je eerste grens hier staat open' : `${l.name}${up ? ` · nog ${l.need} ${l.need === 1 ? 'punt' : 'punten'} tot ${up.name.toLowerCase()}` : ' · nieuwe comfortzone, zoek verderop'}`}</div>
                   </div>
                   <span style={{ color: 'var(--ink-3)', display: 'grid' }}>{Icon.plus()}</span>
                 </button>

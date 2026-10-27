@@ -1,6 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { tableauFor } from '../data/tableaux'
 import TableauParts from './TableauParts'
+import { useTween } from './ui'
+import { arc } from '../lib/arc'
 import type { SinId } from '../data/sins'
 
 const FRAME = 627 // de taferelen zijn 627×627
@@ -14,11 +16,10 @@ const DUST = [12, 27, 41, 55, 68, 80, 90]
 export default function Medallion({ id, value, active = true, size = 224 }: { id: SinId; value: number; active?: boolean; size?: number }) {
   const dark = active && value < -0.5
   const name = tableauFor(id, active ? value : 0)
-  const [drawn, setDrawn] = useState(0)
-  useEffect(() => {
-    const t = requestAnimationFrame(() => setDrawn(active ? Math.min(100, Math.abs(value)) : 0))
-    return () => cancelAnimationFrame(t)
-  }, [value, active])
+  // De boog tekent zich bij het openen
+  const [go, setGo] = useState(false)
+  useEffect(() => { const t = requestAnimationFrame(() => setGo(true)); return () => cancelAnimationFrame(t) }, [])
+  const drawn = useTween(go && active ? Math.min(100, Math.abs(value)) : 0, 1200)
 
   const ring = size + 24
   const r = size / 2 + 8
@@ -28,7 +29,8 @@ export default function Medallion({ id, value, active = true, size = 224 }: { id
     <div className={`medal ${dark ? 'dark' : ''} ${active ? '' : 'off'}`} style={style}>
       <svg className="medal-ring" width={ring} height={ring} viewBox={`0 0 ${ring} ${ring}`} aria-hidden="true">
         <circle cx={ring / 2} cy={ring / 2} r={r} fill="none" stroke="#F2F2F2" strokeOpacity="0.1" strokeWidth="2" />
-        <circle cx={ring / 2} cy={ring / 2} r={r} fill="none" stroke={dark ? '#808080' : '#F2F2F2'} strokeWidth="2.5" strokeLinecap="round" pathLength={100} strokeDasharray={`${drawn} 100`} transform={`rotate(-90 ${ring / 2} ${ring / 2})`} style={{ transition: 'stroke-dasharray 1.2s var(--ease)' }} />
+        {/* Deugd: doorgetrokken, met de klok mee. Zonde: gestippeld, tegen de klok in */}
+        {drawn > 0.5 && <path d={arc(ring / 2, ring / 2, r, drawn / 100, dark)} fill="none" stroke={dark ? '#B3B3B3' : '#F2F2F2'} strokeWidth="2.5" strokeLinecap={dark ? 'butt' : 'round'} strokeDasharray={dark ? '3 4' : undefined} />}
       </svg>
       <div className="medal-disc">
         <div className="medal-art">

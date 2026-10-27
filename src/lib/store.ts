@@ -198,13 +198,14 @@ const load = (): State => {
 
 let state: State = load()
 const listeners = new Set<() => void>()
+/** Wie wil weten dat jij iets veranderde (de sync met de cloud). Niet bij een kopie die van de cloud komt. */
+const changeHooks = new Set<() => void>()
+export const onLocalChange = (fn: () => void) => { changeHooks.add(fn); return () => changeHooks.delete(fn) }
 
 export const getState = () => state
 
-export const update = (fn: (draft: State) => void) => {
-  const draft = structuredClone(state)
-  fn(draft)
-  state = draft
+const commit = (next: State) => {
+  state = next
   try {
     localStorage.setItem(KEY, JSON.stringify(state))
   } catch {
@@ -212,6 +213,16 @@ export const update = (fn: (draft: State) => void) => {
   }
   listeners.forEach((l) => l())
 }
+
+export const update = (fn: (draft: State) => void) => {
+  const draft = structuredClone(state)
+  fn(draft)
+  commit(draft)
+  changeHooks.forEach((h) => h())
+}
+
+/** Je reis vervangen door de versie uit de cloud (bijvoorbeeld van je andere telefoon). */
+export const replaceState = (next: Partial<State>) => commit({ ...fresh(), ...next })
 
 export const resetAll = () => update((d) => Object.assign(d, fresh()))
 
