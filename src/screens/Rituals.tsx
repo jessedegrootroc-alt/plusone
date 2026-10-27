@@ -116,7 +116,7 @@ export function Mirror({ date, onClose }: { date: string; onClose: () => void })
           </div>
           <div className="q" key={aar}>
             <div className="big">{Q.title}</div>
-            <div style={{ color: 'var(--ink-2)', fontSize: 16, lineHeight: '24px' }}>{Q.sub}</div>
+            <div style={{ color: 'var(--ink-2)', fontSize: 16, lineHeight: '24px'}}>{Q.sub}</div>
             <div className="chips" style={{ justifyContent: 'center', marginTop: 8 }}>
               {Q.opts.map((o) => (
                 <button key={o} className="chip sg-chip" onClick={() => save(Q.key, o)}>{o}</button>
@@ -190,13 +190,13 @@ export function Mirror({ date, onClose }: { date: string; onClose: () => void })
           {h.kind === 'vice' ? `${sin.sin} · ${sin.sinLatin}` : h.id.startsWith('rock-') ? `${ROCK[h.weight]} · vandaag` : `${ROCK[h.weight]} · ${sin.virtue}`}
         </div>
         <div className="big">{h.name}</div>
-        <div style={{ color: 'var(--ink-2)', fontSize: 16, lineHeight: '24px' }}>
+        <div style={{ color: 'var(--ink-2)', fontSize: 16, lineHeight: '24px'}}>
           {h.type === 'do' && 'Gedaan?'}
           {h.type === 'avoid' && 'Ben je er vrij van gebleven?'}
           {h.type === 'target' && `Doel: ${fmt(h.amount ?? 0)} ${h.unit}. Precies tellen mag, hoeft niet.`}
           {h.type === 'limit' && `Maximum: ${fmt(h.amount ?? 0)} ${h.unit}. Precies tellen mag, hoeft niet.`}
         </div>
-        {h.cue && <div className="italic" style={{ color: 'var(--ink-2)', fontSize: 16, lineHeight: '24px' }}>“{h.cue}”</div>}
+        {h.cue && <div className="italic" style={{ color: 'var(--ink-2)', fontSize: 16, lineHeight: '24px'}}>“{h.cue}”</div>}
         {(h.type === 'target' || h.type === 'limit') && (
           <div className="bigstep mt-24">
             <button onClick={() => { buzz(); setValue(date, h.id, val - step) }} aria-label="Minder"><Ico name="minus" size={26} /></button>

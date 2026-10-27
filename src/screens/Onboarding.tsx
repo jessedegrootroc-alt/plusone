@@ -138,7 +138,7 @@ export default function Onboarding() {
             <div className="card">
               <div className="stack gap-8">
                 {([3, 2, 1] as const).map((sz) => (
-                  <div key={sz} className="hstack" style={{ gap: 8, fontSize: 13, lineHeight: '20px' }}>
+                  <div key={sz} className="hstack" style={{ gap: 8, fontSize: 13, lineHeight: '20px'}}>
                     <RockIcon size={sz} />
                     <span style={{ flex: 1 }}>{ROCK_PLURAL[sz]}</span>
                     <b style={{ fontWeight: sz === 3 && bigCount > 3 ? 800 : undefined, textDecoration: sz === 3 && bigCount > 3 ? 'underline' : undefined }}>{virtues.filter((h) => h.weight === sz).length}</b>
@@ -155,7 +155,7 @@ export default function Onboarding() {
                   <div className="grow" style={{ minWidth: 140 }}><div className="name">{h.name}</div></div>
                   <div className="seg" style={{ padding: 4 }}>
                     {([3, 2, 1] as const).map((sz) => (
-                      <button key={sz} className={h.weight === sz ? 'on' : ''} style={{ height: 32, padding: '0 8px', fontSize: 13, lineHeight: '20px' }} onClick={() => { buzz(); setPicked((p) => { const key = Object.keys(p).find((k) => p[k].id === h.id)!; return { ...p, [key]: { ...p[key], weight: sz } } }) }}>
+                      <button key={sz} className={h.weight === sz ? 'on' : ''} style={{ height: 32, padding: '0 8px', fontSize: 13, lineHeight: '20px'}} onClick={() => { buzz(); setPicked((p) => { const key = Object.keys(p).find((k) => p[k].id === h.id)!; return { ...p, [key]: { ...p[key], weight: sz } } }) }}>
                         {ROCK_SHORT[sz]}
                       </button>
                     ))}
@@ -276,7 +276,7 @@ function Concept() {
       <div className="stack gap-4">
         {SINS.map((s) => (
           <div key={s.id} className="hstack between" style={{ padding: '8px 4px', borderBottom: '1px solid var(--line)' }}>
-            <span style={{ fontFamily: 'var(--title)', fontWeight: 400, fontSize: 16, lineHeight: '24px' }}>{s.sin}</span>
+            <span style={{ fontFamily: 'var(--title)', fontWeight: 400, fontSize: 16, lineHeight: '24px'}}>{s.sin}</span>
             <span style={{ flex: 1, height: 1, background: 'var(--ink)', margin: '0 12px', opacity: 0.35 }} />
             <span style={{ fontFamily: 'var(--title)', fontSize: 16, lineHeight: '24px', fontWeight: 400 }}>{s.virtue}</span>
           </div>
@@ -321,7 +321,7 @@ function PickStep({ mode, picked, toggle, setAmount }: {
             return (
               <div key={key} className="row" style={{ minHeight: 56 }}>
                 <div className="grow">
-                  <div className="name" style={{ fontSize: 13, lineHeight: '20px' }}>{h.name}</div>
+                  <div className="name" style={{ fontSize: 13, lineHeight: '20px'}}>{h.name}</div>
                   <div className="meta">{h.type === 'limit' ? 'Maximaal per dag' : 'Minimaal per dag'}</div>
                 </div>
                 <div className="stepper">

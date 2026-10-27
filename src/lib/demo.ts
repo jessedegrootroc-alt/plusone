@@ -1,4 +1,5 @@
 import { VICES, VIRTUES } from '../data/catalog'
+import { ladderFor } from '../data/ladders'
 import { addDays, fromTemplate, todayISO, update } from './store'
 
 /**
@@ -20,8 +21,9 @@ export const seedDemo = (mode: string) => {
     d.why = d.why || 'Ik ben het zat om de versie van mezelf te zijn die het opgeeft. Ik wil over een jaar terugkijken en trots zijn.'
     d.habits = habits.map((h) => (h.id.startsWith('workout-') ? { ...h, at: '06:30' } : h.id.startsWith('early-') ? { ...h, weight: 3, at: '06:00' } : h))
     d.notes = [
-      { id: 'n1', text: 'Je bent 12 kilo te zwaar. Elke ochtend om 6:30 trainen, geen excuus.', sin: 'gluttony', createdAt: start },
-      { id: 'n2', text: 'Je zegt dat je een bedrijf wilt. Je hebt nog niemand gebeld. Bel deze week drie mensen.', sin: 'sloth', createdAt: start },
+      { id: 'n1', text: 'Je bent 12 kilo te zwaar. Elke ochtend om 6:30 trainen, geen excuus.', sin: 'gluttony', domain: 'fysiek', steps: ladderFor('fysiek', 'kilo').map((text, i) => ({ text, doneAt: i < 2 ? start : undefined })), createdAt: start },
+      { id: 'n2', text: 'Je zegt dat je een bedrijf wilt. Je hebt nog niemand gebeld. Bel deze week drie mensen.', sin: 'sloth', domain: 'financieel', steps: ladderFor('financieel', 'bedrijf').map((text, i) => ({ text, doneAt: i < 1 ? start : undefined })), createdAt: start },
+      { id: 'n3', text: 'Je zit elke avond met je hoofd in je telefoon. Je bent rusteloos en leeg.', sin: 'lust', domain: 'spiritueel', steps: ladderFor('spiritueel', 'stilte').map((text) => ({ text })), createdAt: start },
     ]
     d.createdAt = start
     d.logs = {}

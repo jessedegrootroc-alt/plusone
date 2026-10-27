@@ -217,7 +217,7 @@ function UrgePatterns() {
             <span style={{ fontWeight: 600 }}>{v}</span>
           </div>
         ))}
-        {voice && <p className="italic" style={{ margin: '12px 0 8px', fontSize: 16, lineHeight: '24px' }}>De Schim zegt het vaakst: “{VOICES[voice[0]].says}”</p>}
+        {voice && <p className="italic" style={{ margin: '12px 0 8px', fontSize: 16, lineHeight: '24px'}}>De Schim zegt het vaakst: “{VOICES[voice[0]].says}”</p>}
       </div>
     </>
   )
@@ -257,12 +257,12 @@ function JourneySheet({ onClose }: { onClose: () => void }) {
         </div>
         <StagePlate balance={tb} style={{ width: '72%', margin: '0 auto' }} />
         <div className="caption">Plaat {st.plate} · {st.name} · {st.place}</div>
-        <p className="italic center" style={{ margin: 0, fontSize: 16, lineHeight: '24px' }}>{st.line}</p>
+        <p className="italic center" style={{ margin: 0, fontSize: 16, lineHeight: '24px'}}>{st.line}</p>
         <input type="range" min={-100} max={100} value={b} onChange={(e) => setB(Number(e.target.value))} style={{ width: '100%', accentColor: '#F2F2F2' }} aria-label="Balans" />
         <div className="hstack between" style={{ gap: 4 }}>
           {STAGES.map((x, i) => {
             const v = i === 0 ? -100 : i === STAGES.length - 1 ? 100 : Math.round((x.min + (STAGES[i + 1]?.min ?? 100)) / 2)
-            return <button key={x.plate} className={`chip ${st.plate === x.plate ? 'on' : ''}`} style={{ padding: '8px 8px', minHeight: 34, fontSize: 13, lineHeight: '20px' }} onClick={() => setB(v)}>{x.plate}</button>
+            return <button key={x.plate} className={`chip ${st.plate === x.plate ? 'on' : ''}`} style={{ padding: '8px 8px', minHeight: 34, fontSize: 13, lineHeight: '20px'}} onClick={() => setB(v)}>{x.plate}</button>
           })}
         </div>
       </div>

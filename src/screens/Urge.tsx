@@ -180,9 +180,9 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
               </div>
             ) : (
               <div className="stack gap-16" style={{ marginTop: 8 }}>
-                <p className="italic" style={{ color: 'var(--ink-2)', margin: 0, fontSize: 16, lineHeight: '24px' }}>De Schim: “{VOICES[ev.voice].says}”</p>
+                <p className="italic" style={{ color: 'var(--ink-2)', margin: 0, fontSize: 16, lineHeight: '24px'}}>De Schim: “{VOICES[ev.voice].says}”</p>
                 <p className="big" style={{ margin: 0 }}>{VOICES[ev.voice].answer}</p>
-                <p style={{ color: 'var(--ink-2)', margin: 0, fontSize: 13, lineHeight: '20px' }}>Zeg het in je hoofd: “Ik merk dat ik de gedachte heb dat …” Dan is het een gedachte, en geen waarheid meer.</p>
+                <p style={{ color: 'var(--ink-2)', margin: 0, fontSize: 13, lineHeight: '20px'}}>Zeg het in je hoofd: “Ik merk dat ik de gedachte heb dat …” Dan is het een gedachte, en geen waarheid meer.</p>
               </div>
             )}
           </>
@@ -200,7 +200,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
                 <div className="big" style={{ marginTop: 8 }}>{memory.gaveIn.map(([f, n]) => `${f.toLowerCase()} (${n}×)`).join(' · ')}</div>
               </div>
             ) : (
-              <p className="italic" style={{ color: 'var(--ink-2)', margin: 0, fontSize: 16, lineHeight: '24px' }}>Denk aan de laatste keer. Hoe voelde je je een kwartier later?</p>
+              <p className="italic" style={{ color: 'var(--ink-2)', margin: 0, fontSize: 16, lineHeight: '24px'}}>Denk aan de laatste keer. Hoe voelde je je een kwartier later?</p>
             )}
             {memory.resisted.length > 0 && (
               <div>
@@ -213,7 +213,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
                 <div key={l as string} className="stack gap-8">
                   <StagePlate balance={b as number} />
                   <div style={{ fontSize: 13, lineHeight: '20px', color: 'var(--ink-2)'}}>{l}</div>
-                  <div style={{ fontFamily: 'var(--title)', fontWeight: 400, fontSize: 20, lineHeight: '28px' }}>{n}</div>
+                  <div style={{ fontFamily: 'var(--title)', fontWeight: 400, fontSize: 20, lineHeight: '28px'}}>{n}</div>
                 </div>
               ))}
             </div>
@@ -240,7 +240,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
             <div style={{ color: 'var(--ink-2)' }}>{need ? `Wat je eigenlijk zoekt is ${need.promise}. Kies wat je nu doet:` : 'Kies wat je nu doet:'}</div>
             <div className="stack gap-8">
               {(need?.actions ?? ['20 push-ups, nu', 'Verander van ruimte', 'Stuur iemand een bericht']).map((a) => (
-                <button key={a} className="ans" style={{ height: 'auto', minHeight: 60, padding: '12px 16px', textAlign: 'left', fontSize: 16, lineHeight: '24px' }} onClick={() => { set({ action: a }); go('commit') }}>
+                <button key={a} className="ans" style={{ height: 'auto', minHeight: 60, padding: '12px 16px', textAlign: 'left', fontSize: 16, lineHeight: '24px'}} onClick={() => { set({ action: a }); go('commit') }}>
                   {a}
                 </button>
               ))}
@@ -298,7 +298,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
         {step === 'commit' && (
           <div className="stack gap-8">
             <button className="ans yes" style={{ width: '100%', height: 64 }} onClick={() => finish('resisted')}>Ik heb het doorstaan</button>
-            <button className="ans" style={{ width: '100%', height: 52, fontSize: 16, lineHeight: '24px' }} onClick={() => go('surf')}>Hij is er nog. Nog een golf.</button>
+            <button className="ans" style={{ width: '100%', height: 52, fontSize: 16, lineHeight: '24px'}} onClick={() => go('surf')}>Hij is er nog. Nog een golf.</button>
           </div>
         )}
         {step === 'done' && (

@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import type { FeatureId, HabitTemplate, HabitType } from '../data/catalog'
 import type { AreaId, Size } from '../data/growth'
+import type { Domain } from '../data/ladders'
 import type { SinId } from '../data/sins'
 
 export interface Habit {
@@ -81,6 +82,10 @@ export interface MirrorNote {
   text: string
   /** Onder welke zonde dit valt. Zo telt de post-it mee in je balans en je mandala. */
   sin?: SinId
+  /** Het onderdeel van je leven: financieel, spiritueel, fysiek of mentaal. */
+  domain?: Domain
+  /** De ladder naar het doel: kleine stappen die steeds een beetje ongemakkelijker worden. */
+  steps?: { text: string; doneAt?: string }[]
   createdAt: string
   doneAt?: string
 }

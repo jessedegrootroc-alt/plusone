@@ -1,13 +1,15 @@
 import { useState } from 'react'
+import { DOMAINS, DOMAIN_BY_ID, guessDomain, ladderFor, type Domain } from '../data/ladders'
 import { SINS, SIN_BY_ID, type SinId } from '../data/sins'
 import { noteHabitId } from '../lib/score'
 import { buzz, setValue, todayISO, uid, update, useStore, type MirrorNote } from '../lib/store'
 import { HoldButton, Icon, Sheet } from './ui'
 
-const MAX = 3
-const TILT = [-0.8, 0.6, -0.4]
+/** Hooguit twee per onderdeel: als alles moet, gebeurt er niets. */
+const MAX_PER = 2
+const TILT = [-0.8, 0.6, -0.4, 0.5]
 
-// Een eerste gok op basis van de woorden, zodat je meestal alleen hoeft te bevestigen.
+// Een eerste gok voor de zonde op basis van de woorden; zonder treffer de zonde die bij het onderdeel hoort.
 const HINTS: [SinId, RegExp][] = [
   ['gluttony', /kilo|zwaar|eten|suiker|drank|alcohol|roken|vape|snack|bier/i],
   ['lust', /porno|scroll|telefoon|scherm|instagram|tiktok|seks/i],
@@ -17,19 +19,28 @@ const HINTS: [SinId, RegExp][] = [
   ['pride', /excuus|excuses|hulp|sorry|gelijk|ego|liegen/i],
   ['sloth', /trainen|sport|bedrijf|bel|uitstel|lui|opstaan|bed|werk|lezen|leren/i],
 ]
-const guess = (text: string): SinId | undefined => HINTS.find(([, re]) => re.test(text))?.[0]
+const guessSin = (text: string, domain?: Domain): SinId | undefined => HINTS.find(([, re]) => re.test(text))?.[0] ?? (domain ? DOMAIN_BY_ID[domain].sin : undefined)
+
+const nextStep = (n: MirrorNote) => {
+  const steps = n.steps ?? []
+  const i = steps.findIndex((x) => !x.doneAt)
+  return { i, step: i >= 0 ? steps[i] : null, total: steps.length, done: steps.filter((x) => x.doneAt).length }
+}
 
 /**
- * De Accountability Mirror van Goggins: hooguit drie post-its, in je eigen harde woorden.
- * Elke post-it valt onder een zonde en telt elke dag mee in je balans: eraan gewerkt telt,
- * overslaan kost. Je haalt hem pas af als het echt bereikt is; die dag telt als grote steen.
+ * De Accountability Mirror van Goggins, per onderdeel van je leven: fysiek, mentaal, financieel en spiritueel.
+ * Elke post-it krijgt een ladder van kleine stappen die steeds ongemakkelijker worden, tot het doel zelf.
+ * Hij telt elke dag mee in je balans: eraan gewerkt telt, overslaan kost. Je haalt hem pas af als het echt bereikt is.
  */
 export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
   const s = useStore()
-  const notes = (s.notes ?? []).filter((n) => !n.doneAt)
-  const off = (s.notes ?? []).length - notes.length
+  const all = (s.notes ?? []).filter((n) => !n.doneAt)
+  const off = (s.notes ?? []).length - all.length
+  const [filter, setFilter] = useState<Domain | 'alles'>('alles')
   const [edit, setEdit] = useState<MirrorNote | 'new' | null>(null)
   const log = s.logs[date]
+  const notes = filter === 'alles' ? all : all.filter((n) => n.domain === filter)
+  const count = (d: Domain) => all.filter((n) => n.domain === d).length
 
   return (
     <div className="card mt-24 stack gap-16">
@@ -38,22 +49,53 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
         <span className="small">{off > 0 ? `${off} eraf gehaald` : 'telt elke dag mee'}</span>
       </div>
 
-      {notes.length === 0 ? (
+      {all.length > 0 && (
+        <div className="chips scroll" role="tablist" aria-label="Filter op onderdeel">
+          <button role="tab" aria-selected={filter === 'alles'} className={`chip ${filter === 'alles' ? 'on' : ''}`} onClick={() => setFilter('alles')}>Alles · {all.length}</button>
+          {DOMAINS.map((d) => (
+            <button key={d.id} role="tab" aria-selected={filter === d.id} className={`chip ${filter === d.id ? 'on' : ''}`} onClick={() => setFilter(d.id)}>
+              {d.name}{count(d.id) ? ` · ${count(d.id)}` : ''}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {all.length === 0 ? (
         <div className="stack gap-12">
-          <p className="lead">Schrijf op wat er mis is en wat er moet gebeuren, zo hard en eerlijk als Goggins. Elke post-it valt onder een zonde en telt elke dag mee in je balans.</p>
+          <p className="lead">Schrijf op wat er mis is en wat er moet gebeuren, zo hard en eerlijk als Goggins. Per onderdeel van je leven, met een ladder van kleine stappen naar het doel.</p>
           <button className="btn ghost sm" onClick={() => setEdit('new')}>Schrijf je eerste post-it</button>
         </div>
       ) : (
         <div className="stack gap-12">
+          {notes.length === 0 && filter !== 'alles' && <p className="small" style={{ margin: 0 }}>Nog niets voor {DOMAIN_BY_ID[filter].name.toLowerCase()}. Hier groei je dus nog niet.</p>}
           {notes.map((n, i) => {
             const on = (log?.v[noteHabitId(n)] ?? 0) >= 1
-            const sin = n.sin ? SIN_BY_ID[n.sin] : null
+            const dom = n.domain ? DOMAIN_BY_ID[n.domain] : null
+            const st = nextStep(n)
             return (
               <div key={n.id} className="postit" style={{ transform: `rotate(${TILT[i % TILT.length]}deg)` }}>
+                <button className="postit-dom" onClick={() => setEdit(n)}>{dom ? dom.name : 'Kies een onderdeel'}</button>
                 <button className="postit-text" onClick={() => setEdit(n)}>{n.text}</button>
+                {st.total > 0 && (
+                  <div className="postit-ladder">
+                    <div className="hstack" style={{ gap: 4 }} aria-hidden="true">
+                      {(n.steps ?? []).map((x, j) => <span key={j} style={{ flex: 1, height: 3, borderRadius: 2, background: x.doneAt ? '#0B0B0B' : 'rgba(11,11,11,0.15)' }} />)}
+                    </div>
+                    {st.step ? (
+                      <div className="postit-step">
+                        <span className="lbl">Stap {st.i + 1} van {st.total}</span>
+                        <span>{st.step.text}</span>
+                      </div>
+                    ) : (
+                      <div className="postit-step"><span className="lbl">Alle stappen gezet</span><span>Bereikt? Haal hem eraf. Nog niet? Leg de lat hoger.</span></div>
+                    )}
+                  </div>
+                )}
                 <div className="postit-foot">
-                  <button className="postit-sin" onClick={() => setEdit(n)}>{sin ? `${sin.sin} → ${sin.virtue}` : 'Kies een zonde'}</button>
-                  {sin && (
+                  {st.step ? (
+                    <HoldStep key={st.i} onDone={() => update((d) => { const x = d.notes.find((y) => y.id === n.id); const t = x?.steps?.find((y) => !y.doneAt); if (t) t.doneAt = todayISO() })} />
+                  ) : <span />}
+                  {n.sin && (
                     <button className={`postit-check ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => { buzz(); setValue(date, noteHabitId(n), on ? 0 : 1) }}>
                       {on ? <>{Icon.check('#F2F2F2')} Vandaag gedaan</> : 'Vandaag gedaan?'}
                     </button>
@@ -62,28 +104,42 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
               </div>
             )
           })}
-          {notes.length < MAX && (
-            <button className="chip add" style={{ alignSelf: 'flex-start' }} onClick={() => setEdit('new')}>{Icon.plus()} Post-it</button>
-          )}
+          <button className="chip add" style={{ alignSelf: 'flex-start' }} onClick={() => setEdit('new')}>{Icon.plus()} Post-it</button>
         </div>
       )}
 
-      {edit && <NoteSheet note={edit === 'new' ? undefined : edit} onClose={() => setEdit(null)} />}
+      {edit && <NoteSheet note={edit === 'new' ? undefined : edit} preset={filter === 'alles' ? undefined : filter} onClose={() => setEdit(null)} />}
     </div>
   )
 }
 
-function NoteSheet({ note, onClose }: { note?: MirrorNote; onClose: () => void }) {
+/** Een stap afvinken vraagt vasthouden: gedaan, niet gezegd. */
+function HoldStep({ onDone }: { onDone: () => void }) {
+  return <HoldButton className="btn postit-hold" label="Stap gezet" ms={900} onDone={onDone} />
+}
+
+function NoteSheet({ note, preset, onClose }: { note?: MirrorNote; preset?: Domain; onClose: () => void }) {
+  const s = useStore()
   const [text, setText] = useState(note?.text ?? '')
+  const [domain, setDomain] = useState<Domain | undefined>(note?.domain ?? preset)
+  const [domTouched, setDomTouched] = useState(!!(note?.domain ?? preset))
   const [sin, setSin] = useState<SinId | undefined>(note?.sin)
-  const [touched, setTouched] = useState(!!note?.sin)
-  const shown = touched ? sin : guess(text)
+  const [sinTouched, setSinTouched] = useState(!!note?.sin)
+  const [sinOpen, setSinOpen] = useState(false)
+  const dom = domTouched ? domain : guessDomain(text)
+  const shownSin = sinTouched ? sin : guessSin(text, dom)
+  const steps = dom && text.trim() ? ladderFor(dom, text) : []
+  const full = !note && dom ? (s.notes ?? []).filter((n) => !n.doneAt && n.domain === dom).length >= MAX_PER : false
+
   const save = () => {
     buzz(12)
     update((d) => {
       d.notes ??= []
-      if (note) Object.assign(d.notes.find((x) => x.id === note.id)!, { text: text.trim(), sin: shown })
-      else d.notes.push({ id: uid(), text: text.trim(), sin: shown, createdAt: todayISO() })
+      if (note) {
+        const x = d.notes.find((y) => y.id === note.id)!
+        const reset = x.domain !== dom || !x.steps?.length
+        Object.assign(x, { text: text.trim(), sin: shownSin, domain: dom, steps: reset ? steps.map((t) => ({ text: t })) : x.steps })
+      } else d.notes.push({ id: uid(), text: text.trim(), sin: shownSin, domain: dom, steps: steps.map((t) => ({ text: t })), createdAt: todayISO() })
     })
     onClose()
   }
@@ -103,25 +159,47 @@ function NoteSheet({ note, onClose }: { note?: MirrorNote; onClose: () => void }
       <div className="stack gap-16">
         <div className="stack gap-4">
           <h2 className="h2">{note ? 'Je post-it' : 'Wat moet je jezelf eerlijk zeggen?'}</h2>
-          <p className="small" style={{ margin: 0 }}>Schrijf het zoals het is, zonder verzachting. Wat is er mis, en wat moet er gebeuren?</p>
+          <p className="small" style={{ margin: 0 }}>Schrijf het zoals het is, zonder verzachting. Wat is er mis, en waar wil je naartoe?</p>
         </div>
-        <textarea className="textarea" autoFocus={!note} value={text} onChange={(e) => setText(e.target.value)} placeholder="Bijv. Je bent 12 kilo te zwaar. Elke ochtend om 6:00 trainen, geen excuus." style={{ minHeight: 112 }} />
+        <textarea className="textarea" autoFocus={!note} value={text} onChange={(e) => setText(e.target.value)} placeholder="Bijv. Je bent 12 kilo te zwaar. Over zes maanden loop je de halve marathon." style={{ minHeight: 104 }} />
 
         <div className="field">
-          <label>Onder welke zonde valt dit?</label>
+          <label>Voor welk onderdeel?</label>
           <div className="chips">
-            {SINS.map((x) => (
-              <button key={x.id} className={`chip ${shown === x.id ? 'on' : ''}`} onClick={() => { setSin(x.id); setTouched(true) }}>
-                {shown === x.id && Icon.check('#0B0B0B')} {x.sin}
+            {DOMAINS.map((d) => (
+              <button key={d.id} className={`chip ${dom === d.id ? 'on' : ''}`} onClick={() => { setDomain(d.id); setDomTouched(true) }}>
+                {dom === d.id && Icon.check('#0B0B0B')} {d.name}
               </button>
             ))}
           </div>
-          <div className="small">
-            {shown ? SIN_BY_ID[shown].sinDef : 'Kies er één, dan telt de post-it mee in je balans.'}
-          </div>
+          <div className="small">{dom ? DOMAIN_BY_ID[dom].line : 'Kies er één. Dan krijg je een ladder van stappen naar je doel.'}</div>
+          {full && <div className="small" style={{ color: 'var(--ink)' }}>Je hebt al {MAX_PER} post-its voor {DOMAIN_BY_ID[dom!].name.toLowerCase()}. Haal er eerst één af: als alles moet, gebeurt er niets.</div>}
         </div>
 
-        <button className={note ? 'btn soft' : 'btn'} disabled={!text.trim() || !shown} onClick={save}>{note ? 'Opslaan' : 'Plak hem op de spiegel'}</button>
+        {steps.length > 0 && (!note || note.domain !== dom || !note.steps?.length) && (
+          <div className="field">
+            <label>Je ladder</label>
+            <ol className="ladder-preview">
+              {steps.map((t, i) => <li key={i}><span className="n">{i + 1}</span>{t}</li>)}
+            </ol>
+            <div className="small">Elke trede iets ongemakkelijker dan de vorige. Je ziet er steeds één tegelijk.</div>
+          </div>
+        )}
+
+        <div className="small">
+          Telt mee voor {shownSin ? <b style={{ color: 'var(--ink-2)' }}>{SIN_BY_ID[shownSin].sin} → {SIN_BY_ID[shownSin].virtue}</b> : 'je balans'} · <button className="link" onClick={() => setSinOpen((x) => !x)}>{sinOpen ? 'klaar' : 'wijzig'}</button>
+        </div>
+        {sinOpen && (
+          <div className="chips">
+            {SINS.map((x) => (
+              <button key={x.id} className={`chip ${shownSin === x.id ? 'on' : ''}`} onClick={() => { setSin(x.id); setSinTouched(true) }}>
+                {shownSin === x.id && Icon.check('#0B0B0B')} {x.sin}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <button className={note ? 'btn soft' : 'btn'} disabled={!text.trim() || !dom || !shownSin || full} onClick={save}>{note ? 'Opslaan' : 'Plak hem op de spiegel'}</button>
         {note && (
           <>
             <HoldButton label="Bereikt: haal hem eraf" onDone={done} />

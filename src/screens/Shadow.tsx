@@ -98,7 +98,7 @@ export default function Shadow({ habitId, sin: presetSin, onClose }: { habitId?:
           <>
             <div className="eyebrow">Je schaduw</div>
             {(habit || projection) && (
-              <p className="italic" style={{ color: 'var(--ink-2)', margin: 0, fontSize: 16, lineHeight: '24px' }}>
+              <p className="italic" style={{ color: 'var(--ink-2)', margin: 0, fontSize: 16, lineHeight: '24px'}}>
                 “Het gaat me niet om {projection ? 'die ander' : habit!.name.toLowerCase()}.”
               </p>
             )}
@@ -121,10 +121,10 @@ export default function Shadow({ habitId, sin: presetSin, onClose }: { habitId?:
           <>
             <div className="eyebrow">Het goud in je schaduw</div>
             <div className="big">{trait ?? voice.gold}</div>
-            <div style={{ color: 'var(--ink-2)', fontSize: 16, lineHeight: '24px' }}>{trait ? 'Wat je in de ander ziet, woont ook in jou. Hoe geef je het zelf ruimte?' : 'Geef het bewust, dan hoeft het niet stiekem.'}</div>
+            <div style={{ color: 'var(--ink-2)', fontSize: 16, lineHeight: '24px'}}>{trait ? 'Wat je in de ander ziet, woont ook in jou. Hoe geef je het zelf ruimte?' : 'Geef het bewust, dan hoeft het niet stiekem.'}</div>
             <div className="stack gap-8" style={{ marginTop: 4 }}>
               {voice.ways.map((w) => (
-                <button key={w} className="ans" style={{ height: 'auto', minHeight: 56, padding: '12px 16px', fontSize: 16, lineHeight: '24px' }} onClick={() => merge(w)}>{w}</button>
+                <button key={w} className="ans" style={{ height: 'auto', minHeight: 56, padding: '12px 16px', fontSize: 16, lineHeight: '24px'}} onClick={() => merge(w)}>{w}</button>
               ))}
             </div>
           </>
@@ -133,8 +133,8 @@ export default function Shadow({ habitId, sin: presetSin, onClose }: { habitId?:
         {step === 'merge' && (
           <>
             <div className="big">Wat je erkent, verliest zijn greep.</div>
-            <div style={{ color: 'var(--ink-2)', fontSize: 16, lineHeight: '24px' }}>Nu: <b>{way}</b></div>
-            <p className="italic" style={{ color: 'var(--ink-2)', margin: '8px 0 0', fontSize: 16, lineHeight: '24px' }}>“{JUNG_LINE}” <span style={{ fontStyle: 'normal', fontSize: 13, lineHeight: '20px' }}>naar C.G. Jung</span></p>
+            <div style={{ color: 'var(--ink-2)', fontSize: 16, lineHeight: '24px'}}>Nu: <b>{way}</b></div>
+            <p className="italic" style={{ color: 'var(--ink-2)', margin: '8px 0 0', fontSize: 16, lineHeight: '24px'}}>“{JUNG_LINE}” <span style={{ fontStyle: 'normal', fontSize: 13, lineHeight: '20px'}}>naar C.G. Jung</span></p>
           </>
         )}
       </div>

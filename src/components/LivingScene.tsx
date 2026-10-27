@@ -1432,7 +1432,14 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
       .then((im) => { if (alive) begin(im) })
       .catch((e) => console.warn('Levende scène niet geladen.', e))
 
-    const ro = new ResizeObserver(() => { layout(); if (reduce) draw(performance.now()) })
+    let lastSize = ''
+    const ro = new ResizeObserver(() => {
+      const size = `${Math.round(c.clientWidth)}x${Math.round(c.clientHeight)}`
+      if (size === lastSize) return
+      lastSize = size
+      layout()
+      if (reduce) draw(performance.now())
+    })
     ro.observe(c)
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; resume() })
     io.observe(c)

@@ -103,6 +103,9 @@ button.card:active { transform: scale(0.985); }
 
 /* ——— Chips en segmenten ——— */
 .chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.chips.scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 calc(var(--s5) * -1); padding: 0 var(--s5); }
+.chips.scroll::-webkit-scrollbar { display: none; }
+.chips.scroll .chip { flex: none; }
 .chip { display: inline-flex; align-items: center; gap: var(--s2); min-height: 40px; padding: var(--s2) var(--s4); border-radius: var(--r-full); box-shadow: inset 0 0 0 1px var(--line); background: var(--card); font: var(--b); transition: all 0.18s var(--ease); }
 .chip:active { transform: scale(0.97); }
 .chip.on { background: var(--ink); color: var(--paper); box-shadow: none; }
@@ -126,6 +129,15 @@ button.card:active { transform: scale(0.985); }
 .postit-sin { min-width: 0; font: var(--sm); color: #4D4D4D; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .postit-check { flex: none; display: inline-flex; align-items: center; gap: var(--s1); min-height: 32px; padding: 0 var(--s3); border-radius: var(--r-full); font: var(--sm); font-weight: 600; color: #0B0B0B; box-shadow: inset 0 0 0 1.5px #0B0B0B; }
 .postit-check.on { background: #0B0B0B; color: #F2F2F2; box-shadow: none; }
+.postit-dom { display: block; font: var(--sm); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #595959; margin-bottom: var(--s1); }
+.postit-ladder { display: flex; flex-direction: column; gap: var(--s2); margin-top: var(--s3); }
+.postit-step { display: flex; flex-direction: column; font: var(--sm); color: #0B0B0B; }
+.postit-step .lbl { font-weight: 600; color: #595959; }
+.postit-hold.btn { width: auto; height: 32px; padding: 0 var(--s3); background: #0B0B0B; color: #F2F2F2; font: var(--sm); font-weight: 600; border-radius: var(--r-full); }
+.postit-hold .fillbar { background: rgba(242, 242, 242, 0.35); }
+.ladder-preview { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.ladder-preview li { display: flex; gap: var(--s3); align-items: baseline; font: var(--sm); color: var(--ink-2); }
+.ladder-preview .n { flex: none; width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; box-shadow: inset 0 0 0 1px var(--line); color: var(--ink-3); font-weight: 600; }
 .seg { display: flex; padding: var(--s1); gap: var(--s1); border-radius: var(--r-full); background: var(--paper-2); overflow-x: auto; scrollbar-width: none; }
 .seg::-webkit-scrollbar { display: none; }
 .seg button { flex: 1 0 auto; height: 40px; padding: 0 var(--s3); border-radius: var(--r-full); font: var(--sm); font-weight: 600; color: var(--ink-2); white-space: nowrap; transition: all 0.2s var(--ease); }
@@ -274,12 +286,14 @@ button.card:active { transform: scale(0.985); }
 
 /* ——— De eerste kaart: past altijd volledig in beeld ——— */
 /* Boven: schermmarge 24 + kop 48 + afstand 24. Onder: tabbalk ±84 + lucht 24. */
-.hero-card { display: flex; flex-direction: column; height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 204px); min-height: 400px; }
+.hero-card { display: flex; flex-direction: column; height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 204px); min-height: 400px; }
+/* svh is de kleinste schermhoogte: verandert niet als de adresbalk bij het scrollen in- of uitschuift, dus de scène houdt één maat */
+@supports (height: 100svh) { .hero-card { height: calc(100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 204px); } }
 .hero-scene { position: relative; flex: 1; min-height: 160px; }
 .hero-scene .scene { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; max-height: none; }
 
 /* ——— De levende scène ——— */
-.scene { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 60dvh; overflow: hidden; background: #000; border-radius: var(--r-lg) var(--r-lg) 0 0; cursor: default; --px: 0; --py: 0; isolation: isolate; }
+.scene { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 60svh; overflow: hidden; background: #000; border-radius: var(--r-lg) var(--r-lg) 0 0; cursor: default; --px: 0; --py: 0; isolation: isolate; }
 .ink-wipe { position: absolute; inset: -25%; z-index: 6; pointer-events: none; background: url('/art/scherm-inktvlek.webp') center / contain no-repeat; }
 .ink-wipe.in { animation: inkIn 0.45s cubic-bezier(0.5, 0, 0.75, 0) both; }
 .ink-wipe.out { animation: inkOut 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
