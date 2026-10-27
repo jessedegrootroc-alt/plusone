@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { Children, useState, type CSSProperties, type ReactNode } from 'react'
 import { paperFor } from '../lib/paper'
 import { todayISO, uid, update, useStore, type JarItem } from '../lib/store'
 import { HoldButton, Icon, Sheet } from './ui'
@@ -37,13 +37,13 @@ export default function Pinboard() {
       </div>
 
       <div className="board">
-        <div className="board-cols">
+        <BoardCols>
           <button className="jar-note jar-add" onClick={() => setAdd(true)}>
             {Icon.plus()}
             <span>{jar.length ? 'Overwinning ophangen' : 'Hang je eerste overwinning op'}</span>
           </button>
           {jar.slice(0, ON_BOARD).map((j, i) => <Note key={j.id} j={j} i={i} onOpen={() => setOpen(j)} />)}
-        </div>
+        </BoardCols>
         {jar.length === 0 && <p className="board-empty">Bewijs dat je zwaardere dingen hebt doorstaan. Voor de dagen dat je het vergeet.</p>}
       </div>
 
@@ -53,13 +53,26 @@ export default function Pinboard() {
           <div className="stack gap-16">
             <h2 className="h2">Je koektrommel · {jar.length}</h2>
             <div className="board">
-              <div className="board-cols">{jar.map((j, i) => <Note key={j.id} j={j} i={i} onOpen={() => { setAll(false); setOpen(j) }} />)}</div>
+              <BoardCols>{jar.map((j, i) => <Note key={j.id} j={j} i={i} onOpen={() => { setAll(false); setOpen(j) }} />)}</BoardCols>
             </div>
           </div>
         </Sheet>
       )}
       {open && <NoteSheet j={open} onClose={() => setOpen(null)} />}
     </section>
+  )
+}
+
+/**
+ * Twee kolommen, om en om gevuld: zo lees je van links naar rechts, en blijft plakband of punaise
+ * bovenaan een kolom heel (CSS-kolommen knippen wat erboven uitsteekt af).
+ */
+export function BoardCols({ children }: { children: ReactNode }) {
+  const items = Children.toArray(children)
+  return (
+    <div className="board-cols">
+      {[0, 1].map((c) => <div key={c} className="board-col">{items.filter((_, i) => i % 2 === c)}</div>)}
+    </div>
   )
 }
 

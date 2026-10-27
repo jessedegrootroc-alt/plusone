@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 import Mandala from '../components/Mandala'
+import Medallion from '../components/Medallion'
+import { NoteSheet } from '../components/MirrorNotes'
 import { GrensDetails } from '../components/Grens'
 import { MONTH_GOAL, growthOf } from '../lib/growth'
 import { Icon, RedLine, Sheet } from '../components/ui'
 import { SINS, SIN_BY_ID, type SinId } from '../data/sins'
-import { computeSeries } from '../lib/score'
-import { useStore } from '../lib/store'
+import { computeSeries, isDone } from '../lib/score'
+import { addDays, todayISO, useStore } from '../lib/store'
 
 function History({ points }: { points: { date: string; balance: number }[] }) {
   const data = points.slice(-30)
@@ -31,6 +33,7 @@ export default function Compass({ openShadow }: { openShadow: (sin?: SinId) => v
   const series = useMemo(() => computeSeries(s), [s])
   const [open, setOpen] = useState<SinId | null>(null)
   const [grens, setGrens] = useState(false)
+  const [noteFor, setNoteFor] = useState<SinId | null>(null)
   const ordered = [...SINS].sort((a, b) => series.perSin[a.id] - series.perSin[b.id])
   const weakest = ordered.find((x) => s.habits.some((h) => h.sin === x.id))
   const active = new Set(SINS.filter((x) => s.habits.some((h) => h.sin === x.id)).map((x) => x.id))
@@ -47,13 +50,14 @@ export default function Compass({ openShadow }: { openShadow: (sin?: SinId) => v
       </div>
 
       <div className="card" style={{ padding: '16px 8px 16px' }}>
-        <Mandala values={series.perSin} active={active} onPick={setOpen} grens={g.month.length / MONTH_GOAL} rest={g.zone === 'rust'} />
-        <div className="hstack" style={{ justifyContent: 'center', gap: 24, marginTop: 8 }}>
-          <Legend kind="light" label="Wat je leeft" />
-          <Legend kind="dark" label="Wat je schaduw vasthoudt" />
-        </div>
-        <button className="small center" style={{ display: 'block', width: '100%', marginTop: 8, padding: '4px 0' }} onClick={() => setGrens(true)}>
-          Buitenring: je grens, {g.month.length} van {MONTH_GOAL} deze maand · <u>per plek</u>
+        <Mandala values={series.perSin} active={active} onPick={setOpen} />
+        {/* De grens: deze maand uit je comfortzone, als acht streepjes */}
+        <button className="grens-row" onClick={() => setGrens(true)}>
+          <span className="small">Grens deze maand</span>
+          <span className={`grens-pips ${g.zone === 'rust' ? 'rest' : ''}`} aria-label={`${g.month.length} van ${MONTH_GOAL}`}>
+            {Array.from({ length: MONTH_GOAL }, (_, i) => <i key={i} className={i < g.month.length ? 'on' : ''} />)}
+          </span>
+          <span className="small" style={{ color: 'var(--ink)' }}>{g.month.length}/{MONTH_GOAL}</span>
         </button>
         <button className="hstack between" style={{ width: '100%', marginTop: 16, padding: '16px 8px 0', borderTop: '1px solid var(--line)' }} onClick={() => openShadow()}>
           <span className="small">{talks} {talks === 1 ? 'schaduwgesprek' : 'schaduwgesprekken'}</span>
@@ -98,64 +102,110 @@ export default function Compass({ openShadow }: { openShadow: (sin?: SinId) => v
       </div>
 
       {grens && <GrensDetails onClose={() => setGrens(false)} />}
-      {open && <SinSheet id={open} value={series.perSin[open]} onClose={() => setOpen(null)} onShadow={() => { const x = open; setOpen(null); openShadow(x) }} />}
+      {open && <SinSheet id={open} value={series.perSin[open]} before={series.points.length > 7 ? series.points[series.points.length - 8].perSin[open] : null} onClose={() => setOpen(null)} onShadow={() => { const x = open; setOpen(null); openShadow(x) }} onNote={() => { setNoteFor(open); setOpen(null) }} />}
+      {noteFor && <NoteSheet presetSin={noteFor} onClose={() => setNoteFor(null)} />}
     </div>
   )
 }
 
-function SinSheet({ id, value, onClose, onShadow }: { id: SinId; value: number; onClose: () => void; onShadow: () => void }) {
+// De smoes die elke zonde je influistert, en wat Goggins terugzegt.
+const SMOES: Record<SinId, [lie: string, answer: string]> = {
+  pride: ['Ik weet het al.', 'Dan had je het al gedaan. Vraag vandaag om eerlijke feedback en verdedig je niet.'],
+  envy: ['Zij hebben gewoon geluk.', 'Hun geluk is jouw probleem niet. Wat jij vandaag doet wel.'],
+  wrath: ['Hij begon.', 'Het maakt niet uit wie begon. Jij bepaalt wat er nu gebeurt. Tel tot tien, dan pas praten.'],
+  sloth: ['Morgen begin ik.', 'Morgen is de leugen die je al jaren vertelt. Vijf minuten, nu.'],
+  greed: ['Ik heb het verdiend.', 'Verdiend is wat je doet als niemand kijkt, niet wat je koopt.'],
+  gluttony: ['Eentje kan geen kwaad.', 'Het is nooit eentje. Kies wat je over een uur nog goed vindt.'],
+  lust: ['Even kijken.', 'Even wordt een uur. Leg je telefoon nu in een andere kamer.'],
+}
+
+/**
+ * Een terras door de ogen van Goggins: eerst de waarheid (wie wint er, en ga je vooruit of achteruit),
+ * dan de smoes die je jezelf vertelt, dan het bewijs van de afgelopen week, en dan wat je nu doet.
+ * Geen uitleg vooraf; wat de zonde is staat onderaan, voor wie het wil weten.
+ */
+function SinSheet({ id, value, before, onClose, onShadow, onNote }: { id: SinId; value: number; before: number | null; onClose: () => void; onShadow: () => void; onNote: () => void }) {
   const s = useStore()
   const meta = SIN_BY_ID[id]
   const hs = s.habits.filter((h) => h.sin === id)
   const notes = (s.notes ?? []).filter((n) => n.sin === id && !n.doneAt)
-  const good = value >= 0
+  const active = hs.length > 0
+  const trend = before === null ? 0 : value - before
+  const days = Array.from({ length: 7 }, (_, i) => addDays(todayISO(), i - 6))
+  const [lie, answer] = SMOES[id]
+  const sinWins = active && value < -0.5
+  const verdict = !active ? 'Hier meet je nog niets. Wat je niet meet, wint stilletjes.'
+    : sinWins ? `${meta.sin} wint${trend < -2 ? ', en je zakt verder' : trend > 2 ? ', maar je klimt' : ''}.`
+    : trend < -2 ? `${meta.virtue} wint, maar je zakt. Zo begint het.`
+    : `${meta.virtue} wint. Niet tevreden worden.`
+
   return (
     <Sheet onClose={onClose}>
-      <div className="stack gap-16">
-        <div className="plate">
-          <img className="engraving" src={good ? meta.virtueImg : meta.sinImg} alt={`Gustave Doré: ${good ? meta.virtue : meta.sin}`} style={{ aspectRatio: '16 / 9', objectPosition: good ? meta.virtuePos : meta.sinPos }} />
+      <div className="stack gap-24">
+        <div className="stack gap-16" style={{ alignItems: 'center' }}>
+          <Medallion id={id} value={value} active={active} />
+          <div className="center stack gap-4">
+            <div className="eyebrow">Terras {meta.numeral}</div>
+            <h2 className="h1">{sinWins ? meta.sin : meta.virtue}</h2>
+            <div className="terrace-score">
+              {active && <span className="num">{value >= 0.5 ? '+' : value <= -0.5 ? '−' : ''}{Math.abs(Math.round(value))}</span>}
+              {active && before !== null && Math.abs(trend) >= 1 && <span className={`trend ${trend > 0 ? 'up' : 'down'}`}>{trend > 0 ? '↑' : '↓'} {Math.abs(Math.round(trend))} deze week</span>}
+            </div>
+            <p className="lead" style={{ color: 'var(--ink)' }}>{verdict}</p>
+          </div>
         </div>
-        <div className="center stack gap-4">
-          <div className="eyebrow">Terras {meta.numeral}</div>
-          <h2 className="h1">{meta.sin} <span style={{ color: 'var(--ink-3)' }}>→</span> {meta.virtue}</h2>
-          <div className="small">{meta.sinLatin} · {meta.virtueLatin}</div>
+
+        {/* De smoes: wat de zonde je influistert, en het antwoord */}
+        <div className="smoes">
+          <div className="eyebrow">De smoes</div>
+          <p className="smoes-lie">“{lie}”</p>
+          <p className="lead">{answer}</p>
         </div>
-        <RedLine value={value} compact />
-        <div className="hstack between small" style={{ marginTop: -8 }}><span>{meta.sin}</span><span>{meta.virtue}</span></div>
-        <p className="lead"><b>De zonde.</b> {meta.sinLine}</p>
-        <p className="lead" style={{ marginTop: -8 }}><b>De deugd.</b> {meta.virtueLine}</p>
-        <button className="btn ghost sm" onClick={onShadow}>Praat met je schaduw hierover</button>
+
+        {/* Het bewijs: geen gevoel, maar wat je deed */}
+        <div className="stack gap-12">
+          <div className="section-head" style={{ margin: 0 }}><h3 className="h2">Het bewijs</h3><span className="small">7 dagen</span></div>
+          {active ? (
+            <div className="list">
+              {hs.map((h) => {
+                const vals = days.map((d) => s.logs[d]?.v[h.id])
+                const won = vals.filter((v, i) => v !== undefined && isDone(h, v) && days[i] <= todayISO()).length
+                return (
+                  <div key={h.id} className="row proof">
+                    <div className="grow">
+                      <div className="name">{h.name}</div>
+                      <div className="meta">{h.kind === 'vice' ? 'weerstaan' : 'gedaan'} · {won} van 7</div>
+                    </div>
+                    <span className="proof-days" aria-hidden="true">
+                      {vals.map((v, i) => <i key={i} className={v === undefined ? '' : isDone(h, v) ? 'won' : 'lost'} />)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="small" style={{ margin: 0 }}>Nog geen gewoontes op dit terras. Voeg er een toe onder Zelf, dan zie je hier elke dag wat je deed.</p>
+          )}
+        </div>
+
         {notes.length > 0 && (
-          <div className="stack gap-8">
-            <div className="ornament">Op je spiegel</div>
+          <div className="stack gap-12">
+            <div className="section-head" style={{ margin: 0 }}><h3 className="h2">Op je spiegel</h3></div>
             {notes.map((n) => <div key={n.id} className="postit"><div className="postit-text">{n.text}</div></div>)}
           </div>
         )}
-        <div className="ornament">Jouw gewoontes</div>
-        {hs.length ? (
-          <div className="list">
-            {hs.map((h) => (
-              <div key={h.id} className="row" style={{ minHeight: 52 }}>
-                <div className="grow">
-                  <div className="name">{h.name}</div>
-                  <div className="meta">{h.kind === 'vice' ? 'verleiding' : 'goede gewoonte'}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="small center">Nog geen gewoontes op dit terras. Voeg ze toe onder Zelf.</p>
-        )}
+
+        {/* Wat je nu doet */}
+        <div className="stack gap-12">
+          <button className="btn" onClick={onNote}>Zet het op je spiegel</button>
+          <button className="btn ghost" onClick={onShadow}>Praat met je schaduw</button>
+        </div>
+
+        <div className="stack gap-8 small" style={{ paddingTop: 16, borderTop: '1px solid var(--line)' }}>
+          <span><b style={{ color: 'var(--ink-2)' }}>{meta.sin}:</b> {meta.sinLine}</span>
+          <span><b style={{ color: 'var(--ink-2)' }}>{meta.virtue}:</b> {meta.virtueLine}</span>
+        </div>
       </div>
     </Sheet>
-  )
-}
-
-function Legend({ kind, label }: { kind: 'light' | 'dark'; label: string }) {
-  return (
-    <span className="hstack small" style={{ gap: 8 }}>
-      <span style={{ width: 12, height: 12, borderRadius: 6, border: '1px solid var(--ink)', background: kind === 'light' ? 'var(--ink)' : 'var(--hatch)' }} />
-      {label}
-    </span>
   )
 }

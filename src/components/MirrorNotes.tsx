@@ -2,6 +2,7 @@ import { useState, type CSSProperties } from 'react'
 import { DOMAINS, DOMAIN_BY_ID, guessDomain, ladderFor, type Domain } from '../data/ladders'
 import { SINS, SIN_BY_ID, type SinId } from '../data/sins'
 import { paperFor } from '../lib/paper'
+import { BoardCols } from './Pinboard'
 import { noteHabitId, stepHabitId, stepWeight } from '../lib/score'
 import { buzz, setValue, todayISO, uid, update, useStore, type MirrorNote } from '../lib/store'
 import { HoldButton, Icon, Sheet } from './ui'
@@ -38,6 +39,8 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
   const off = (s.notes ?? []).length - all.length
   const [filter, setFilter] = useState<Domain | 'alles'>('alles')
   const [edit, setEdit] = useState<MirrorNote | 'new' | null>(null)
+  const [focusId, setFocus] = useState<string | null>(null)
+  const focused = focusId ? all.find((n) => n.id === focusId) : undefined
   const log = s.logs[date]
   const notes = filter === 'alles' ? all : all.filter((n) => n.domain === filter)
   const count = (d: Domain) => all.filter((n) => n.domain === d).length
@@ -66,67 +69,106 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
           <button className="btn ghost sm" onClick={() => setEdit('new')}>Schrijf je eerste post-it</button>
         </div>
       ) : (
-        <div className="carousel notes" aria-label="Post-its">
-          {notes.length === 0 && filter !== 'alles' && <div className="card"><p className="small" style={{ margin: 0 }}>Nog niets voor {DOMAIN_BY_ID[filter].name.toLowerCase()}. Hier groei je dus nog niet.</p></div>}
-          {notes.map((n) => {
-            const on = (log?.v[noteHabitId(n)] ?? 0) >= 1
-            const dom = n.domain ? DOMAIN_BY_ID[n.domain] : null
-            const st = nextStep(n)
-            const p = paperFor(n.id, 2.6)
-            return (
-              <div key={n.id} className="postit" style={{ '--rot': `${p.rot}deg`, '--tint': p.tint, '--pin': `${p.pin}%`, '--tape': `${p.tape}deg` } as CSSProperties}>
-                <span className="tape" aria-hidden="true" />
-                <button className="postit-dom" onClick={() => setEdit(n)}>{dom ? dom.name : 'Kies een onderdeel'}</button>
-                <button className="postit-text" onClick={() => setEdit(n)}>{n.text}</button>
-                {st.total > 0 && (
-                  <div className="postit-ladder">
-                    <div className="hstack" style={{ gap: 4 }} aria-hidden="true">
-                      {(n.steps ?? []).map((x, j) => <span key={j} style={{ flex: 1, height: 3, borderRadius: 2, background: x.doneAt ? '#0B0B0B' : 'rgba(11,11,11,0.15)' }} />)}
-                    </div>
-                    {st.step ? (
-                      <div className="postit-step">
-                        <span className="lbl">Stap {st.i + 1} van {st.total} · telt {stepWeight(st.i, st.total)}× mee</span>
-                        <span>{st.step.text}</span>
-                      </div>
-                    ) : (
-                      <div className="postit-step"><span className="lbl">Alle stappen gezet</span><span>Bereikt? Haal hem eraf. Nog niet? Leg de lat hoger.</span></div>
+        <div className="board glass" aria-label="Post-its op je spiegel">
+          <BoardCols>
+            {notes.map((n, i) => {
+              const on = (log?.v[noteHabitId(n)] ?? 0) >= 1
+              const dom = n.domain ? DOMAIN_BY_ID[n.domain] : null
+              const st = nextStep(n)
+              const p = paperFor(n.id, 4)
+              return (
+                <div key={n.id} className="jar-note mnote" style={{ '--rot': `${p.rot}deg`, '--dx': `${p.dx}px`, '--tint': p.tint, '--pin': `${p.pin}%`, '--tape': `${p.tape}deg`, animationDelay: `${Math.min(i, 8) * 70}ms` } as CSSProperties}>
+                  <span className="tape" aria-hidden="true" />
+                  <button className="mnote-open" onClick={() => setFocus(n.id)}>
+                    <span className="jar-kind">{dom ? dom.name : 'Kies een onderdeel'}</span>
+                    <span className="mnote-text">{n.text}</span>
+                    {st.total > 0 && <Ladder n={n} />}
+                  </button>
+                  <div className="mnote-foot">
+                    <span className="jar-date">{st.total ? (st.step ? `Stap ${st.i + 1}/${st.total}` : 'Alles gezet') : ''}</span>
+                    {n.sin && (
+                      <button className={`mnote-check ${on ? 'on' : ''}`} aria-pressed={on} aria-label={on ? 'Vandaag gedaan' : 'Vandaag gedaan?'} onClick={() => { buzz(); setValue(date, noteHabitId(n), on ? 0 : 1) }}>
+                        {Icon.check(on ? '#F2F2F2' : '#0B0B0B')}
+                      </button>
                     )}
                   </div>
-                )}
-                <div className="postit-foot">
-                  {st.step ? (
-                    <HoldStep key={st.i} onDone={() => update((d) => { const x = d.notes.find((y) => y.id === n.id); const t = x?.steps?.find((y) => !y.doneAt); if (!x || !t) return; const today = todayISO(); t.doneAt = today; (d.logs[today] ??= { v: {} }).v[stepHabitId(x, x.steps!.indexOf(t))] = 1 })} />
-                  ) : <span />}
-                  {n.sin && (
-                    <button className={`postit-check ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => { buzz(); setValue(date, noteHabitId(n), on ? 0 : 1) }}>
-                      {on ? <>{Icon.check('#F2F2F2')} Vandaag gedaan</> : 'Vandaag gedaan?'}
-                    </button>
-                  )}
                 </div>
-              </div>
-            )
-          })}
-          <button className="carousel-add" onClick={() => setEdit('new')}>{Icon.plus()} Nieuwe post-it</button>
+              )
+            })}
+            <button className="jar-note jar-add" onClick={() => setEdit('new')}>
+              {Icon.plus()}
+              <span>Nieuwe post-it</span>
+            </button>
+          </BoardCols>
+          {notes.length === 0 && filter !== 'alles' && <p className="board-empty">Nog niets voor {DOMAIN_BY_ID[filter].name.toLowerCase()}. Hier groei je dus nog niet.</p>}
         </div>
       )}
 
+      {focused && <FocusSheet n={focused} date={date} onEdit={() => { setFocus(null); setEdit(focused) }} onClose={() => setFocus(null)} />}
       {edit && <NoteSheet note={edit === 'new' ? undefined : edit} preset={filter === 'alles' ? undefined : filter} onClose={() => setEdit(null)} />}
     </section>
   )
 }
 
-/** Een stap afvinken vraagt vasthouden: gedaan, niet gezegd. */
-function HoldStep({ onDone }: { onDone: () => void }) {
-  return <HoldButton className="btn postit-hold" label="Stap gezet" ms={900} onDone={onDone} />
+/** De ladder als streepjes: gezette stappen zwart, de rest nog grijs. */
+function Ladder({ n }: { n: MirrorNote }) {
+  return (
+    <span className="mnote-ladder" aria-hidden="true">
+      {(n.steps ?? []).map((x, j) => <i key={j} className={x.doneAt ? 'on' : ''} />)}
+    </span>
+  )
 }
 
-function NoteSheet({ note, preset, onClose }: { note?: MirrorNote; preset?: Domain; onClose: () => void }) {
+/**
+ * Eén post-it van dichtbij: de hele ladder, en hier zet je een stap. Vasthouden, want gedaan is niet gezegd.
+ */
+function FocusSheet({ n, date, onEdit, onClose }: { n: MirrorNote; date: string; onEdit: () => void; onClose: () => void }) {
+  const s = useStore()
+  const st = nextStep(n)
+  const dom = n.domain ? DOMAIN_BY_ID[n.domain] : null
+  const on = (s.logs[date]?.v[noteHabitId(n)] ?? 0) >= 1
+  const p = paperFor(n.id, 2)
+  const stepDone = () => update((d) => { const x = d.notes.find((y) => y.id === n.id); const t = x?.steps?.find((y) => !y.doneAt); if (!x || !t) return; const today = todayISO(); t.doneAt = today; (d.logs[today] ??= { v: {} }).v[stepHabitId(x, x.steps!.indexOf(t))] = 1 })
+  return (
+    <Sheet onClose={onClose}>
+      <div className="stack gap-24">
+        <div className="jar-note mnote jar-solo" style={{ '--rot': `${p.rot}deg`, '--tint': p.tint, '--pin': `${p.pin}%`, '--tape': `${p.tape}deg` } as CSSProperties}>
+          <span className="tape" aria-hidden="true" />
+          <span className="jar-kind">{dom ? dom.name : 'Geen onderdeel'}</span>
+          <span className="mnote-text">{n.text}</span>
+          {st.total > 0 && (
+            <ol className="mnote-steps">
+              {(n.steps ?? []).map((x, j) => (
+                <li key={j} className={x.doneAt ? 'done' : j === st.i ? 'now' : ''}>
+                  <span className="n">{x.doneAt ? Icon.check('#0B0B0B') : j + 1}</span>
+                  <span>{x.text}{j === st.i && <em> · telt {stepWeight(j, st.total)}× mee</em>}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+        <div className="stack gap-12">
+          {st.step ? <HoldButton key={st.i} className="btn" label={`Stap ${st.i + 1} gezet`} ms={900} onDone={stepDone} /> : <p className="small center" style={{ margin: 0 }}>Alle stappen gezet. Bereikt? Haal hem eraf via bewerken. Nog niet? Leg de lat hoger.</p>}
+          {n.sin && (
+            <button className={`btn ${on ? '' : 'ghost'}`} aria-pressed={on} onClick={() => { buzz(); setValue(date, noteHabitId(n), on ? 0 : 1) }}>
+              {on ? <>{Icon.check('#0B0B0B')} Vandaag gedaan</> : 'Vandaag aan gewerkt?'}
+            </button>
+          )}
+          <button className="link center" onClick={onEdit}>Bewerken</button>
+        </div>
+      </div>
+    </Sheet>
+  )
+}
+
+/** Een post-it schrijven of bewerken. Vanaf een terras komt de zonde al ingevuld mee. */
+export function NoteSheet({ note, preset, presetSin, onClose }: { note?: MirrorNote; preset?: Domain; presetSin?: SinId; onClose: () => void }) {
   const s = useStore()
   const [text, setText] = useState(note?.text ?? '')
   const [domain, setDomain] = useState<Domain | undefined>(note?.domain ?? preset)
   const [domTouched, setDomTouched] = useState(!!(note?.domain ?? preset))
-  const [sin, setSin] = useState<SinId | undefined>(note?.sin)
-  const [sinTouched, setSinTouched] = useState(!!note?.sin)
+  const [sin, setSin] = useState<SinId | undefined>(note?.sin ?? presetSin)
+  const [sinTouched, setSinTouched] = useState(!!(note?.sin ?? presetSin))
   const [sinOpen, setSinOpen] = useState(false)
   const dom = domTouched ? domain : guessDomain(text)
   const shownSin = sinTouched ? sin : guessSin(text, dom)
