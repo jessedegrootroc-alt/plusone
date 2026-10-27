@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { AREAS, AREA_BY_ID, CHALLENGES, ENERGY, FEAR, FELT, type AreaId, type Size } from '../data/growth'
 import { LEVELS, MAX_OPEN, MONTH_GOAL, growthOf, insightsOf, levelsOf, nextSuggestion } from '../lib/growth'
 import { addDays, buzz, todayISO, uid, update, useStore, type Challenge } from '../lib/store'
+import { grensHabitId, grensWeight } from '../lib/score'
 import { Icon, Sheet } from './ui'
 
 const day = (iso: string) => {
@@ -156,7 +157,7 @@ export function GrensCard() {
           <div className="hstack" style={{ gap: 16, alignItems: 'flex-start' }}>
             <div className="stack gap-4 grow" style={{ minWidth: 0 }}>
               <div className="h2">{next.title}</div>
-              <div className="small">{AREA_BY_ID[next.area].name}{g.open.length > 1 ? ` · nog ${g.open.length - 1} open` : ''}</div>
+              <div className="small">{AREA_BY_ID[next.area].name} · telt {grensWeight(next)}× mee{g.open.length > 1 ? ` · nog ${g.open.length - 1} open` : ''}</div>
             </div>
             <HoldRing label={`${next.title}: houd vast als het gedaan is`} onDone={() => setFelt(next)} />
           </div>
@@ -203,6 +204,7 @@ export function FeltSheet({ c, onClose }: { c: Challenge; onClose: () => void })
       x.status = 'gedaan'
       x.doneAt = todayISO()
       x.felt = v
+      ;(d.logs[todayISO()] ??= { v: {} }).v[grensHabitId(x)] = 1
       d.jar.unshift({ id: uid(), text: `Grens verlegd: ${c.title}`, date: todayISO() })
     })
     onClose()
@@ -336,7 +338,7 @@ export function ChallengeSheet({ onClose, preset }: { onClose: () => void; prese
               <button key={x.v} className={fear === x.v ? 'on' : ''} onClick={() => setFear(x.v)}>{x.label}</button>
             ))}
           </div>
-          <div className="small">{fear === 1 ? 'Lekker is je comfortzone. Prima om te beginnen, maar daar groei je niet.' : fear === 2 ? 'Precies goed. Hier groei je.' : 'Doodeng is de paniekzone. Alleen doen als je tank vol is, en dan nog liever een stapje kleiner.'}</div>
+          <div className="small">{fear === 1 ? 'Lekker is je comfortzone. Prima om te beginnen, maar daar groei je niet.' : fear === 2 ? 'Precies goed. Hier groei je.' : 'Doodeng is de paniekzone. Alleen doen als je tank vol is, en dan nog liever een stapje kleiner.'} Telt {grensWeight({ fear, size })}× mee in je balans.</div>
         </div>
 
         <div className="field">

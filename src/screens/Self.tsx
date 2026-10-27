@@ -3,6 +3,7 @@ import Plate, { StagePlate } from '../components/Plate'
 import { Icon, Sheet, useTween } from '../components/ui'
 import { FEATURES, ROCK } from '../data/catalog'
 import HabitPicker from '../components/HabitPicker'
+import Pinboard from '../components/Pinboard'
 import { IMG, SIN_BY_ID, STAGES, stageFor, type SinId } from '../data/sins'
 import { computeSeries, mirrorStreak } from '../lib/score'
 import { fromTemplate, resetAll, uid, update, useStore, type AvatarConfig, type Habit } from '../lib/store'
@@ -18,7 +19,6 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
   const series = useMemo(() => computeSeries(s), [s])
   const [panel, setPanel] = useState<Panel>(null)
   const [draftAvatar, setDraftAvatar] = useState<AvatarConfig>(s.avatar)
-  const [jarText, setJarText] = useState('')
   const close = () => setPanel(null)
 
   const virtues = s.habits.filter((h) => h.kind === 'virtue')
@@ -88,19 +88,7 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
       <ShadowCard onOpen={openShadow} />
       <UrgePatterns />
 
-      <div className="group-title"><h2 className="h2">Koektrommel</h2><span className="small">{s.jar.length} overwinningen</span></div>
-      <p className="small" style={{ margin: '-4px 4px 8px' }}>Bewijs dat je zwaardere dingen hebt doorstaan. Voor de dagen dat je het vergeet.</p>
-      <div className="hstack gap-8" style={{ gap: 8 }}>
-        <input className="input" value={jarText} onChange={(e) => setJarText(e.target.value)} placeholder="Een overwinning, groot of klein" onKeyDown={(e) => { if (e.key === 'Enter' && jarText.trim()) { update((d) => { d.jar.unshift({ id: uid(), text: jarText.trim(), date: new Date().toISOString().slice(0, 10) }) }); setJarText('') } }} />
-        <button className="iconbtn" style={{ background: 'var(--ink)', color: 'var(--paper)', flex: 'none', width: 52, height: 52, borderRadius: 16 }} aria-label="Toevoegen" disabled={!jarText.trim()} onClick={() => { update((d) => { d.jar.unshift({ id: uid(), text: jarText.trim(), date: new Date().toISOString().slice(0, 10) }) }); setJarText('') }}>{Icon.plus()}</button>
-      </div>
-      <div className="list mt-8">
-        {s.jar.slice(0, 6).map((j) => (
-          <div key={j.id} className="row" style={{ minHeight: 52 }}>
-            <div className="grow"><div className="name">{j.text}</div><div className="meta">{new Date(j.date + 'T12:00:00').toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}</div></div>
-          </div>
-        ))}
-      </div>
+      <Pinboard />
 
       <div className="group-title"><h2 className="h2">Goede gewoontes</h2><button className="link" onClick={() => setPanel({ t: 'catalog', kind: 'virtue' })}>Toevoegen</button></div>
       <HabitList list={virtues} onEdit={(h) => setPanel({ t: 'habit', h, kind: 'virtue' })} />

@@ -1,5 +1,6 @@
 import { SINS, type SinId } from '../data/sins'
-import { addDays, todayISO, type DayLog, type DayRock, type Habit, type MirrorNote, type State } from './store'
+import type { AreaId } from '../data/growth'
+import { addDays, todayISO, type Challenge, type DayLog, type DayRock, type Habit, type MirrorNote, type State } from './store'
 
 export const rockHabit = (r: DayRock): Habit => ({ id: r.id, name: r.text, sin: 'sloth', kind: 'virtue', type: 'do', weight: r.size, at: r.at })
 
@@ -22,14 +23,47 @@ export const noteHabit = (n: MirrorNote, date: string): Habit => ({
 const notesOn = (state: State, date: string) =>
   (state.notes ?? []).filter((n) => n.sin && n.createdAt <= date && (!n.doneAt || date <= n.doneAt))
 
-/** Vaste gewoontes plus de dagstenen en de post-its van die dag. */
+/**
+ * Hoe ver uit je comfortzone, zo zwaar telt het mee (1–3). Een trede van je ladder telt zwaarder naarmate hij
+ * hoger ligt: de eerste stappen 1×, het midden 2×, de laatste stappen 3×.
+ */
+export const stepWeight = (i: number, total: number): 1 | 2 | 3 => Math.min(3, 1 + Math.floor((3 * i) / Math.max(1, total))) as 1 | 2 | 3
+/** Een grens: lekker 1×, spannend 2×, doodeng 3×; een grote (mijlpaal) nog een stap zwaarder, tot 3×. */
+export const grensWeight = (c: Pick<Challenge, 'fear' | 'size'>): 1 | 2 | 3 => Math.min(3, c.fear + (c.size === 'groot' ? 1 : 0)) as 1 | 2 | 3
+
+export const stepHabitId = (n: MirrorNote, i: number) => `step:${n.id}:${i}`
+export const grensHabitId = (c: Challenge) => `grens:${c.id}`
+
+const GRENS_SIN: Partial<Record<AreaId, SinId>> = { geld: 'greed', geven: 'greed', binnen: 'pride', denken: 'pride', mensen: 'envy', liefde: 'envy', familie: 'envy', lichaam: 'gluttony' }
+
+/** Wat je die dag uit je comfortzone haalde: gezette treden en verlegde grenzen. Telt alleen mee, kost nooit iets. */
+const stretchesOn = (state: State, date: string): Habit[] => {
+  const v = state.logs[date]?.v ?? {}
+  const out: Habit[] = []
+  for (const n of state.notes ?? []) {
+    const total = n.steps?.length ?? 0
+    n.steps?.forEach((st, i) => {
+      const id = stepHabitId(n, i)
+      if (st.doneAt === date && (v[id] ?? 0) >= 1) out.push({ id, name: st.text, sin: n.sin ?? 'sloth', kind: 'virtue', type: 'do', weight: stepWeight(i, total) })
+    })
+  }
+  for (const c of state.growth ?? []) {
+    const id = grensHabitId(c)
+    if (c.doneAt === date && (v[id] ?? 0) >= 1) out.push({ id, name: c.title, sin: GRENS_SIN[c.area] ?? 'sloth', kind: 'virtue', type: 'do', weight: grensWeight(c) })
+  }
+  return out
+}
+
+/** Vaste gewoontes plus de dagstenen, de post-its en wat je die dag uit je comfortzone haalde. */
 export const habitsFor = (state: State, date: string): Habit[] => [
   ...state.habits,
   ...(state.logs[date]?.rocks ?? []).map(rockHabit),
   ...notesOn(state, date).map((n) => noteHabit(n, date)),
+  ...stretchesOn(state, date),
 ]
 
-export const isNote = (h: Habit) => h.id.startsWith('note:')
+/** Post-its, treden en grenzen: tellen mee in je balans, maar staan niet in je lijst van gewoontes. */
+export const isNote = (h: Habit) => /^(note|step|grens):/.test(h.id)
 
 /** Deugden gesorteerd zoals ze in de pot moeten: grote stenen eerst. */
 export const byRock = (hs: Habit[]) => [...hs].sort((a, b) => b.weight - a.weight)
@@ -125,7 +159,8 @@ export const computeSeries = (state: State, until = todayISO()): Series => {
       const slipped = hs.some((h) => habitScore(h, effLog, false) < 0)
       if (target < cur) return slipped ? cur + (target - cur) * ALPHA : cur
       const totalW = hs.reduce((a, h) => a + h.weight, 0) || 1
-      const answeredW = hs.reduce((a, h) => a + (log && h.id in log.v ? h.weight : 0), 0)
+      // Een gezette trede of verlegde grens telt overdag al flink mee, niet pas als je dag af is
+      const answeredW = hs.reduce((a, h) => a + (log && h.id in log.v ? h.weight * (/^(step|grens):/.test(h.id) ? 4 : 1) : 0), 0)
       const urge = Math.min(1, (log?.urges ?? 0) * 0.2)
       return cur + (target - cur) * ALPHA * Math.min(1, answeredW / totalW + urge)
     }

@@ -1,13 +1,13 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { DOMAINS, DOMAIN_BY_ID, guessDomain, ladderFor, type Domain } from '../data/ladders'
 import { SINS, SIN_BY_ID, type SinId } from '../data/sins'
-import { noteHabitId } from '../lib/score'
+import { paperFor } from '../lib/paper'
+import { noteHabitId, stepHabitId, stepWeight } from '../lib/score'
 import { buzz, setValue, todayISO, uid, update, useStore, type MirrorNote } from '../lib/store'
 import { HoldButton, Icon, Sheet } from './ui'
 
 /** Hooguit twee per onderdeel: als alles moet, gebeurt er niets. */
 const MAX_PER = 2
-const TILT = [-0.8, 0.6, -0.4, 0.5]
 
 // Een eerste gok voor de zonde op basis van de woorden; zonder treffer de zonde die bij het onderdeel hoort.
 const HINTS: [SinId, RegExp][] = [
@@ -66,14 +66,16 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
           <button className="btn ghost sm" onClick={() => setEdit('new')}>Schrijf je eerste post-it</button>
         </div>
       ) : (
-        <div className="carousel" aria-label="Post-its">
+        <div className="carousel notes" aria-label="Post-its">
           {notes.length === 0 && filter !== 'alles' && <div className="card"><p className="small" style={{ margin: 0 }}>Nog niets voor {DOMAIN_BY_ID[filter].name.toLowerCase()}. Hier groei je dus nog niet.</p></div>}
-          {notes.map((n, i) => {
+          {notes.map((n) => {
             const on = (log?.v[noteHabitId(n)] ?? 0) >= 1
             const dom = n.domain ? DOMAIN_BY_ID[n.domain] : null
             const st = nextStep(n)
+            const p = paperFor(n.id, 2.6)
             return (
-              <div key={n.id} className="postit" style={{ transform: `rotate(${TILT[i % TILT.length]}deg)` }}>
+              <div key={n.id} className="postit" style={{ '--rot': `${p.rot}deg`, '--tint': p.tint, '--pin': `${p.pin}%`, '--tape': `${p.tape}deg` } as CSSProperties}>
+                <span className="tape" aria-hidden="true" />
                 <button className="postit-dom" onClick={() => setEdit(n)}>{dom ? dom.name : 'Kies een onderdeel'}</button>
                 <button className="postit-text" onClick={() => setEdit(n)}>{n.text}</button>
                 {st.total > 0 && (
@@ -83,7 +85,7 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
                     </div>
                     {st.step ? (
                       <div className="postit-step">
-                        <span className="lbl">Stap {st.i + 1} van {st.total}</span>
+                        <span className="lbl">Stap {st.i + 1} van {st.total} · telt {stepWeight(st.i, st.total)}× mee</span>
                         <span>{st.step.text}</span>
                       </div>
                     ) : (
@@ -93,7 +95,7 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
                 )}
                 <div className="postit-foot">
                   {st.step ? (
-                    <HoldStep key={st.i} onDone={() => update((d) => { const x = d.notes.find((y) => y.id === n.id); const t = x?.steps?.find((y) => !y.doneAt); if (t) t.doneAt = todayISO() })} />
+                    <HoldStep key={st.i} onDone={() => update((d) => { const x = d.notes.find((y) => y.id === n.id); const t = x?.steps?.find((y) => !y.doneAt); if (!x || !t) return; const today = todayISO(); t.doneAt = today; (d.logs[today] ??= { v: {} }).v[stepHabitId(x, x.steps!.indexOf(t))] = 1 })} />
                   ) : <span />}
                   {n.sin && (
                     <button className={`postit-check ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => { buzz(); setValue(date, noteHabitId(n), on ? 0 : 1) }}>

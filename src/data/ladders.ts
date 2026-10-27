@@ -178,6 +178,131 @@ const LADDERS: Record<Domain, Ladder[]> = {
   ],
 }
 
-/** De ladder bij jouw post-it: de eerste die past bij je woorden, anders de algemene van het onderdeel. */
+/**
+ * De ladder bij jouw post-it. Staat er een getal in je doel, dan bouwt de app de ladder daaruit;
+ * anders de eerste vaste ladder die past bij je woorden, of de algemene van het onderdeel.
+ */
 export const ladderFor = (domain: Domain, text: string): string[] =>
-  (LADDERS[domain].find((l) => l.match?.test(text)) ?? LADDERS[domain][LADDERS[domain].length - 1]).steps
+  numericLadder(text) ?? (LADDERS[domain].find((l) => l.match?.test(text)) ?? LADDERS[domain][LADDERS[domain].length - 1]).steps
+
+// ── Ladders uit een getal ──
+// Staat er een aantal in je doel ("10 klanten benaderen", "12 kilo eraf", "1.000 euro sparen"), dan bouwt de app
+// een ladder die altijd zo opbouwt: voorbereiden, de eerste, een kwart, de helft, alles, en de lat hoger.
+
+/** Dutch getal: "1.000" is duizend, "1,5" is anderhalf. */
+const parseNum = (raw: string) => Number(/^\d{1,3}(\.\d{3})+$/.test(raw) ? raw.replace(/\./g, '') : raw.replace(',', '.'))
+const fmtNum = (n: number) => (Number.isInteger(n) ? n : Math.round(n * 10) / 10).toLocaleString('nl-NL')
+/** Mooi afgerond bedrag: 1.000 wordt geen 333,33 maar 350. */
+const nice = (n: number) => (n >= 1000 ? Math.round(n / 100) * 100 : n >= 100 ? Math.round(n / 5) * 5 : n >= 10 ? Math.round(n) : Math.round(n * 10) / 10)
+/** Treden die echt oplopen: 1, een kwart, de helft, alles (geen dubbele bij kleine aantallen). */
+const rungs = (n: number, first: number) => {
+  const q = Math.max(first, Math.ceil(n / 4))
+  const h = Math.max(q, Math.ceil(n / 2))
+  return { first, q: q > first ? q : null, h: h > q && h < n ? h : null }
+}
+
+// Werkwoorden: gebiedende wijs (voor "de eerste") en voltooid deelwoord (voor "3 benaderd")
+const VERBS: Record<string, [string, string]> = {
+  benaderen: ['benader', 'benaderd'], bellen: ['bel', 'gebeld'], mailen: ['mail', 'gemaild'], sturen: ['stuur', 'gestuurd'], versturen: ['verstuur', 'verstuurd'],
+  spreken: ['spreek', 'gesproken'], vragen: ['vraag', 'gevraagd'], ontmoeten: ['ontmoet', 'ontmoet'], uitnodigen: ['nodig', 'uitgenodigd'],
+  verkopen: ['verkoop', 'verkocht'], pitchen: ['pitch', 'gepitcht'], lezen: ['lees', 'gelezen'], schrijven: ['schrijf', 'geschreven'],
+  leren: ['leer', 'geleerd'], maken: ['maak', 'gemaakt'], afmaken: ['maak', 'afgemaakt'], bouwen: ['bouw', 'gebouwd'], posten: ['post', 'gepost'],
+  publiceren: ['publiceer', 'gepubliceerd'], opnemen: ['neem', 'opgenomen'], lopen: ['loop', 'gelopen'], rennen: ['ren', 'gerend'],
+  fietsen: ['fiets', 'gefietst'], zwemmen: ['zwem', 'gezwommen'], trainen: ['train', 'getraind'], doen: ['doe', 'gedaan'], halen: ['haal', 'gehaald'],
+  geven: ['geef', 'gegeven'], helpen: ['help', 'geholpen'], bezoeken: ['bezoek', 'bezocht'], solliciteren: ['solliciteer', 'gesolliciteerd'],
+  oefenen: ['oefen', 'geoefend'], afronden: ['rond', 'afgerond'], opruimen: ['ruim', 'opgeruimd'], koken: ['kook', 'gekookt'],
+}
+const verbIn = (text: string) => {
+  const words = text.toLowerCase().match(/[a-zà-ÿ]+/g) ?? []
+  const v = words.find((x) => VERBS[x])
+  return v ? VERBS[v] : null
+}
+
+const REPS = /^(push-?ups?|opdrukken|pull-?ups?|optrekken|squats?|burpees?|sit-?ups?|lunges?|dips)$/i
+const PEOPLE = /^(klanten|mensen|bedrijven|partijen|partners|leads|contacten|investeerders|vrienden|werkgevers|vacatures|bureaus|winkels)$/i
+
+/** Een ladder uit het getal in je doel, of null als er geen bruikbaar getal in staat. */
+export const numericLadder = (text: string): string[] | null => {
+  const time = text.match(/\b([01]?\d|2[0-3])[:.]([0-5]\d)\b/)
+  const clean = time ? text.replace(time[0], ' ') : text
+  const what = time ? (text.slice(text.indexOf(time[0]) + time[0].length).match(/^\s*(?:uur\s+)?([a-zà-ÿ]+(?:\s+[a-zà-ÿ]+){0,3})/i)?.[1] ?? '') : ''
+  const timeStep = time ? `Twee weken elke dag om ${time[1]}:${time[2]}${what ? ` ${what.toLowerCase()}` : ''}, geen uitzondering` : null
+  const withTime = (steps: string[]) => (timeStep ? [steps[0], timeStep, ...steps.slice(1)] : steps)
+
+  // Gewicht: "12 kilo", "8 kg"
+  let m = clean.match(/(\d[\d.,]*)\s*(kilo'?s?|kg)\b/i)
+  if (m) {
+    const n = parseNum(m[1])
+    const r = rungs(n, 1)
+    return withTime([
+      `Weeg je vandaag, schrijf het getal op en zet je doel ernaast: ${fmtNum(n)} kilo eraf`,
+      'De eerste kilo eraf',
+      ...(r.q ? [`${fmtNum(r.q)} kilo eraf`] : []),
+      ...(r.h ? [`Halverwege: ${fmtNum(r.h)} kilo eraf, ook als de weegschaal een week stilstaat`] : []),
+      `Het doel: ${fmtNum(n)} kilo eraf`,
+      'Lat hoger: drie maanden op je nieuwe gewicht blijven, elke week wegen',
+    ])
+  }
+
+  // Geld: "1.000 euro", "€500"
+  m = clean.match(/(?:€\s?(\d[\d.,]*))|(\d[\d.,]*)\s*(euro|eur)\b/i)
+  if (m) {
+    const n = parseNum(m[1] ?? m[2])
+    const verb = verbIn(clean)
+    const part = verb ? verb[1] : /verdien|omzet|inkomen|klant/i.test(clean) ? 'verdiend' : 'gespaard'
+    return withTime([
+      `Een aparte rekening of potje openen en je doel van €${fmtNum(n)} erop zetten`,
+      `De eerste €${fmtNum(nice(n / 10))} ${part}`,
+      `€${fmtNum(nice(n / 4))} ${part}`,
+      `Halverwege: €${fmtNum(nice(n / 2))} ${part}, ook in een maand dat het tegenzit`,
+      `Het doel: €${fmtNum(n)} ${part}`,
+      `Lat hoger: €${fmtNum(nice(n * 2))}, het dubbele`,
+    ])
+  }
+
+  // Afstand: "10 km", "42 kilometer"
+  m = clean.match(/(\d[\d.,]*)\s*(km|kilometer)\b/i)
+  if (m) {
+    const n = parseNum(m[1])
+    const verb = verbIn(clean) ?? ['loop', 'gelopen']
+    return withTime([
+      `Je route of wedstrijd kiezen, en je schoenen vanavond al klaarzetten`,
+      `${fmtNum(nice(Math.max(1, n / 10)))} km ${verb[1]} zonder stoppen`,
+      `${fmtNum(nice(n / 4))} km ${verb[1]}, drie keer deze week`,
+      `Halverwege: ${fmtNum(nice(n / 2))} km ${verb[1]}, op een dag dat je geen zin hebt`,
+      `Het doel: ${fmtNum(n)} km ${verb[1]}`,
+      `Lat hoger: ${fmtNum(n)} km sneller, of ${fmtNum(nice(n * 1.5))} km`,
+    ])
+  }
+
+  // Een aantal met iets erachter: "10 klanten benaderen", "50 push-ups", "20 boeken lezen"
+  m = clean.match(/(\d[\d.,]*)\s+([a-zà-ÿ-]+)/i)
+  if (!m) return null
+  const n = parseNum(m[1])
+  if (!Number.isFinite(n) || n < 2) return null
+  const noun = m[2].toLowerCase()
+
+  if (REPS.test(noun)) {
+    const r = rungs(n, Math.max(1, Math.ceil(n / 5)))
+    return withTime([
+      `Test hoeveel ${noun} je nu in één keer kunt, en schrijf het op`,
+      `Een week elke dag ${fmtNum(r.first)} ${noun}, verdeeld over de dag`,
+      ...(r.q ? [`${fmtNum(r.q)} ${noun} in één set`] : []),
+      ...(r.h ? [`Halverwege: ${fmtNum(r.h)} ${noun} in één set, ook als je armen trillen`] : []),
+      `Het doel: ${fmtNum(n)} ${noun} in één set`,
+      `Lat hoger: elke dag ${fmtNum(n)} ${noun}, een maand lang`,
+    ])
+  }
+
+  const verb = verbIn(clean.slice(clean.indexOf(m[0]) + m[0].length)) ?? verbIn(clean) ?? ['doe', 'gedaan']
+  const r = rungs(n, 1)
+  const who = PEOPLE.test(noun)
+  return withTime([
+    who ? `Voorbereiden: schrijf de ${fmtNum(n)} ${noun} op, met waarom juist zij` : `Voorbereiden: zet je ${fmtNum(n)} ${noun} op een lijst en plan wanneer`,
+    `De eerste: ${verb[0]} er één, vandaag. Dat is de engste stap`,
+    ...(r.q ? [`Een kwart: ${fmtNum(r.q)} ${noun} ${verb[1]}`] : []),
+    ...(r.h ? [`De helft: ${fmtNum(r.h)} ${noun} ${verb[1]}, ${who ? 'ook na een nee' : 'ook in een week dat het tegenzit'}`] : []),
+    `Het doel: alle ${fmtNum(n)} ${noun} ${verb[1]}`,
+    who ? `Lat hoger: nog ${fmtNum(n)} erbij, en wie nee zei over drie maanden opnieuw, met een betere aanpak` : `Lat hoger: nog ${fmtNum(n)}, sneller of beter dan de eerste keer`,
+  ])
+}

@@ -36,8 +36,12 @@ export const seedDemo = (mode: string) => {
       { id: 'g5', feature: 'sun', text: 'Elke werkdag om 5:30 op' },
     ]
     d.jar = [
+      { id: 'j0', text: 'Van de spiegel: Elke dag 10.000 stappen, drie maanden lang', date: addDays(todayISO(), -1) },
       { id: 'j1', text: 'Om 22:00 alsnog 5 km gelopen in de regen', date: addDays(todayISO(), -4) },
+      { id: 'j3', text: 'Grens verlegd: 3 minuten in het ijsbad', date: addDays(todayISO(), -6) },
       { id: 'j2', text: 'Drang naar gokken doorstaan na het voetbal', date: addDays(todayISO(), -9) },
+      { id: 'j4', text: 'Nee gezegd tegen de tweede fles wijn', date: addDays(todayISO(), -12) },
+      { id: 'j5', text: 'Om 5:30 op, zonder snooze', date: addDays(todayISO(), -15) },
     ]
     for (let day = start; day < todayISO(); day = addDays(day, 1)) {
       const v: Record<string, number> = {}
