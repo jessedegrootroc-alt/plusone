@@ -39,10 +39,14 @@ export default function Compass({ openShadow }: { openShadow: (sin?: SinId) => v
 
   return (
     <div className="screen">
-      <div className="eyebrow">Het kompas</div>
-      <h1 className="h1">Je mandala.</h1>
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">Het kompas</div>
+          <h1 className="h1">Je mandala</h1>
+        </div>
+      </div>
 
-      <div className="card mt-16" style={{ padding: '16px 8px 16px' }}>
+      <div className="card" style={{ padding: '16px 8px 16px' }}>
         <Mandala values={series.perSin} active={active} onPick={setOpen} grens={g.month.length / MONTH_GOAL} rest={g.zone === 'rust'} />
         <div className="hstack" style={{ justifyContent: 'center', gap: 24, marginTop: 8 }}>
           <Legend kind="light" label="Wat je leeft" />

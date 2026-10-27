@@ -67,6 +67,8 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
   const nowHM = new Date().toTimeString().slice(0, 5)
   // Vanaf 19:00, of bij een eerdere dag, is afsluiten de belangrijkste stap: dan staat hij bovenaan.
   const closeTime = date !== today || nowHM >= '19:00'
+  // Waar je nu bent in je dag: 0 ochtend, 1 overdag, 2 avond
+  const moment = nowHM < '12:00' ? 0 : nowHM < '19:00' ? 1 : 2
   // Eerlijk bewijs: hoeveel niet-onderhandelbare dingen je de afgelopen 7 dagen echt deed
   const week7 = useMemo(() => {
     let total = 0
@@ -105,8 +107,8 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
 
   return (
     <div className="screen">
-      <div className="hstack between" style={{ gap: 16 }}>
-        <div className="stack" style={{ minWidth: 0 }}>
+      <div className="page-head">
+        <div>
           <div className="eyebrow one-line">{shortDate}{streak > 0 ? ` · ${streak} gespiegeld` : ''}</div>
           <h1 className="h1 one-line">{date === today ? greet(s.name) : 'Terugkijken'}</h1>
         </div>
@@ -118,7 +120,7 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
       </div>
 
       {/* De spiegel: in één oogopslag waar je staat. Deze kaart vult precies het scherm. */}
-      <div className="card hero-card mt-24" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card hero-card" style={{ padding: 0, overflow: 'hidden' }}>
         <div className="hero-scene">
           <Scene balance={shown} onTap={() => openMirror(date)} shadow={charge} strong={strongest} features={s.avatar.features} objects={pulling} virtueObject={goodObject} weak={weakest} />
         </div>
@@ -145,10 +147,7 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
         </div>
       </div>
 
-      {/* De spiegel van Goggins direct onder je plaat: het eerste wat je elke dag aankijkt */}
-      {date === today && <MirrorNotes date={date} />}
-
-      <div className="week mt-24" role="tablist" aria-label="Kies een dag">
+      <div className="week mt-16" role="tablist" aria-label="Kies een dag">
         {week.map((d) => {
           const p = series.points.find((x) => x.date === d)
           const before = d < s.createdAt
@@ -174,6 +173,9 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
         })}
       </div>
 
+      {/* De spiegel van Goggins: het eerste wat je na je plaat aankijkt */}
+      {date === today && <MirrorNotes date={date} />}
+
       {needsYesterday && (
         <button className="card mt-24 hstack between" style={{ width: '100%', textAlign: 'left', gap: 16 }} onClick={() => openMirror(yesterday)}>
           <div>
@@ -184,135 +186,155 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
         </button>
       )}
 
-      {closeTime && !sealed && (
-        <div className="card mt-24 stack gap-16">
-          <div className="stack gap-4">
-            <div className="eyebrow">{date === today ? 'Vanavond' : 'Deze dag'}</div>
-            <div className="h2">Sluit je dag af</div>
-            <p className="small" style={{ margin: 0 }}>Twee minuten eerlijk terugkijken. Daarna telt je dag mee in je balans.</p>
-          </div>
-          <div className="hstack" style={{ gap: 8 }}>
-            <button className="btn sm" style={{ flex: 1 }} onClick={() => openMirror(date)}>{Icon.mirror()} Spiegelmoment</button>
-            <button className="btn ghost sm" style={{ flex: 1 }} onClick={() => update((d) => { (d.logs[date] ??= { v: {} }).sealed = true })}>Alles klopt zo</button>
-          </div>
-        </div>
-      )}
-
-      {date === today && <EnergyCheck />}
-
-      {/* Goggins: geen lijstje, maar een paar dingen die niet onderhandelbaar zijn, elk op een vaste tijd. */}
-      <div className="card mt-16" style={{ paddingBottom: 8 }}>
-        <div className="hstack" style={{ gap: 16, paddingBottom: 16 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="h2">Niet-onderhandelbaar</div>
-            <div className="small">{bigDone} van {big.length} · deze week {week7.done} van {week7.total}</div>
-          </div>
-          <button className="iconbtn" aria-label="Steen toevoegen voor deze dag" onClick={() => setAddRock(true)} style={{ border: '1.5px solid var(--line)' }}>{Icon.plus()}</button>
-        </div>
-
-        <div className="list flat">
-          {big.map((h) => {
-            const late = date === today && !!h.at && h.at < nowHM && !done(h)
-            const metaBits = [dayRockIds.has(h.id) ? (suckIds.has(h.id) ? 'Het ongemak van vandaag' : date === today ? 'Alleen vandaag' : 'Alleen deze dag') : '', late ? 'te laat' : ''].filter(Boolean)
-            return (
-              <HabitRow
-                key={h.id}
-                compact
-                h={h}
-                lead={<TimeLead at={h.at} late={late} onClick={() => setTimeFor(h)} />}
-                value={log?.v[h.id] ?? 0}
-                answered={!!log && h.id in log.v}
-                onChange={(v) => change(h.id, v, false, false)}
-                meta={metaBits.join(' · ') || undefined}
-                onRemove={dayRockIds.has(h.id) ? () => removeRock(h.id) : undefined}
-              />
-            )
-          })}
-        </div>
-        {!big.length && <p className="small" style={{ margin: '0 0 16px' }}>Nog niets. Maak een goede gewoonte groot onder Zelf, of tik op +.</p>}
-
-        {date === today && !suckIds.size && (
-          <button className="row suck" onClick={() => setSuck(true)}>
-            <span className="time-lead" style={{ color: 'var(--ink-3)' }}>{Icon.plus()}</span>
-            <div className="grow">
-              <div className="name">Wat ga je vandaag doen dat je niet wilt?</div>
-              <div className="meta">Eén ding dat zuigt. Zo eelt je geest.</div>
+      {/* Je dag als tijdlijn, zoals Headspace: ochtend, overdag, avond. De stip van nu is gevuld. */}
+      <section className="section">
+        <div className="section-head"><h2 className="h2">{date === today ? 'Je dag' : 'Die dag'}</h2><span className="small">{bigDone} van {big.length} niet-onderhandelbaar</span></div>
+        <div className="tl">
+          {date === today && (
+            <div className={`tl-item ${moment === 0 ? 'now' : 'past'}`}>
+              <span className="tl-dot" aria-hidden="true" />
+              <div className="tl-label"><span className="eyebrow">Ochtend</span><span className="small">je tank</span></div>
+              <EnergyCheck />
             </div>
-          </button>
-        )}
+          )}
 
-        {rest.length > 0 && (
-          <>
-            <button className="fold" onClick={() => setShowRest((x) => !x)} aria-expanded={showRest}>
-              <span>De rest · {rest.filter(done).length} van {rest.length}</span>
-              <span className={`chev ${showRest ? 'open' : ''}`}>{Icon.next()}</span>
-            </button>
-            <div className={`collapse ${showRest ? 'open' : ''}`} aria-hidden={!showRest} inert={!showRest}>
-              <div className="list flat">
-                {[...rest.filter((h) => !done(h)), ...rest.filter(done)].map((h) => (
+          <div className={`tl-item ${date !== today || moment === 1 ? 'now' : moment > 1 ? 'past' : ''}`}>
+            <span className="tl-dot" aria-hidden="true" />
+            <div className="tl-label"><span className="eyebrow">Overdag</span><span className="small">wat je dag maakt of breekt</span></div>
+          {/* Goggins: geen lijstje, maar een paar dingen die niet onderhandelbaar zijn, elk op een vaste tijd. */}
+          <div className="card" style={{ paddingBottom: 8 }}>
+            <div className="hstack" style={{ gap: 16, paddingBottom: 16 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="h2">Niet-onderhandelbaar</div>
+                <div className="small">{bigDone} van {big.length} · deze week {week7.done} van {week7.total}</div>
+              </div>
+              <button className="iconbtn" aria-label="Steen toevoegen voor deze dag" onClick={() => setAddRock(true)} style={{ border: '1.5px solid var(--line)' }}>{Icon.plus()}</button>
+            </div>
+
+            <div className="list flat">
+              {big.map((h) => {
+                const late = date === today && !!h.at && h.at < nowHM && !done(h)
+                const metaBits = [dayRockIds.has(h.id) ? (suckIds.has(h.id) ? 'Het ongemak van vandaag' : date === today ? 'Alleen vandaag' : 'Alleen deze dag') : '', late ? 'te laat' : ''].filter(Boolean)
+                return (
                   <HabitRow
                     key={h.id}
                     compact
                     h={h}
-                    lead={<RockIcon size={h.weight} px={16} />}
+                    lead={<TimeLead at={h.at} late={late} onClick={() => setTimeFor(h)} />}
                     value={log?.v[h.id] ?? 0}
                     answered={!!log && h.id in log.v}
                     onChange={(v) => change(h.id, v, false, false)}
-                    meta={dayRockIds.has(h.id) ? (date === today ? 'Alleen vandaag' : 'Alleen deze dag') : undefined}
+                    meta={metaBits.join(' · ') || undefined}
                     onRemove={dayRockIds.has(h.id) ? () => removeRock(h.id) : undefined}
                   />
-                ))}
-              </div>
+                )
+              })}
             </div>
-          </>
-        )}
+            {!big.length && <p className="small" style={{ margin: '0 0 16px' }}>Nog niets. Maak een goede gewoonte groot onder Zelf, of tik op +.</p>}
 
-        {vices.length > 0 && (
-          <>
-            <button className="fold" onClick={() => setShowVices((x) => !x)} aria-expanded={showVices}>
-              <span>Verleidingen · {slips.length ? `${slips.length} toegegeven` : 'alles vrij'}</span>
-              <span className="hstack" style={{ gap: 8 }}>
-                {showVices && <span className="small">tik als je toegaf</span>}
-                <span className={`chev ${showVices ? 'open' : ''}`}>{Icon.next()}</span>
-              </span>
-            </button>
-            {(showVices ? vices : slips).length > 0 && (
-              <div className="list flat">
-                {(showVices ? vices : slips).map((h) => {
-                  const v = log?.v[h.id] ?? 0
-                  return <HabitRow key={h.id} compact h={h} value={v} answered={sealed || (!!log && h.id in log.v)} onChange={(nv) => change(h.id, nv, !isDone(h, v), true)} />
-                })}
-              </div>
+            {date === today && !suckIds.size && (
+              <button className="row suck" onClick={() => setSuck(true)}>
+                <span className="time-lead" style={{ color: 'var(--ink-3)' }}>{Icon.plus()}</span>
+                <div className="grow">
+                  <div className="name">Wat ga je vandaag doen dat je niet wilt?</div>
+                  <div className="meta">Eén ding dat zuigt. Zo eelt je geest.</div>
+                </div>
+              </button>
             )}
-          </>
-        )}
-      </div>
 
-      {date === today && <GrensCard />}
+            {rest.length > 0 && (
+              <>
+                <button className="fold" onClick={() => setShowRest((x) => !x)} aria-expanded={showRest}>
+                  <span>De rest · {rest.filter(done).length} van {rest.length}</span>
+                  <span className={`chev ${showRest ? 'open' : ''}`}>{Icon.next()}</span>
+                </button>
+                <div className={`collapse ${showRest ? 'open' : ''}`} aria-hidden={!showRest} inert={!showRest}>
+                  <div className="list flat">
+                    {[...rest.filter((h) => !done(h)), ...rest.filter(done)].map((h) => (
+                      <HabitRow
+                        key={h.id}
+                        compact
+                        h={h}
+                        lead={<RockIcon size={h.weight} px={16} />}
+                        value={log?.v[h.id] ?? 0}
+                        answered={!!log && h.id in log.v}
+                        onChange={(v) => change(h.id, v, false, false)}
+                        meta={dayRockIds.has(h.id) ? (date === today ? 'Alleen vandaag' : 'Alleen deze dag') : undefined}
+                        onRemove={dayRockIds.has(h.id) ? () => removeRock(h.id) : undefined}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
-      {/* Afsluiten hoort bij het eind van de dag. Overdag is het een rustige rij onderaan; 's avonds komt het naar boven. */}
-      {sealed ? (
-        <div className="card mt-24 hstack" style={{ gap: 12 }}>
-          {Icon.check()}
-          <div>
-            <div style={{ fontWeight: 600 }}>{date === today ? 'Vandaag' : 'Deze dag'} is gespiegeld</div>
-            <div className="small">Aanpassen kan nog: tik op een gewoonte.</div>
+            {vices.length > 0 && (
+              <>
+                <button className="fold" onClick={() => setShowVices((x) => !x)} aria-expanded={showVices}>
+                  <span>Verleidingen · {slips.length ? `${slips.length} toegegeven` : 'alles vrij'}</span>
+                  <span className="hstack" style={{ gap: 8 }}>
+                    {showVices && <span className="small">tik als je toegaf</span>}
+                    <span className={`chev ${showVices ? 'open' : ''}`}>{Icon.next()}</span>
+                  </span>
+                </button>
+                {(showVices ? vices : slips).length > 0 && (
+                  <div className="list flat">
+                    {(showVices ? vices : slips).map((h) => {
+                      const v = log?.v[h.id] ?? 0
+                      return <HabitRow key={h.id} compact h={h} value={v} answered={sealed || (!!log && h.id in log.v)} onChange={(nv) => change(h.id, nv, !isDone(h, v), true)} />
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          </div>
+
+          {date === today && (
+            <div className={`tl-item ${moment === 1 ? 'now' : moment > 1 ? 'past' : ''}`}>
+              <span className="tl-dot" aria-hidden="true" />
+              <div className="tl-label"><span className="eyebrow">Deze week</span><span className="small">buiten je comfortzone</span></div>
+              <GrensCard />
+            </div>
+          )}
+
+          <div className={`tl-item ${sealed ? 'past' : moment === 2 || date !== today ? 'now' : ''}`}>
+            <span className="tl-dot" aria-hidden="true" />
+            <div className="tl-label"><span className="eyebrow">{date === today ? 'Avond' : 'Afsluiten'}</span><span className="small">twee minuten eerlijk terugkijken</span></div>
+            {sealed ? (
+              <div className="card hstack" style={{ gap: 12 }}>
+                {Icon.check()}
+                <div>
+                  <div style={{ fontWeight: 600 }}>{date === today ? 'Vandaag' : 'Deze dag'} is gespiegeld</div>
+                  <div className="small">Aanpassen kan nog: tik op een gewoonte.</div>
+                </div>
+              </div>
+            ) : closeTime ? (
+              <div className="card stack gap-16">
+                <div className="stack gap-4">
+                  <div className="h2">Sluit je dag af</div>
+                  <p className="small" style={{ margin: 0 }}>Daarna telt je dag mee in je balans.</p>
+                </div>
+                <div className="hstack" style={{ gap: 8 }}>
+                  <button className="btn sm" style={{ flex: 1 }} onClick={() => openMirror(date)}>{Icon.mirror()} Spiegelmoment</button>
+                  <button className="btn ghost sm" style={{ flex: 1 }} onClick={() => update((d) => { (d.logs[date] ??= { v: {} }).sealed = true })}>Alles klopt zo</button>
+                </div>
+              </div>
+            ) : (
+              <button className="card hstack between" style={{ width: '100%', textAlign: 'left', gap: 16 }} onClick={() => openMirror(date)}>
+                <span className="hstack" style={{ gap: 12 }}>
+                  {Icon.mirror()}
+                  <span>
+                    <span className="name" style={{ display: 'block' }}>Dag afsluiten</span>
+                    <span className="small">Spiegelmoment, vanaf 19:00</span>
+                  </span>
+                </span>
+                <span style={{ color: 'var(--ink-3)', display: 'grid' }}>{Icon.next()}</span>
+              </button>
+            )}
           </div>
         </div>
-      ) : !closeTime && (
-        <div className="mt-24 stack gap-8">
-          <button className="card hstack between" style={{ width: '100%', textAlign: 'left', gap: 16 }} onClick={() => openMirror(date)}>
-            <span className="hstack" style={{ gap: 12 }}>
-              {Icon.mirror()}
-              <span>
-                <span className="name" style={{ display: 'block' }}>Dag afsluiten</span>
-                <span className="small">Spiegelmoment, vanavond. Twee minuten.</span>
-              </span>
-            </span>
-            <span style={{ color: 'var(--ink-3)', display: 'grid' }}>{Icon.next()}</span>
-          </button>
-        </div>
-      )}
+      </section>
 
       {timeFor && <TimeSheet h={timeFor} date={date} onClose={() => setTimeFor(null)} />}
       {suck && <SuckSheet date={date} onClose={() => setSuck(false)} />}

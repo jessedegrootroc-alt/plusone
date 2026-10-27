@@ -53,7 +53,6 @@ export function EnergyCheck() {
   return (
     <div className="card mt-24 stack gap-16">
       <div className="stack gap-4">
-        <div className="eyebrow">Ochtendvraag</div>
         <div className="h2">Hoe vol is je tank vandaag?</div>
         <p className="small" style={{ margin: 0 }}>Eén tik. De app past je dag erop aan, zodat groeien geen burn-out wordt.</p>
       </div>

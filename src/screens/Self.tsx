@@ -4,7 +4,7 @@ import { Icon, Sheet, useTween } from '../components/ui'
 import { FEATURES, ROCK } from '../data/catalog'
 import HabitPicker from '../components/HabitPicker'
 import { IMG, SIN_BY_ID, STAGES, stageFor, type SinId } from '../data/sins'
-import { computeSeries } from '../lib/score'
+import { computeSeries, mirrorStreak } from '../lib/score'
 import { fromTemplate, resetAll, uid, update, useStore, type AvatarConfig, type Habit } from '../lib/store'
 import Builder from './Builder'
 import HabitEditor from './HabitEditor'
@@ -27,8 +27,19 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
 
   return (
     <div className="screen">
-      <div className="eyebrow">Zelf</div>
-      <h1 className="h1">{s.name || 'Jij'}, nu en straks.</h1>
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">Zelf</div>
+          <h1 className="h1">{s.name || 'Jij'}</h1>
+        </div>
+      </div>
+
+      {/* Zoals het profiel van Headspace: drie getallen in één oogopslag */}
+      <div className="stats">
+        <div className="stat"><span className="num">{mirrorStreak(s)}</span><span className="small">dagen gespiegeld</span></div>
+        <div className="stat"><span className="num">{s.jar.length}</span><span className="small">overwinningen</span></div>
+        <div className="stat"><span className="num">{(s.growth ?? []).filter((c) => c.status === 'gedaan').length}</span><span className="small">grenzen verlegd</span></div>
+      </div>
 
       <div className="card mt-16" style={{ padding: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>

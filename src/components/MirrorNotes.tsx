@@ -43,9 +43,9 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
   const count = (d: Domain) => all.filter((n) => n.domain === d).length
 
   return (
-    <div className="card mt-24 stack gap-16">
-      <div className="hstack between">
-        <div className="eyebrow">De spiegel</div>
+    <section className="section">
+      <div className="section-head">
+        <h2 className="h2">De spiegel</h2>
         <span className="small">{off > 0 ? `${off} eraf gehaald` : 'telt elke dag mee'}</span>
       </div>
 
@@ -61,13 +61,13 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
       )}
 
       {all.length === 0 ? (
-        <div className="stack gap-12">
+        <div className="card stack gap-12">
           <p className="lead">Schrijf op wat er mis is en wat er moet gebeuren, zo hard en eerlijk als Goggins. Per onderdeel van je leven, met een ladder van kleine stappen naar het doel.</p>
           <button className="btn ghost sm" onClick={() => setEdit('new')}>Schrijf je eerste post-it</button>
         </div>
       ) : (
-        <div className="stack gap-12">
-          {notes.length === 0 && filter !== 'alles' && <p className="small" style={{ margin: 0 }}>Nog niets voor {DOMAIN_BY_ID[filter].name.toLowerCase()}. Hier groei je dus nog niet.</p>}
+        <div className="carousel" aria-label="Post-its">
+          {notes.length === 0 && filter !== 'alles' && <div className="card"><p className="small" style={{ margin: 0 }}>Nog niets voor {DOMAIN_BY_ID[filter].name.toLowerCase()}. Hier groei je dus nog niet.</p></div>}
           {notes.map((n, i) => {
             const on = (log?.v[noteHabitId(n)] ?? 0) >= 1
             const dom = n.domain ? DOMAIN_BY_ID[n.domain] : null
@@ -104,12 +104,12 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
               </div>
             )
           })}
-          <button className="chip add" style={{ alignSelf: 'flex-start' }} onClick={() => setEdit('new')}>{Icon.plus()} Post-it</button>
+          <button className="carousel-add" onClick={() => setEdit('new')}>{Icon.plus()} Nieuwe post-it</button>
         </div>
       )}
 
       {edit && <NoteSheet note={edit === 'new' ? undefined : edit} preset={filter === 'alles' ? undefined : filter} onClose={() => setEdit(null)} />}
-    </div>
+    </section>
   )
 }
 
