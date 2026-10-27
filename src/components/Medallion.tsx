@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { RIGS, tableauFor } from '../data/tableaux'
+import { tableauFor } from '../data/tableaux'
+import TableauParts from './TableauParts'
 import type { SinId } from '../data/sins'
 
 const FRAME = 627 // de taferelen zijn 627×627
@@ -13,7 +14,6 @@ const DUST = [12, 27, 41, 55, 68, 80, 90]
 export default function Medallion({ id, value, active = true, size = 224 }: { id: SinId; value: number; active?: boolean; size?: number }) {
   const dark = active && value < -0.5
   const name = tableauFor(id, active ? value : 0)
-  const rig = RIGS[name]
   const [drawn, setDrawn] = useState(0)
   useEffect(() => {
     const t = requestAnimationFrame(() => setDrawn(active ? Math.min(100, Math.abs(value)) : 0))
@@ -32,21 +32,11 @@ export default function Medallion({ id, value, active = true, size = 224 }: { id
       </svg>
       <div className="medal-disc">
         <div className="medal-art">
-          <img src={`/art/rig-${name}-basis.webp`} alt="" width={FRAME} height={FRAME} />
-          {rig && (
-            <img
-              className={`rig rig-${rig.kind}`}
-              src={`/art/${rig.file}.webp`}
-              alt=""
-              style={{ left: rig.piece[0], top: rig.piece[1], width: rig.size[0], height: rig.size[1], transformOrigin: rig.pivot ? `${rig.pivot[0] - rig.piece[0]}px ${rig.pivot[1] - rig.piece[1]}px` : '50% 0' }}
-            />
-          )}
-          {/* Water dat blijft stromen: lichtbanden die door de straal naar beneden lopen */}
-          {rig?.kind === 'pour' && <span className="rig-flow" style={{ left: rig.piece[0], top: rig.piece[1], width: rig.size[0], height: rig.size[1], maskImage: `url(/art/${rig.file}.webp)`, WebkitMaskImage: `url(/art/${rig.file}.webp)` }} />}
+          <TableauParts name={name} />
         </div>
         <span className="medal-sheen" />
         <span className="medal-dust" aria-hidden="true">
-          {DUST.map((x, i) => <i key={i} style={{ left: `${x}%`, animationDelay: `${-i * 1.3}s`, animationDuration: `${7 + (i % 3) * 2}s` }} />)}
+          {DUST.map((x, i) => <i key={i} style={{ left: `${x}%`, animationDelay: `${-i * 1.5}s`, animationDuration: `${i % 2 ? 12 : 6}s` }} />)}
         </span>
       </div>
     </div>

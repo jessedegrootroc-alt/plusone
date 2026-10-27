@@ -145,6 +145,8 @@ button.card:active { transform: scale(0.985); }
 .chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .chips.scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; scroll-padding-inline: var(--gutter); margin: 0 calc(var(--gutter) * -1); padding: 0 var(--gutter); }
 .chips.scroll::-webkit-scrollbar { display: none; }
+/* Zelfde ritme als tussen kop en chips: 16 px tot wat eronder komt */
+.chips.scroll + * { margin-top: var(--s4); }
 .chips.scroll .chip { flex: none; }
 .chip { display: inline-flex; align-items: center; gap: var(--s2); min-height: 40px; padding: var(--s2) var(--s4); border-radius: var(--r-full); box-shadow: inset 0 0 0 1px var(--line); background: var(--card); font: var(--b); transition: all 0.18s var(--ease); }
 .chip:active { transform: scale(0.97); }
@@ -222,23 +224,23 @@ button.card:active { transform: scale(0.985); }
 .medal { position: relative; width: calc(var(--size) + 24px); height: calc(var(--size) + 24px); margin: 0 auto; display: grid; place-items: center; }
 .medal-ring { position: absolute; inset: 0; }
 .medal-disc { position: relative; width: var(--size); height: var(--size); border-radius: 50%; overflow: hidden; background: #0B0B0B; isolation: isolate; }
-.medal-art { position: absolute; left: 50%; top: 50%; width: 627px; height: 627px; margin: -313.5px 0 0 -313.5px; transform: scale(var(--k)); animation: medalBreath 8s ease-in-out infinite; }
+.medal-art { position: absolute; left: 50%; top: 50%; width: 627px; height: 627px; margin: -313.5px 0 0 -313.5px; transform: scale(var(--k)); animation: medalBreath 12s ease-in-out infinite; }
 .medal-art img { position: absolute; left: 0; top: 0; max-width: none; }
 .medal.dark .medal-art { filter: brightness(0.7) contrast(1.15); }
 .medal.off .medal-art { filter: brightness(0.35) grayscale(1); animation: none; }
 /* Donkere rand binnen de schijf, zodat het tafereel uit het donker komt */
 .medal-disc::after { content: ''; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 32px 12px rgba(0, 0, 0, 0.85); pointer-events: none; }
-.medal-sheen { position: absolute; inset: 0; background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.1) 50%, transparent 62%); background-size: 300% 100%; animation: medalSheen 9s ease-in-out infinite; mix-blend-mode: screen; pointer-events: none; }
+.medal-sheen { position: absolute; inset: 0; background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.1) 50%, transparent 62%); background-size: 300% 100%; animation: medalSheen 12s ease-in-out infinite; mix-blend-mode: screen; pointer-events: none; }
 .medal.dark .medal-sheen { opacity: 0.4; }
 .medal-dust i { position: absolute; bottom: 8%; width: 2px; height: 2px; border-radius: 50%; background: #F2F2F2; opacity: 0; animation: medalDust 8s linear infinite; }
 .medal.dark .medal-dust i { background: #B3B3B3; }
 .rig { position: absolute; max-width: none; }
-.rig-sway { animation: rigSway 3.4s ease-in-out infinite alternate; }
-.rig-flame { animation: rigFlame 0.9s ease-in-out infinite; }
+.rig-sway { animation: rigSway 3s ease-in-out infinite alternate; }
+.rig-flame { animation: rigFlame 1s ease-in-out infinite; }
 .rig-pendulum { animation: rigPendulum 1s ease-in-out infinite alternate; }
-.rig-tilt { animation: rigTilt 4s ease-in-out infinite alternate; }
-.rig-hammer { animation: rigHammer 2.8s linear infinite; }
-.rig-flow { position: absolute; background: repeating-linear-gradient(180deg, transparent 0 18px, rgba(255, 255, 255, 0.55) 24px, transparent 30px); background-size: 100% 30px; mix-blend-mode: screen; opacity: 0.6; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; animation: rigFlow 1.1s linear infinite; }
+.rig-tilt { animation: rigTilt 3s ease-in-out infinite alternate; }
+.rig-hammer { animation: rigHammer 3s linear infinite; }
+.rig-flow { position: absolute; background: repeating-linear-gradient(180deg, transparent 0 18px, rgba(255, 255, 255, 0.55) 24px, transparent 30px); background-size: 100% 30px; mix-blend-mode: screen; opacity: 0.6; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; animation: rigFlow 1s linear infinite; }
 @keyframes medalBreath { 0%, 100% { transform: scale(var(--k)); } 50% { transform: scale(calc(var(--k) * 1.035)) translateY(-2px); } }
 @keyframes medalSheen { 0% { background-position: 100% 0; } 60%, 100% { background-position: -50% 0; } }
 @keyframes medalDust { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 0.55; } 85% { opacity: 0.35; } 100% { transform: translateY(-160px) translateX(12px); opacity: 0; } }
@@ -246,7 +248,7 @@ button.card:active { transform: scale(0.985); }
 @keyframes rigFlame { 0%, 100% { transform: scale(1, 1); } 25% { transform: scale(1.05, 1.12) rotate(2deg); } 50% { transform: scale(0.97, 0.95); } 75% { transform: scale(1.03, 1.08) rotate(-2deg); } }
 @keyframes rigPendulum { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
 @keyframes rigTilt { from { transform: rotate(-1.5deg); } to { transform: rotate(1.5deg); } }
-/* Hamer: traag omhoog, snelle klap, nadreun, terug */
+/* Hamer: traag omhoog, snelle klap, nadreun, terug. Alle bewegingen delen een maat van 12 s, zodat elke lus naadloos is. */
 @keyframes rigHammer { 0% { transform: rotate(0); } 50% { transform: rotate(-6deg); animation-timing-function: ease-in; } 56% { transform: rotate(12.6deg); } 60% { transform: rotate(11deg); } 64% { transform: rotate(12.6deg); animation-timing-function: ease-out; } 100% { transform: rotate(0); } }
 @keyframes rigFlow { from { background-position: 0 0; } to { background-position: 0 30px; } }
 @media (prefers-reduced-motion: reduce) { .medal-art, .medal-sheen, .medal-dust i, .rig, .rig-flow { animation: none !important; } }
@@ -263,17 +265,53 @@ button.card:active { transform: scale(0.985); }
 .proof-days i { width: 10px; height: 10px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--line); }
 .proof-days i.won { background: var(--ink); box-shadow: none; }
 .proof-days i.lost { box-shadow: inset 0 0 0 1.5px var(--ink-3); background: repeating-linear-gradient(-45deg, transparent 0 2px, rgba(128, 128, 128, 0.7) 2px 3px); }
-.grens-row { display: flex; align-items: center; gap: var(--s3); width: 100%; margin-top: var(--s4); padding: var(--s3) var(--s2) 0; }
-.grens-pips { flex: 1; display: flex; gap: 4px; }
-.grens-pips i { flex: 1; height: 4px; border-radius: 2px; background: rgba(242, 242, 242, 0.12); }
+.zone-card { display: flex; align-items: center; gap: var(--s4); padding: var(--s4); border-radius: var(--r-lg); background: var(--paper-2); }
+.zone-dot { animation: pathGlow 3s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+/* De kaart van je leven: verlichte plekken met een trap, de rest in de mist */
+.area-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
+.area-cell { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: var(--s2); min-height: 72px; padding: var(--s3); border-radius: var(--r-md); text-align: left; transition: transform 0.15s var(--ease); }
+.area-cell:active { transform: scale(0.96); }
+.area-cell.lit { background: var(--paper-2); box-shadow: inset 0 0 0 1px rgba(242, 242, 242, 0.12); }
+.area-cell.fog { background: repeating-linear-gradient(-45deg, transparent 0 5px, rgba(242, 242, 242, 0.04) 5px 6px); box-shadow: inset 0 0 0 1px var(--line); }
+.area-name { font: var(--sm); font-weight: 600; color: var(--ink); hyphens: auto; -webkit-hyphens: auto; }
+.area-cell.fog .area-name { color: var(--ink-3); font-weight: 400; }
+.area-open { position: absolute; top: var(--s2); right: var(--s2); width: 6px; height: 6px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px rgba(242, 242, 242, 0.15); }
+.next-grens { display: flex; flex-direction: column; gap: var(--s1); padding: var(--s5); border-radius: var(--r-lg); background: var(--ink); color: var(--paper); }
+.next-grens .eyebrow, .next-grens .small { color: #595959; }
+.next-grens .btn { background: var(--paper); color: var(--ink); }
+.grens-row { display: flex; align-items: center; gap: var(--s3); width: 100%; margin-top: var(--s4); padding: var(--s4) var(--s2) 0; border-top: 1px solid var(--line); text-align: left; color: var(--ink-3); }
+.grens-icon { flex: none; width: 48px; height: 48px; object-fit: contain; }
+.grens-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.grens-icon { width: 40px; height: 40px; }
+.grens-title { font: var(--b); font-weight: 600; color: var(--ink); white-space: nowrap; }
+.grens-meter { display: flex; align-items: center; gap: var(--s3); }
+.grens-meter b { flex: none; font: var(--sm); font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+/* Vier weken van twee: zo zie je meteen dat twee per week het ritme is */
+.grens-pips { flex: 1; display: flex; gap: var(--s2); }
+.grens-pips > span { flex: 1; display: flex; gap: 2px; }
+.grens-pips i { flex: 1; height: 6px; border-radius: 3px; background: rgba(242, 242, 242, 0.12); }
 .grens-pips i.on { background: var(--ink); }
 .grens-pips.rest i.on { background: var(--ink-3); }
+.mnote-truth { font: var(--sm); font-size: 12px; line-height: 16px; color: #6B6B6B; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mnote-foot .jar-date { white-space: nowrap; }
+.jar-date.late { color: #0B0B0B; font-weight: 600; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+/* De vorige stap scheurt eraf: omhoog, gedraaid, weg; de nieuwe plakt eronder (pinIn) */
+.peel-wrap { display: grid; }
+.peel-wrap > .jar-note { grid-area: 1 / 1; }
+.jar-note.peel { z-index: 2; animation: peelOff 0.75s var(--ease) forwards; }
+@keyframes peelOff { 0% { transform: rotate(var(--rot)); opacity: 1; } 30% { transform: translate(6px, -10px) rotate(calc(var(--rot) + 6deg)) skewY(-2deg); } 100% { transform: translate(60px, -90px) rotate(calc(var(--rot) + 24deg)); opacity: 0; } }
 .jar-solo { margin: var(--s4) auto 0; max-width: 320px; padding: var(--s5); animation: none; }
 .jar-solo .jar-text { font: var(--t-s); }
 .jar-solo::after { background: linear-gradient(135deg, rgba(0, 0, 0, 0.12) 50%, var(--card) 50%); }
 .postit-text { display: block; width: 100%; text-align: left; font: var(--b); font-weight: 600; color: #0B0B0B; }
 .ladder-preview { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
 .ladder-preview li { display: flex; gap: var(--s3); align-items: baseline; font: var(--sm); color: var(--ink-2); }
+.ladder-preview .grow { flex: 1; min-width: 0; }
+.ladder-preview .term { flex: none; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+.ladder-preview li.done { color: var(--ink-3); text-decoration: line-through; text-decoration-color: rgba(242, 242, 242, 0.3); }
+.ladder-preview li.done .n { background: var(--paper-2); box-shadow: none; }
+.ladder-preview li.now { color: var(--ink); font-weight: 600; }
+.ladder-preview li.now .n { background: var(--ink); color: var(--paper); box-shadow: none; }
 .ladder-preview .n { flex: none; width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; box-shadow: inset 0 0 0 1px var(--line); color: var(--ink-3); font-weight: 600; }
 .seg { display: flex; padding: var(--s1); gap: var(--s1); border-radius: var(--r-full); background: var(--paper-2); overflow-x: auto; scrollbar-width: none; }
 .seg::-webkit-scrollbar { display: none; }
@@ -329,10 +367,12 @@ button.card:active { transform: scale(0.985); }
 
 /* ——— Tabbalk ——— */
 .tabbar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 460px; z-index: 20; display: flex; justify-content: space-around; padding: var(--s2) var(--s3) calc(env(safe-area-inset-bottom) + var(--s2)); background: #0B0B0B; border-top: 1px solid var(--line); }
-.tab { display: flex; flex-direction: column; align-items: center; gap: var(--s1); width: 80px; padding: var(--s2) 0; font: var(--sm); font-weight: 600; color: var(--ink-3); transition: color 0.2s; }
+.tab { display: flex; flex-direction: column; align-items: center; gap: var(--s1); width: 80px; padding: var(--s1) 0; font: var(--sm); font-weight: 600; color: var(--ink-3); transition: color 0.2s; }
 .tab.on { color: var(--ink); }
-.tab .ind { width: 4px; height: 4px; border-radius: 2px; background: var(--ink); opacity: 0; transition: opacity 0.2s; }
-.tab.on .ind { opacity: 1; }
+/* De actieve tab: een lichte bal achter het icoon in plaats van een puntje eronder */
+.tab-ico { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; transition: background-color 0.25s var(--ease), transform 0.25s var(--ease); }
+.tab.on .tab-ico { background: rgba(242, 242, 242, 0.14); }
+.tab:active .tab-ico { transform: scale(0.92); }
 
 /* ——— Sheets en volledige schermen ——— */
 .scrim { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.7); animation: fade 0.25s both; }
@@ -356,12 +396,31 @@ button.card:active { transform: scale(0.985); }
 .hero-img { position: relative; overflow: hidden; }
 .hero-img img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.08); }
 .hero-img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11, 11, 11, 0.1) 0%, rgba(11, 11, 11, 0) 24%, rgba(11, 11, 11, 0.72) 56%, rgba(11, 11, 11, 0.96) 100%); }
-.path-card { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; padding: 0; overflow: hidden; text-align: left; background: #000; }
-.path-card img { position: absolute; top: 0; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.15); }
-.path-card .from { left: 0; width: 62%; filter: grayscale(1) contrast(1.15) brightness(0.85); }
-.path-card .to { right: 0; width: 62%; filter: grayscale(1) contrast(1.3) brightness(0.62); -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 45%); mask-image: linear-gradient(90deg, transparent 0%, #000 45%); }
-.path-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11, 11, 11, 0) 35%, rgba(11, 11, 11, 0.92) 100%); }
-.path-card .txt { position: absolute; left: var(--s5); right: var(--s5); bottom: var(--s4); z-index: 1; }
+/* ——— Je schaduw als scène: één achtergrond, alles op een maat van 12 s ——— */
+.ps { position: relative; display: block; width: 100%; height: 300px; padding: 0; overflow: hidden; text-align: left; background: #050505; isolation: isolate; }
+.ps-bg { position: absolute; inset: -8px -16px; background: url(/art/achtergrond-terrassen-1-ver.webp) center 30% / cover no-repeat; filter: brightness(0.7) contrast(0.95); --amp: 6px; animation: psDrift 12s ease-in-out infinite alternate; }
+/* Van schaduw naar licht: links bijna zwart, rechts open */
+.ps-shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.55) 40%, rgba(0, 0, 0, 0.1) 75%, transparent 100%); }
+.ps-rays { position: absolute; right: -12%; top: -12%; width: 72%; height: 95%; background: url(/art/effect-stralen.webp) no-repeat 0 0 / cover; transform: scaleX(-1); mix-blend-mode: screen; opacity: 0.3; animation: psRays 6s ease-in-out infinite alternate; pointer-events: none; }
+.ps-glow { position: absolute; right: -40px; bottom: 0; width: 240px; height: 240px; background: url(/art/effect-gloed.webp) center / contain no-repeat; mix-blend-mode: screen; opacity: 0.3; animation: psGlow 6s ease-in-out infinite; }
+.ps-fig { position: absolute; bottom: 6px; width: 150px; height: 150px; }
+.ps-fig.sin { left: 2%; filter: brightness(0.62) contrast(1.15); }
+.ps-fig.virtue { right: 2%; }
+.ps-art { position: absolute; left: 0; top: 0; width: 627px; height: 627px; transform-origin: 0 0; transform: scale(var(--k)); animation: psBreath 6s ease-in-out infinite; }
+.ps-fig.sin .ps-art { animation-delay: -3s; }
+.ps-art img { position: absolute; left: 0; top: 0; max-width: none; }
+.ps-shadow { position: absolute; left: 12%; right: 12%; bottom: 0; height: 16px; border-radius: 50%; background: radial-gradient(rgba(0, 0, 0, 0.85), transparent 70%); }
+.ps-path { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.ps-mist { position: absolute; left: -20%; right: -20%; bottom: -24px; height: 120px; background: url(/art/effect-mist.webp) repeat-x center bottom / auto 100%; mix-blend-mode: screen; opacity: 0.22; -webkit-mask-image: linear-gradient(90deg, #000 30%, transparent 72%); mask-image: linear-gradient(90deg, #000 30%, transparent 72%); animation: psMist 12s ease-in-out infinite alternate; pointer-events: none; }
+.ps-motes img { position: absolute; bottom: 14%; width: 6px; mix-blend-mode: screen; opacity: 0; animation: medalDust 6s linear infinite; }
+.ps-vignette { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, transparent 34%), radial-gradient(120% 90% at 55% 70%, transparent 55%, rgba(0, 0, 0, 0.7)); }
+.ps .txt { position: absolute; left: var(--s5); right: var(--s5); top: var(--s5); z-index: 3; display: flex; flex-direction: column; gap: var(--s1); }
+@keyframes psDrift { from { transform: translateX(calc(var(--amp) * -1)); } to { transform: translateX(var(--amp)); } }
+@keyframes psRays { from { opacity: 0.22; } to { opacity: 0.42; } }
+@keyframes psGlow { 0%, 100% { opacity: 0.24; transform: scale(1); } 50% { opacity: 0.38; transform: scale(1.06); } }
+@keyframes psBreath { 0%, 100% { transform: scale(var(--k)); } 50% { transform: translateY(-3px) scale(var(--k)); } }
+@keyframes psMist { from { transform: translateX(-18px); } to { transform: translateX(18px); } }
+@media (prefers-reduced-motion: reduce) { .ps *, .ps-motes img { animation: none !important; } .ps-path image { display: none; } }
 .sin-head { position: relative; height: 128px; border-radius: var(--r-md); overflow: hidden; margin-bottom: var(--s3); }
 .sin-head img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.1); }
 .sin-head::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11, 11, 11, 0.88) 0%, rgba(11, 11, 11, 0.24) 76%); }

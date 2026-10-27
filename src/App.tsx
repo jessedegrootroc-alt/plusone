@@ -58,9 +58,8 @@ export default function App() {
       <nav className="tabbar" aria-label="Hoofdmenu">
         {([['today', 'Spiegel', Icon.mirror], ['compass', 'Kompas', Icon.compass], ['self', 'Zelf', Icon.self]] as const).map(([k, l, ic]) => (
           <button key={k} className={`tab ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)} aria-current={tab === k ? 'page' : undefined}>
-            {ic()}
+            <span className="tab-ico">{ic()}</span>
             <span>{l}</span>
-            <span className="ind" />
           </button>
         ))}
       </nav>

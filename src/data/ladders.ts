@@ -306,3 +306,46 @@ export const numericLadder = (text: string): string[] | null => {
     who ? `Lat hoger: nog ${fmtNum(n)} erbij, en wie nee zei over drie maanden opnieuw, met een betere aanpak` : `Lat hoger: nog ${fmtNum(n)}, sneller of beter dan de eerste keer`,
   ])
 }
+
+// ── Elke stap een eigen termijn ──
+// Goggins (Can't Hurt Me, challenge 2): elke stap is zijn eigen post-it, met een termijn erbij,
+// zoals "de eerste kilo in de eerste week". Haal je hem, dan gaat hij eraf en hangt de volgende.
+
+const kiloIn = (t: string) => {
+  if (/eerste kilo/i.test(t)) return 1
+  const m = t.match(/(\d[\d.,]*)\s*kilo/i)
+  return m ? Number(m[1].replace(',', '.')) : null
+}
+
+/** Hoeveel dagen een stap mag duren: uit de woorden van de stap, anders een week. */
+const daysFor = (t: string, i: number, total: number, prevKilo: number) => {
+  if (i === 0) return 1
+  if (/^lat hoger/i.test(t)) return 30
+  const k = kiloIn(t)
+  // Een halve kilo per week is gezond afvallen
+  if (k !== null && k > prevKilo) return Math.ceil((k - prevKilo) / 0.5) * 7
+  // Geld sparen of verdienen gaat per maand; de eerste euro's binnen een week
+  if (/€/.test(t)) return i === 1 ? 7 : 30
+  if (/vandaag/i.test(t)) return 1
+  if (/^drie maanden/i.test(t)) return 90
+  if (/^(dertig dagen|een maand|vier weken)/i.test(t)) return 30
+  if (/^twee weken/i.test(t)) return 14
+  if (/^(een week|vijf dagen|zeven dagen)/i.test(t)) return 7
+  if (/^het doel/i.test(t)) return 14
+  return i === total - 1 ? 30 : 7
+}
+
+/** De ladder met een termijn per stap. Je doel gaat voor; staat daar geen getal in, dan je harde waarheid. */
+export const planFor = (domain: Domain, goal: string, truth = ''): { text: string; days: number }[] => {
+  const steps = (goal.trim() && numericLadder(goal)) || ladderFor(domain, goal.trim() ? `${goal}. ${truth}` : truth)
+  let prevKilo = 0
+  return steps.map((text, i) => {
+    const days = daysFor(text, i, steps.length, prevKilo)
+    if (i > 0) prevKilo = kiloIn(text) ?? prevKilo
+    return { text, days }
+  })
+}
+
+/** Een termijn in woorden: vandaag, deze week, binnen 2 weken. */
+export const termLabel = (days: number) =>
+  days <= 1 ? 'vandaag' : days <= 7 ? 'binnen een week' : days < 63 ? `binnen ${Math.round(days / 7)} weken` : `binnen ${Math.round(days / 30)} maanden`

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import Mandala from '../components/Mandala'
 import Medallion from '../components/Medallion'
+import ShadowPath from '../components/ShadowPath'
 import { NoteSheet } from '../components/MirrorNotes'
 import { GrensDetails } from '../components/Grens'
 import { MONTH_GOAL, growthOf } from '../lib/growth'
@@ -51,13 +52,20 @@ export default function Compass({ openShadow }: { openShadow: (sin?: SinId) => v
 
       <div className="card" style={{ padding: '16px 8px 16px' }}>
         <Mandala values={series.perSin} active={active} onPick={setOpen} />
-        {/* De grens: deze maand uit je comfortzone, als acht streepjes */}
-        <button className="grens-row" onClick={() => setGrens(true)}>
-          <span className="small">Grens deze maand</span>
-          <span className={`grens-pips ${g.zone === 'rust' ? 'rest' : ''}`} aria-label={`${g.month.length} van ${MONTH_GOAL}`}>
-            {Array.from({ length: MONTH_GOAL }, (_, i) => <i key={i} className={i < g.month.length ? 'on' : ''} />)}
+        {/* De grens: hoe vaak je de afgelopen 30 dagen uit je comfortzone ging. Acht vakjes in vier weken van twee. */}
+        <button className="grens-row" onClick={() => setGrens(true)} aria-label={`Uit je comfortzone: ${g.month.length} van ${MONTH_GOAL} grenzen verlegd in 30 dagen. Open per plek.`}>
+          <img src="/art/item-pelgrimsstaf.webp" alt="" className="grens-icon" />
+          <span className="grens-body">
+            <span className="grens-title">Uit je comfortzone</span>
+            <span className="grens-meter">
+              <span className={`grens-pips ${g.zone === 'rust' ? 'rest' : ''}`} aria-hidden="true">
+                {[0, 1, 2, 3].map((w) => <span key={w}>{[0, 1].map((j) => <i key={j} className={w * 2 + j < g.month.length ? 'on' : ''} />)}</span>)}
+              </span>
+              <b>{Math.min(g.month.length, MONTH_GOAL)}/{MONTH_GOAL}</b>
+            </span>
+            <span className="small">{g.zone === 'rust' ? 'Herstel: rust is nu ook training' : g.zone === 'comfort' ? 'Twee weken niets spannends. Tijd voor een grens' : 'Grenzen verlegd in 30 dagen. Twee per week is genoeg'}</span>
           </span>
-          <span className="small" style={{ color: 'var(--ink)' }}>{g.month.length}/{MONTH_GOAL}</span>
+          {Icon.next()}
         </button>
         <button className="hstack between" style={{ width: '100%', marginTop: 16, padding: '16px 8px 0', borderTop: '1px solid var(--line)' }} onClick={() => openShadow()}>
           <span className="small">{talks} {talks === 1 ? 'schaduwgesprek' : 'schaduwgesprekken'}</span>
@@ -67,14 +75,7 @@ export default function Compass({ openShadow }: { openShadow: (sin?: SinId) => v
 
       {/* Je zwakste terras als weg: links de zonde in het donker, rechts de deugd waar je heen gaat */}
       {weakest && series.perSin[weakest.id] < 0 && (
-        <button className="card mt-16 path-card" onClick={() => setOpen(weakest.id)} aria-label={`Hier zit je schaduw het sterkst: ${weakest.sin}, op weg naar ${weakest.virtue}`}>
-          <img className="from" src={weakest.sinImg} alt="" style={{ objectPosition: weakest.sinPos }} />
-          <img className="to" src={weakest.virtueImg} alt="" style={{ objectPosition: weakest.virtuePos }} />
-          <div className="txt">
-            <div className="eyebrow">Hier zit je schaduw het sterkst</div>
-            <div className="h2">{weakest.sin} <span style={{ color: 'var(--ink-3)' }}>→</span> {weakest.virtue}</div>
-          </div>
-        </button>
+        <ShadowPath meta={weakest} onOpen={() => setOpen(weakest.id)} />
       )}
 
       <div className="group-title"><h2 className="h2">Koers</h2><span className="small">30 dagen</span></div>

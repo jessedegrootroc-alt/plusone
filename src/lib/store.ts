@@ -84,8 +84,10 @@ export interface MirrorNote {
   sin?: SinId
   /** Het onderdeel van je leven: financieel, spiritueel, fysiek of mentaal. */
   domain?: Domain
-  /** De ladder naar het doel: kleine stappen die steeds een beetje ongemakkelijker worden. */
-  steps?: { text: string; doneAt?: string }[]
+  /** Waar je naartoe wilt, meetbaar ("12 kilo eraf"). De tekst zelf is de harde waarheid: waar je nu staat. */
+  goal?: string
+  /** De ladder naar het doel: elke stap een eigen post-it met een termijn, steeds iets ongemakkelijker. */
+  steps?: { text: string; days?: number; startedAt?: string; doneAt?: string }[]
   createdAt: string
   doneAt?: string
 }
