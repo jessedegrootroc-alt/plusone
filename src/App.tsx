@@ -56,7 +56,7 @@ export default function App() {
       {tab === 'self' && <Self openShadow={() => setShadow({})} />}
 
       <nav className="tabbar" aria-label="Hoofdmenu">
-        {([['today', 'Spiegel', Icon.mirror], ['compass', 'Kompas', Icon.compass], ['self', 'Zelf', Icon.self]] as const).map(([k, l, ic]) => (
+        {([['today', 'Spiegel', Icon.mirror], ['compass', 'Kompas', Icon.compass], ['self', 'Reis', Icon.path]] as const).map(([k, l, ic]) => (
           <button key={k} className={`tab ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)} aria-current={tab === k ? 'page' : undefined}>
             <span className="tab-ico">{ic()}</span>
             <span>{l}</span>

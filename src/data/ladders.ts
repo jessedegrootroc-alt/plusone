@@ -218,6 +218,9 @@ const verbIn = (text: string) => {
   return v ? VERBS[v] : null
 }
 
+/** Dingen die je in een middag doet (een mail, een telefoontje): die doe je met urgentie, deze week. */
+const QUICK = new Set(['benaderd', 'gebeld', 'gemaild', 'gestuurd', 'verstuurd', 'gesproken', 'gevraagd', 'uitgenodigd', 'gepitcht', 'gepost', 'gesolliciteerd', 'ontmoet', 'gegeven', 'geholpen', 'bezocht'])
+
 const REPS = /^(push-?ups?|opdrukken|pull-?ups?|optrekken|squats?|burpees?|sit-?ups?|lunges?|dips)$/i
 const PEOPLE = /^(klanten|mensen|bedrijven|partijen|partners|leads|contacten|investeerders|vrienden|werkgevers|vacatures|bureaus|winkels)$/i
 
@@ -299,7 +302,7 @@ export const numericLadder = (text: string): string[] | null => {
   const who = PEOPLE.test(noun)
   return withTime([
     who ? `Voorbereiden: schrijf de ${fmtNum(n)} ${noun} op, met waarom juist zij` : `Voorbereiden: zet je ${fmtNum(n)} ${noun} op een lijst en plan wanneer`,
-    `De eerste: ${verb[0]} er één, vandaag. Dat is de engste stap`,
+    QUICK.has(verb[1]) ? `De eerste: ${verb[0]} er één, vandaag. Dat is de engste stap` : `De eerste: begin vandaag, en heb er deze week één ${verb[1]}`,
     ...(r.q ? [`Een kwart: ${fmtNum(r.q)} ${noun} ${verb[1]}`] : []),
     ...(r.h ? [`De helft: ${fmtNum(r.h)} ${noun} ${verb[1]}, ${who ? 'ook na een nee' : 'ook in een week dat het tegenzit'}`] : []),
     `Het doel: alle ${fmtNum(n)} ${noun} ${verb[1]}`,
@@ -307,9 +310,11 @@ export const numericLadder = (text: string): string[] | null => {
   ])
 }
 
-// ── Elke stap een eigen termijn ──
-// Goggins (Can't Hurt Me, challenge 2): elke stap is zijn eigen post-it, met een termijn erbij,
-// zoals "de eerste kilo in de eerste week". Haal je hem, dan gaat hij eraf en hangt de volgende.
+// ── Elke stap een eigen termijn, in het tempo van Goggins ──
+// Can't Hurt Me, challenge 2: elke stap is zijn eigen post-it met een termijn, zoals "twee pond eraf in de
+// eerste week", daarna stappen van twee tot vijf pond. Dat is ongeveer een kilo per week: stevig, maar vol te houden.
+// Challenge 7: bouw kracht en afstand op met 5 tot 10 procent per week, dan blijf je heel.
+// En met urgentie (Never Finished): wat je zelf in de hand hebt, zoals mensen benaderen, doe je deze week, niet "ooit".
 
 const kiloIn = (t: string) => {
   if (/eerste kilo/i.test(t)) return 1
@@ -317,16 +322,45 @@ const kiloIn = (t: string) => {
   return m ? Number(m[1].replace(',', '.')) : null
 }
 
+/** Een aantal met een voltooid deelwoord ("3 klanten benaderd", "alle 20 boeken gelezen"). */
+const countIn = (t: string) => {
+  const m = t.match(/^(?:een kwart|de helft|het doel)[^\d]*(\d+)\s+[a-zà-ÿ-]+\s+([a-zà-ÿ]+)/i)
+  return m ? { n: Number(m[1]), done: m[2].toLowerCase() } : null
+}
+
+/** Herhalingen of kilometers in een stap ("25 push-ups", "2,5 km"), voor de 10%-per-week-regel. */
+const amountIn = (t: string) => {
+  const m = t.match(/(\d[\d.,]*)\s*(km|kilometer|push-?ups?|opdrukken|pull-?ups?|optrekken|squats?|burpees?|sit-?ups?|lunges?|dips)\b/i)
+  return m ? Number(m[1].replace(/\.(?=\d{3})/g, '').replace(',', '.')) : null
+}
+
+const KILO_PER_WEEK = 1 // twee pond per week, zoals in het boek
+const GROWTH_PER_WEEK = 1.1 // tien procent erbij per week
+
 /** Hoeveel dagen een stap mag duren: uit de woorden van de stap, anders een week. */
-const daysFor = (t: string, i: number, total: number, prevKilo: number) => {
+const daysFor = (t: string, i: number, total: number, prev: { kilo: number; amount: number; count: number }) => {
   if (i === 0) return 1
   if (/^lat hoger/i.test(t)) return 30
   const k = kiloIn(t)
-  // Een halve kilo per week is gezond afvallen
-  if (k !== null && k > prevKilo) return Math.ceil((k - prevKilo) / 0.5) * 7
+  if (k !== null && k > prev.kilo) return Math.ceil((k - prev.kilo) / KILO_PER_WEEK) * 7
+  // Kracht en afstand: tien procent per week, minstens een week per stap.
+  // Hardlopen vanaf een kleine basis mag sneller: een halve kilometer per week erbij is ook veilig.
+  const a = amountIn(t)
+  if (a !== null && prev.amount > 0 && a > prev.amount) {
+    const pct = Math.ceil(Math.log(a / prev.amount) / Math.log(GROWTH_PER_WEEK))
+    const weeks = /km|kilometer/i.test(t) ? Math.min(pct, Math.ceil((a - prev.amount) / 0.5)) : pct
+    return Math.max(1, weeks) * 7
+  }
   // Geld sparen of verdienen gaat per maand; de eerste euro's binnen een week
   if (/€/.test(t)) return i === 1 ? 7 : 30
+  if (/deze week één/i.test(t)) return 7
   if (/vandaag/i.test(t)) return 1
+  // Aantallen: wat je in een middag doet (mensen benaderen, bellen) met urgentie, de rest één per week (een boek, een les)
+  const c = countIn(t)
+  if (c) {
+    if (QUICK.has(c.done)) return /^een kwart/i.test(t) ? 3 : /^de helft/i.test(t) ? 4 : 7
+    return Math.max(1, c.n - prev.count) * 7
+  }
   if (/^drie maanden/i.test(t)) return 90
   if (/^(dertig dagen|een maand|vier weken)/i.test(t)) return 30
   if (/^twee weken/i.test(t)) return 14
@@ -338,14 +372,18 @@ const daysFor = (t: string, i: number, total: number, prevKilo: number) => {
 /** De ladder met een termijn per stap. Je doel gaat voor; staat daar geen getal in, dan je harde waarheid. */
 export const planFor = (domain: Domain, goal: string, truth = ''): { text: string; days: number }[] => {
   const steps = (goal.trim() && numericLadder(goal)) || ladderFor(domain, goal.trim() ? `${goal}. ${truth}` : truth)
-  let prevKilo = 0
+  const prev = { kilo: 0, amount: 0, count: 1 }
   return steps.map((text, i) => {
-    const days = daysFor(text, i, steps.length, prevKilo)
-    if (i > 0) prevKilo = kiloIn(text) ?? prevKilo
+    const days = daysFor(text, i, steps.length, prev)
+    if (i > 0) {
+      prev.kilo = kiloIn(text) ?? prev.kilo
+      prev.amount = amountIn(text) ?? prev.amount
+      prev.count = countIn(text)?.n ?? prev.count
+    }
     return { text, days }
   })
 }
 
-/** Een termijn in woorden: vandaag, deze week, binnen 2 weken. */
+/** Een termijn in woorden: vandaag, binnen 3 dagen, binnen 2 weken. */
 export const termLabel = (days: number) =>
-  days <= 1 ? 'vandaag' : days <= 7 ? 'binnen een week' : days < 63 ? `binnen ${Math.round(days / 7)} weken` : `binnen ${Math.round(days / 30)} maanden`
+  days <= 1 ? 'vandaag' : days < 7 ? `binnen ${days} dagen` : days === 7 ? 'binnen een week' : days < 63 ? `binnen ${Math.round(days / 7)} weken` : `binnen ${Math.round(days / 30)} maanden`

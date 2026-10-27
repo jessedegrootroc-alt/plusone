@@ -15,6 +15,7 @@ export const Icon = {
   mirror: () => <Ico name="mirror" size={24} />,
   compass: () => <Ico name="compass" size={24} />,
   self: () => <Ico name="user" size={24} />,
+  path: () => <Ico name="path" size={24} />,
   wave: () => <Ico name="urge" size={18} />,
 }
 
@@ -149,7 +150,7 @@ export function Toast({ text, onDone, action, onAction }: { text: string; onDone
 export const fmt = (n: number) => (n >= 1000 ? n.toLocaleString('nl-NL') : String(n))
 
 /** Eén gewoonte, één tik. Deugden tik je aan; verleidingen staan op 'vrij' en tik je alleen als je toegaf. */
-export function HabitRow({ h, value, answered, onChange, meta: metaOverride, onRemove, lead, compact }: {
+export function HabitRow({ h, value, answered, onChange, meta: metaOverride, onRemove, lead, compact, tight }: {
   h: Habit
   value: number
   answered: boolean
@@ -160,6 +161,8 @@ export function HabitRow({ h, value, answered, onChange, meta: metaOverride, onR
   lead?: ReactNode
   /** Alleen het hoognodige: geen zonde/deugd-label, alleen het doel. */
   compact?: boolean
+  /** Eén regel hoog: de naam wordt afgekapt in plaats van te breken. */
+  tight?: boolean
 }) {
   const sin = SIN_BY_ID[h.sin]
   const meta = metaOverride ?? (compact ? '' : h.kind === 'virtue' ? sin.virtue : sin.sin)
@@ -169,7 +172,7 @@ export function HabitRow({ h, value, answered, onChange, meta: metaOverride, onR
   if (h.type === 'do') {
     const on = value >= 1
     return (
-      <button className={`row ${on ? 'done' : ''}`} onClick={() => { buzz(); onChange(on ? 0 : 1) }} aria-pressed={on}>
+      <button className={`row ${tight ? 'tight' : ''} ${on ? 'done' : ''}`} onClick={() => { buzz(); onChange(on ? 0 : 1) }} aria-pressed={on}>
         {lead}
         <div className="grow">
           <div className="name">{h.name}</div>
@@ -196,7 +199,7 @@ export function HabitRow({ h, value, answered, onChange, meta: metaOverride, onR
   if (h.type === 'avoid') {
     const slip = value >= 1
     return (
-      <button className={`row ${slip ? 'slip' : ''}`} onClick={() => { buzz(slip ? 8 : 20); onChange(slip ? 0 : 1) }} aria-pressed={slip}>
+      <button className={`row ${tight ? 'tight' : ''} ${slip ? 'slip' : ''}`} onClick={() => { buzz(slip ? 8 : 20); onChange(slip ? 0 : 1) }} aria-pressed={slip}>
         {lead}
         <div className="grow">
           <div className="name">{h.name}</div>
@@ -211,7 +214,7 @@ export function HabitRow({ h, value, answered, onChange, meta: metaOverride, onR
   const ok = h.type === 'target' ? value >= amt : !over
   const pct = h.type === 'target' ? Math.min(100, (value / Math.max(1, amt)) * 100) : Math.min(100, (value / Math.max(1, amt || step)) * 100)
   return (
-    <div className={`row ${h.type === 'target' && ok ? 'done' : over ? 'slip' : ''}`}>
+    <div className={`row ${tight ? 'tight' : ''} ${h.type === 'target' && ok ? 'done' : over ? 'slip' : ''}`}>
       {lead}
       <button className="grow" style={{ textAlign: 'left' }} onClick={() => { buzz(); onChange(value + step) }}>
         <div className="name">{h.name}</div>

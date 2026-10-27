@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FeatureId } from '../data/catalog'
 import type { ObjectId } from '../data/objects'
 import type { SceneId, SinId } from '../data/sins'
+import { getMotion } from '../lib/motion'
 
 /**
  * De kust van de berg (balans −20 tot +20), als levende scène in de stijl van Darkest Dungeon.
@@ -321,9 +322,7 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
     const dpr = Math.min(2, window.devicePixelRatio || 1)
     let W = 0
     let H = 0
-    let pointer = { x: 0, y: 0 }
     let bakedK = -1
-    let pSmooth = { x: 0, y: 0 }
 
     // Vooraf gebakken lagen, opnieuw bij elke maatwijziging
     let L: null | {
@@ -539,11 +538,11 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, W, H)
 
-      // Camera: ademt en drijft. Parallax volgt de vinger, zacht nagetrokken.
-      pSmooth = { x: pSmooth.x + (pointer.x - pSmooth.x) * Math.min(1, dt * 1.5), y: pSmooth.y + (pointer.y - pSmooth.y) * Math.min(1, dt * 1.5) }
+      // Camera: ademt en drijft, en volgt de stand van je telefoon (of de muis), al gladgestreken in lib/motion
+      const m = getMotion()
       const zoom = 1.02 + 0.015 * Math.sin((TAU * t) / 24)
-      const camX = Math.sin((TAU * t) / 31) * 4 + pSmooth.x * 16
-      const camY = Math.sin((TAU * t) / 23) * 2.5 + pSmooth.y * 10
+      const camX = Math.sin((TAU * t) / 31) * 4 + m.x * 8
+      const camY = Math.sin((TAU * t) / 23) * 2.5 + m.y * 8
       const layer = (depth: number, fn: () => void) => {
         ctx.save()
         ctx.translate(W / 2 - camX * depth, H * 0.62 - camY * depth)
@@ -1443,32 +1442,12 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
     ro.observe(c)
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; resume() })
     io.observe(c)
-    // Parallax volgt alleen een muis. Een vinger op de scène is scrollen: die mag het beeld niet laten verspringen.
-    const move = (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse') return
-      const r = c.getBoundingClientRect()
-      pointer = { x: (e.clientX - r.left) / r.width - 0.5, y: (e.clientY - r.top) / r.height - 0.5 }
-    }
-    const leave = () => { pointer = { x: 0, y: 0 } }
-    // Kantelen geeft een zachte parallax, maar alleen links-rechts: voor- en achterover kantel je vanzelf bij het scrollen
-    const tilt = (e: DeviceOrientationEvent) => {
-      if (e.gamma == null) return
-      pointer = { x: clamp(e.gamma / 60, -0.4, 0.4), y: 0 }
-    }
-    c.addEventListener('pointermove', move)
-    c.addEventListener('pointerleave', leave)
-    c.addEventListener('pointercancel', leave)
-    window.addEventListener('deviceorientation', tilt)
     document.addEventListener('visibilitychange', resume)
     return () => {
       alive = false
       cancelAnimationFrame(raf)
       ro.disconnect()
       io.disconnect()
-      c.removeEventListener('pointermove', move)
-      c.removeEventListener('pointerleave', leave)
-      c.removeEventListener('pointercancel', leave)
-      window.removeEventListener('deviceorientation', tilt)
       document.removeEventListener('visibilitychange', resume)
     }
   }, [still, scene, tabsKey, emblemKey, objKey, sinKey, virtueKey])

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { AREAS, AREA_BY_ID, CHALLENGES, ENERGY, FEAR, FELT, type AreaId, type Size } from '../data/growth'
-import { MAX_OPEN, MONTH_GOAL, growthOf, insightsOf, levelsOf, nextSuggestion } from '../lib/growth'
+import { MAX_OPEN, growthOf, insightsOf, levelsOf, nextSuggestion } from '../lib/growth'
 import { addDays, buzz, todayISO, uid, update, useStore, type Challenge } from '../lib/store'
 import { grensHabitId, grensWeight } from '../lib/score'
 import { Icon, Sheet } from './ui'
@@ -13,57 +13,11 @@ const day = (iso: string) => {
   return `uiterlijk ${new Date(iso + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })}`
 }
 
-const ZONE_NAME = { comfort: 'Comfortzone', groei: 'Groeizone', rust: 'Herstel' } as const
 
 const TANK: Record<1 | 2 | 3, string> = {
   3: 'Goede dag om je grens te verleggen.',
   2: 'Doe je niet-onderhandelbare dingen. Je grens kan vandaag, als je hem klein houdt.',
   1: 'Vandaag herstel je: slaap, eet goed, wandel. Je grens wacht tot morgen.',
-}
-
-/**
- * De ochtendvraag: hoe vol is je tank? Eén tik, en je ziet meteen wat het voor je dag betekent.
- * Dit is de rem op burn-out: bij een lege tank schakelt De grens naar herstel.
- */
-export function EnergyCheck() {
-  const s = useStore()
-  const today = todayISO()
-  const e = s.logs[today]?.energy
-  const g = growthOf(s)
-  const [edit, setEdit] = useState(false)
-  const set = (v: 1 | 2 | 3) => {
-    buzz()
-    update((d) => { (d.logs[today] ??= { v: {} }).energy = v })
-    setEdit(false)
-  }
-  const label = ENERGY.find((x) => x.v === e)?.label
-  const outcome = e ? (g.zone === 'rust' && e !== 1 ? g.reason : TANK[e]) : null
-
-  if (e && !edit) {
-    return (
-      <button className="card mt-24 hstack between" style={{ width: '100%', textAlign: 'left', gap: 16 }} onClick={() => setEdit(true)} aria-label={`Tank: ${label}. Wijzigen`}>
-        <div className="stack gap-4" style={{ minWidth: 0 }}>
-          <div className="eyebrow">Je tank · {label}</div>
-          <div className="lead">{outcome}</div>
-        </div>
-        <span className="link" style={{ flex: 'none' }}>Wijzig</span>
-      </button>
-    )
-  }
-
-  return (
-    <div className="card mt-24 stack gap-16">
-      <div className="stack gap-4">
-        <div className="h2">Hoe vol is je tank vandaag?</div>
-        <p className="small" style={{ margin: 0 }}>Eén tik. De app past je dag erop aan, zodat groeien geen burn-out wordt.</p>
-      </div>
-      <div className="seg">
-        {ENERGY.map((x) => (
-          <button key={x.v} className={e === x.v ? 'on' : ''} aria-pressed={e === x.v} onClick={() => set(x.v)}>{x.label}</button>
-        ))}
-      </div>
-    </div>
-  )
 }
 
 /** Hoeveel dagen je nog hebt, in woorden die je voelt. */
@@ -114,83 +68,74 @@ function HoldRing({ onDone, label }: { onDone: () => void; label: string }) {
   )
 }
 
-/** Acht streepjes: je grenzen deze maand. Zichtbaar zonder te lezen. */
-function MonthPips({ n, zone }: { n: number; zone: keyof typeof ZONE_NAME }) {
+/**
+ * Op Vandaag: je grens van deze week. Eén vraag, één eerste stap, één ring om af te ronden.
+ * De ring lijkt op een vinkje maar vraagt vasthouden: gedaan, niet gezegd.
+ */
+/**
+ * De tank als één regel: drie knoppen naast elkaar, één tik. Alleen als het ertoe doet (leeg, of herstel)
+ * staat er een zin onder: dan remt de app je grens af, zodat groeien geen burn-out wordt.
+ */
+export function TankStrip() {
+  const s = useStore()
+  const today = todayISO()
+  const e = s.logs[today]?.energy
+  const g = growthOf(s)
+  const set = (v: 1 | 2 | 3) => { buzz(); update((d) => { (d.logs[today] ??= { v: {} }).energy = v }) }
+  const warn = e === 1 ? TANK[1] : e && g.zone === 'rust' ? g.reason : null
   return (
-    <div className="stack gap-8">
-      <div className="hstack" style={{ gap: 4 }} aria-hidden="true">
-        {Array.from({ length: MONTH_GOAL }).map((_, i) => (
-          <span key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i < n ? 'var(--ink)' : 'var(--line)' }} />
-        ))}
+    <div className="day-tank">
+      <div className="day-tank-row">
+        <span className="day-label">Je tank</span>
+        <div className="tank-pills" role="group" aria-label="Hoe vol is je tank vandaag?">
+          {ENERGY.map((x) => <button key={x.v} className={e === x.v ? 'on' : ''} aria-pressed={e === x.v} onClick={() => set(x.v)}>{x.label}</button>)}
+        </div>
       </div>
-      <span className="small">{Math.min(n, MONTH_GOAL)} van {MONTH_GOAL} grenzen deze maand · {ZONE_NAME[zone].toLowerCase()}</span>
+      {warn && <p className="small" style={{ margin: 0 }}>{warn}</p>}
     </div>
   )
 }
 
 /**
- * Op Vandaag: je grens van deze week. Eén vraag, één eerste stap, één ring om af te ronden.
- * De ring lijkt op een vinkje maar vraagt vasthouden: gedaan, niet gezegd.
+ * Je grens van deze week als één regel in je dag. Vasthouden als hij gedaan is;
+ * de details (eerste stap, per plek) staan achter een tik.
  */
-export function GrensCard() {
+export function GrensRow() {
   const s = useStore()
   const g = growthOf(s)
   const [pick, setPick] = useState(false)
   const [felt, setFelt] = useState<Challenge | null>(null)
+  const [more, setMore] = useState(false)
   const next = g.open[0]
   const cd = next ? countdown(next.due) : null
-
+  const staff = <img src="/art/item-pelgrimsstaf.webp" alt="" className="row-icon" />
   return (
-    <div className="card mt-16 stack gap-16">
+    <>
       {g.zone === 'rust' ? (
-        <div className="stack gap-4">
-          <div className="eyebrow">Je grens · rustdag</div>
-          <div className="h2">Vandaag herstel je.</div>
-          <p className="lead">{g.reason}{next ? ' Je grens wacht.' : ''}</p>
+        <div className="row tight">
+          {staff}
+          <div className="grow"><div className="name">Rustdag</div><div className="meta">Je grens wacht tot je tank weer vol is</div></div>
         </div>
       ) : next ? (
-        <>
-          <div className="hstack between" style={{ gap: 12 }}>
-            <div className="eyebrow">Je grens deze week</div>
-            <span className="small" style={{ color: cd!.late ? 'var(--ink)' : undefined, fontWeight: cd!.late ? 600 : undefined }}>{cd!.text}</span>
-          </div>
-          <div className="hstack" style={{ gap: 16, alignItems: 'flex-start' }}>
-            <div className="stack gap-4 grow" style={{ minWidth: 0 }}>
-              <div className="h2">{next.title}</div>
-              <div className="small">{AREA_BY_ID[next.area].name} · telt {grensWeight(next)}× mee{g.open.length > 1 ? ` · nog ${g.open.length - 1} open` : ''}</div>
-            </div>
-            <HoldRing label={`${next.title}: houd vast als het gedaan is`} onDone={() => setFelt(next)} />
-          </div>
-          {next.step && (
-            <button
-              className={`grens-step ${next.stepDone ? 'on' : ''}`}
-              aria-pressed={!!next.stepDone}
-              onClick={() => { buzz(); update((d) => { const x = d.growth.find((y) => y.id === next.id); if (x) x.stepDone = !x.stepDone }) }}
-            >
-              <span className={`check ${next.stepDone ? 'on' : ''}`} style={{ width: 24, height: 24 }}>{next.stepDone && Icon.check('#0B0B0B')}</span>
-              <span className="stack" style={{ gap: 0 }}>
-                <span className="small">{next.stepDone ? 'Eerste stap gezet. Nu de rest.' : 'Eerste stap, twee minuten'}</span>
-                <span className="txt">{next.step}</span>
-              </span>
-            </button>
-          )}
-        </>
-      ) : (
-        <div className="stack gap-12">
-          <div className="stack gap-4">
-            <div className="eyebrow">Je grens deze week</div>
-            <div className="h2">Wat ga je doen dat je spannend vindt?</div>
-            <p className="lead">{g.zone === 'comfort' ? g.reason : 'Eén ding buiten je comfortzone. Groot hoeft niet.'}</p>
-          </div>
-          <button className="btn ghost sm" onClick={() => setPick(true)}>Kies je grens</button>
+        <div className="row tight">
+          {staff}
+          <button className="grow" style={{ textAlign: 'left', minWidth: 0 }} onClick={() => setMore(true)}>
+            <div className="name ellipsis">{next.title}</div>
+            <div className="meta" style={{ color: cd!.late ? 'var(--ink)' : undefined }}>Grens · {cd!.text} · {grensWeight(next)}×</div>
+          </button>
+          <HoldRing label={`${next.title}: houd vast als het gedaan is`} onDone={() => setFelt(next)} />
         </div>
+      ) : (
+        <button className="row tight" onClick={() => setPick(true)}>
+          {staff}
+          <div className="grow"><div className="name">Kies je grens van deze week</div><div className="meta">{g.zone === 'comfort' ? 'Twee weken niets spannends' : 'Eén ding buiten je comfortzone'}</div></div>
+          <span style={{ color: 'var(--ink-3)', display: 'grid' }}>{Icon.next()}</span>
+        </button>
       )}
-
-      <MonthPips n={g.month.length} zone={g.zone} />
-
       {pick && <ChallengeSheet onClose={() => setPick(false)} />}
       {felt && <FeltSheet c={felt} onClose={() => setFelt(null)} />}
-    </div>
+      {more && <GrensDetails onClose={() => setMore(false)} />}
+    </>
   )
 }
 

@@ -4,8 +4,11 @@ import { Icon, Sheet, useTween } from '../components/ui'
 import { FEATURES, ROCK } from '../data/catalog'
 import HabitPicker from '../components/HabitPicker'
 import Pinboard from '../components/Pinboard'
+import LivingScene from '../components/LivingScene'
+import { pullingObjects, strongestVirtueObject } from '../data/objects'
 import Trophies from '../components/Trophies'
-import { IMG, SIN_BY_ID, STAGES, stageFor, type SinId } from '../data/sins'
+import { enableMotion, motionOn, needsPermission } from '../lib/motion'
+import { IMG, SINS, SIN_BY_ID, STAGES, stageFor, type SinId } from '../data/sins'
 import { computeSeries } from '../lib/score'
 import { fromTemplate, resetAll, uid, update, useStore, type AvatarConfig, type Habit } from '../lib/store'
 import Builder from './Builder'
@@ -21,6 +24,14 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
   const [panel, setPanel] = useState<Panel>(null)
   const [draftAvatar, setDraftAvatar] = useState<AvatarConfig>(s.avatar)
   const close = () => setPanel(null)
+  const [askMotion, setAskMotion] = useState(() => needsPermission() && !motionOn())
+
+  // Wat de levende scènes nodig hebben, net als op Vandaag
+  const pulling = useMemo(() => pullingObjects(s), [s])
+  const goodObject = useMemo(() => strongestVirtueObject(s), [s])
+  const bySin = (dir: 1 | -1) => SINS.filter((x) => s.habits.some((h) => h.sin === x.id)).sort((a, b) => dir * (series.perSin[a.id] - series.perSin[b.id])).slice(0, 2).map((x) => x.id)
+  const weakest = bySin(1)
+  const strongest = bySin(-1)
 
   const virtues = s.habits.filter((h) => h.kind === 'virtue')
   const vices = s.habits.filter((h) => h.kind === 'vice')
@@ -30,7 +41,7 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
     <div className="screen">
       <div className="page-head">
         <div>
-          <div className="eyebrow">Zelf</div>
+          <div className="eyebrow">Je reis</div>
           <h1 className="h1">{s.name || 'Jij'}</h1>
         </div>
       </div>
@@ -39,18 +50,29 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
 
       <div className="card mt-16" style={{ padding: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          {/* Dezelfde levende scènes als op Vandaag: waar je nu staat, en Paradiso als je ideale zelf */}
           <div className="stack gap-8">
-            <StagePlate balance={series.balance} />
+            <div className="mini-scene" role="img" aria-label={`Nu: ${stageFor(series.balance).name}`}>
+              <LivingScene scene={stageFor(series.balance).scene} balance={series.balance} strong={strongest} features={s.avatar.features} objects={pulling} virtueObject={goodObject} weak={weakest} />
+            </div>
             <div className="caption">Nu · {stageFor(series.balance).name}</div>
           </div>
           <div className="stack gap-8">
-            <Plate src={IMG.knight} alt="Gustave Doré: de hemelse ridder" />
+            <div className="mini-scene" role="img" aria-label="Je ideale zelf: Paradiso">
+              <LivingScene scene="paradiso" balance={100} strong={strongest} features={s.avatar.features} />
+            </div>
             <div className="caption">Je ideale zelf</div>
           </div>
         </div>
         <p className="small center mt-16" style={{ margin: '16px 0 0' }}>
           Nog {gap.toFixed(0)} punten tot je ideale zelf. Bij een goede dag kruip je er zo’n {(gap * 0.15).toFixed(1).replace('.', ',')} dichterbij.
         </p>
+        {/* iOS: de scènes bewegen pas mee met je telefoon na toestemming. Normaal gebeurt dat bij je eerste tik; dit is de tweede kans. */}
+        {askMotion && (
+          <button className="link center" style={{ display: 'block', margin: '12px auto 0' }} onClick={async () => { if (await enableMotion()) setAskMotion(false) }}>
+            Beweging met je telefoon inschakelen
+          </button>
+        )}
         <div className="hstack gap-8 mt-16" style={{ gap: 8 }}>
           <button className="btn soft sm" onClick={() => { setDraftAvatar(s.avatar); setPanel({ t: 'builder' }) }}>Aanpassen</button>
           <button className="btn soft sm" onClick={() => setPanel({ t: 'preview' })}>Bekijk de reis</button>

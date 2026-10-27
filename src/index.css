@@ -34,6 +34,8 @@
   --r-sm: 12px; --r-md: 16px; --r-lg: 24px; --r-full: 999px;
   --shadow: 0 16px 32px -16px rgba(0, 0, 0, 0.9);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Beweging met de telefoon (lib/motion): --tx en --ty lopen van -1 tot 1, --par is hoe ver een laag op diepte 1 schuift */
+  --tx: 0; --ty: 0; --par: 8px;
   color-scheme: dark;
 }
 
@@ -160,7 +162,8 @@ button.card:active { transform: scale(0.985); }
 .row.pick.on { background: var(--paper-2); }
 .hold-ring { position: relative; flex: none; width: 64px; height: 72px; display: grid; justify-items: center; align-content: start; touch-action: none; user-select: none; -webkit-user-select: none; }
 .hold-ring svg { width: 52px; height: 52px; }
-.hold-ring .ico-wrap { position: absolute; top: 14px; left: 14px; width: 24px; height: 24px; display: grid; place-items: center; color: var(--ink); }
+/* Het vinkje in het midden van de ring: de ring (52 px) staat gecentreerd in een knop van 64 px breed */
+.hold-ring .ico-wrap { position: absolute; top: 14px; left: calc(50% - 12px); width: 24px; height: 24px; display: grid; place-items: center; color: var(--ink); }
 .hold-ring .cap { font: var(--sm); color: var(--ink-3); white-space: nowrap; }
 .grens-step { display: flex; gap: var(--s3); align-items: center; width: 100%; text-align: left; padding: var(--s3) var(--s4); border-radius: var(--r-md); background: var(--paper-2); }
 .grens-step .txt { font: var(--b); color: var(--ink); }
@@ -326,6 +329,22 @@ button.card:active { transform: scale(0.985); }
 .row .name { font: var(--b); color: var(--ink); transition: color 0.3s ease, text-decoration-color 0.3s ease; }
 .row .meta { font: var(--sm); color: var(--ink-3); }
 .row .grow { flex: 1; min-width: 0; }
+/* Eén regel hoog: zo past je hele dag op een scherm */
+.row.tight { min-height: 52px; padding: var(--s2) 0; }
+.row.tight .name, .ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-icon { flex: none; width: 48px; height: 32px; object-fit: contain; }
+/* Je dag als één kaart */
+.day-card { padding: var(--s2) var(--s4); }
+.day-card > .list.flat > .row:first-child { border-top: 0; }
+.day-tank { display: flex; flex-direction: column; gap: var(--s2); padding: var(--s2) 0 var(--s3); border-bottom: 1px solid var(--line); }
+.day-tank-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
+.day-label { font: var(--sm); font-weight: 600; color: var(--ink-2); }
+.tank-pills { display: flex; gap: var(--s1); padding: var(--s1); border-radius: var(--r-full); background: var(--paper-2); }
+.tank-pills button { height: 32px; padding: 0 var(--s3); border-radius: var(--r-full); font: var(--sm); font-weight: 600; color: var(--ink-2); transition: all 0.2s var(--ease); }
+.tank-pills button.on { background: var(--ink); color: var(--paper); }
+.day-add { display: flex; flex-wrap: wrap; gap: var(--s2); padding: var(--s3) 0; border-top: 1px solid var(--line); }
+.day-add .chip { min-height: 32px; padding: 0 var(--s3); font: var(--sm); font-weight: 600; }
+.day-close { padding: var(--s3) 0 var(--s2); border-top: 1px solid var(--line); }
 .row.done .name { color: var(--ink-3); text-decoration: line-through; text-decoration-color: rgba(242, 242, 242, 0.3); }
 .row.slip { background-image: var(--hatch-light); margin: 0 calc(var(--s4) * -1); padding-left: var(--s4); padding-right: var(--s4); width: calc(100% + var(--s4) * 2); }
 .card .row.slip { margin: 0 calc(var(--s5) * -1); padding-left: var(--s5); padding-right: var(--s5); width: calc(100% + var(--s5) * 2); }
@@ -415,6 +434,12 @@ button.card:active { transform: scale(0.985); }
 .ps-motes img { position: absolute; bottom: 14%; width: 6px; mix-blend-mode: screen; opacity: 0; animation: medalDust 6s linear infinite; }
 .ps-vignette { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, transparent 34%), radial-gradient(120% 90% at 55% 70%, transparent 55%, rgba(0, 0, 0, 0.7)); }
 .ps .txt { position: absolute; left: var(--s5); right: var(--s5); top: var(--s5); z-index: 3; display: flex; flex-direction: column; gap: var(--s1); }
+/* Diepte met de telefoon: achtergrond schuift weinig, de figuren vooraan meer. 'translate' staat los van de animaties. */
+.ps-bg { translate: calc(var(--tx) * var(--par) * -0.6) calc(var(--ty) * var(--par) * -0.6); }
+.ps-rays, .ps-glow { translate: calc(var(--tx) * var(--par) * -0.3) calc(var(--ty) * var(--par) * -0.3); }
+.ps-fig { translate: calc(var(--tx) * var(--par) * 0.8) calc(var(--ty) * var(--par) * 0.4); }
+.medal-art { translate: calc(var(--tx) * var(--par) * 0.5) calc(var(--ty) * var(--par) * 0.5); }
+.medal-sheen { translate: calc(var(--tx) * var(--par) * -1.5) 0; }
 @keyframes psDrift { from { transform: translateX(calc(var(--amp) * -1)); } to { transform: translateX(var(--amp)); } }
 @keyframes psRays { from { opacity: 0.22; } to { opacity: 0.42; } }
 @keyframes psGlow { 0%, 100% { opacity: 0.24; transform: scale(1); } 50% { opacity: 0.38; transform: scale(1.06); } }
@@ -491,7 +516,7 @@ button.card:active { transform: scale(0.985); }
 .hero-scene .scene { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; max-height: none; }
 
 /* ——— De levende scène ——— */
-.scene { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 60svh; overflow: hidden; background: #000; border-radius: var(--r-lg) var(--r-lg) 0 0; cursor: default; --px: 0; --py: 0; isolation: isolate; }
+.scene { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 60svh; overflow: hidden; background: #000; border-radius: var(--r-lg) var(--r-lg) 0 0; cursor: default; isolation: isolate; }
 .ink-wipe { position: absolute; inset: -25%; z-index: 6; pointer-events: none; background: url('/art/scherm-inktvlek.webp') center / contain no-repeat; }
 .ink-wipe.in { animation: inkIn 0.45s cubic-bezier(0.5, 0, 0.75, 0) both; }
 .ink-wipe.out { animation: inkOut 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
@@ -499,6 +524,8 @@ button.card:active { transform: scale(0.985); }
 @keyframes inkOut { from { transform: scale(2.6); opacity: 1; } to { transform: scale(3.4) rotate(12deg); opacity: 0; } }
 .scene[role='button'] { cursor: pointer; }
 .scene-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* Een kleine levende scène, zoals op Reis: zelfde maat als de oude platen */
+.mini-scene { position: relative; width: 100%; aspect-ratio: 3 / 4; overflow: hidden; border-radius: var(--r-md); background: #000; isolation: isolate; }
 
 @keyframes kenburns { from { transform: scale(1.02) translate(0, 0); } to { transform: scale(1.1) translate(-2%, -1.5%); } }
 @keyframes rays { to { transform: rotate(360deg); } }

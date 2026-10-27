@@ -185,7 +185,7 @@ function SinSheet({ id, value, before, onClose, onShadow, onNote }: { id: SinId;
               })}
             </div>
           ) : (
-            <p className="small" style={{ margin: 0 }}>Nog geen gewoontes op dit terras. Voeg er een toe onder Zelf, dan zie je hier elke dag wat je deed.</p>
+            <p className="small" style={{ margin: 0 }}>Nog geen gewoontes op dit terras. Voeg er een toe onder Reis, dan zie je hier elke dag wat je deed.</p>
           )}
         </div>
 

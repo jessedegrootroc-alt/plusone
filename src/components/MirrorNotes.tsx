@@ -35,7 +35,7 @@ const nextStep = (n: MirrorNote, today = todayISO()) => {
 }
 const leftLabel = (left: number) => (left < 0 ? 'over tijd' : left === 0 ? 'vandaag' : left === 1 ? 'nog 1 dag' : `nog ${left} dagen`)
 
-/** Een stap afvinken: hij gaat eraf, de volgende hangt er vanaf vandaag. */
+/** Een stap afvinken: hij gaat eraf en de koektrommel in, de volgende hangt er vanaf vandaag. */
 const completeStep = (id: string) => update((d) => {
   const x = d.notes.find((y) => y.id === id)
   const i = x?.steps?.findIndex((y) => !y.doneAt) ?? -1
@@ -44,6 +44,8 @@ const completeStep = (id: string) => update((d) => {
   x.steps![i].doneAt = today
   if (x.steps![i + 1]) x.steps![i + 1].startedAt = today
   ;(d.logs[today] ??= { v: {} }).v[stepHabitId(x, i)] = 1
+  // Een gehaalde post-it gaat de koektrommel in, met het plakband van de spiegel er nog aan
+  d.jar.unshift({ id: uid(), text: `Van de spiegel: ${x.steps![i].text}`, date: today })
 })
 
 /**
