@@ -1,0 +1,84 @@
+/* De verhaalwebsite. Zelfde letters en zwart als de app; alles staat vast boven één canvas. */
+:root { --ink: #F2F2F2; --ink-2: #B3B3B3; --ink-3: #808080; --paper: #0B0B0B; --ease: cubic-bezier(0.22, 1, 0.36, 1); --title: 'Marcellus', Georgia, serif; --sans: 'Inter', -apple-system, system-ui, sans-serif; color-scheme: dark; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: #000; color: var(--ink); font: 400 16px/24px var(--sans); -webkit-font-smoothing: antialiased; }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+body:not(.playing) { overflow: hidden; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+a { color: inherit; }
+
+.film { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.spacer { width: 1px; }
+
+/* Tekst: één monumentale regel tegelijk, onderin, zoals ondertiteling in een trailer */
+/* Bovenin, in het donker van de lucht: de figuren staan onderin, de tekst mag ze niet bedekken */
+.lines { position: fixed; left: 24px; right: 24px; top: calc(env(safe-area-inset-top) + 20vh); pointer-events: none; text-align: center; }
+.line { position: absolute; left: 0; right: 0; top: 0; margin: 0; opacity: 0; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.line .t { font: 400 clamp(28px, 7.5vw, 64px)/1.1 var(--title); letter-spacing: 0.04em; text-shadow: 0 2px 24px rgba(0, 0, 0, 0.9); }
+.line.big .t { font-size: clamp(48px, 16vw, 140px); letter-spacing: 0.06em; }
+.line .s { font: 400 15px/22px var(--sans); color: var(--ink-2); text-shadow: 0 1px 12px #000; }
+
+/* +1 bij elke trede */
+.plus { position: fixed; left: 50%; top: 42%; transform: translate(-50%, 0); font: 600 72px/1 var(--sans); letter-spacing: -0.03em; opacity: 0; pointer-events: none; text-shadow: 0 0 40px rgba(242, 242, 242, 0.5); }
+.plus.pop { animation: pop 1.3s var(--ease) both; }
+@keyframes pop { 0% { opacity: 0; transform: translate(-50%, 20px) scale(0.6); } 20% { opacity: 1; transform: translate(-50%, 0) scale(1.08); } 60% { opacity: 1; transform: translate(-50%, -10px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -40px) scale(0.96); } }
+
+/* Het pad: een dunne lijn rechts met een stip per bedrijf */
+.path { position: fixed; right: 14px; top: 20vh; bottom: 20vh; width: 2px; background: rgba(242, 242, 242, 0.14); border-radius: 1px; }
+.path b { position: absolute; left: 0; top: 0; width: 2px; height: 0; background: var(--ink); border-radius: 1px; }
+.path i { position: absolute; left: -3px; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: #000; box-shadow: inset 0 0 0 1.5px rgba(242, 242, 242, 0.5); }
+
+.sound { position: fixed; top: calc(env(safe-area-inset-top) + 14px); right: 14px; height: 32px; padding: 0 12px; border-radius: 999px; font: 600 12px/32px var(--sans); color: var(--ink-2); box-shadow: inset 0 0 0 1px rgba(242, 242, 242, 0.25); background: rgba(0, 0, 0, 0.35); z-index: 5; }
+.sound[aria-pressed='true'] { color: var(--ink); }
+
+/* Het gebaar: een ring die zich vult, uitleg pas als je aarzelt, en altijd een uitweg */
+.gate { position: fixed; inset: 0; z-index: 4; display: none; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 6vh); gap: 12px; touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; outline: none; }
+.gate.on { display: flex; }
+.gate-ring { position: relative; width: 88px; height: 88px; transition: transform 0.25s var(--ease); }
+.gate.held .gate-ring { transform: scale(1.12); }
+.gate-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.gate-ring .track { fill: none; stroke: rgba(242, 242, 242, 0.22); stroke-width: 3; }
+.gate-ring .fill { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 0 100; filter: drop-shadow(0 0 6px rgba(242, 242, 242, 0.6)); }
+.gate-ring::after { content: ''; position: absolute; inset: 30px; border-radius: 50%; background: var(--ink); opacity: calc(0.35 + var(--p, 0) * 0.65); animation: breath 1.6s ease-in-out infinite; }
+.gate.held .gate-ring::after { animation: none; }
+.gate[data-kind='drag'] .gate-ring::after { display: none; }
+.gate-arrow { display: none; position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -11px 0 0 -7px; border-right: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); transform: rotate(45deg); animation: nudge 1.4s var(--ease) infinite; }
+.gate[data-kind='drag'] .gate-arrow { display: block; }
+.gate-label { font: 600 13px/20px var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); opacity: 0; transition: opacity 0.4s; text-shadow: 0 1px 10px #000; }
+.gate.hint .gate-label { opacity: 1; }
+.gate-skip { margin-top: 4px; font: 400 12px/20px var(--sans); color: var(--ink-3); text-decoration: underline; text-underline-offset: 3px; opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+.gate.skippable .gate-skip { opacity: 1; pointer-events: auto; }
+.gate[data-kind='tap'] .gate-ring::after { animation: none; }
+@keyframes breath { 0%, 100% { transform: scale(0.85); } 50% { transform: scale(1); } }
+@keyframes nudge { 0%, 100% { transform: translateY(-4px) rotate(45deg); opacity: 0.5; } 50% { transform: translateY(6px) rotate(45deg); opacity: 1; } }
+
+/* Laden: de krans, en een lijn die zich tekent */
+.loader { position: fixed; inset: 0; z-index: 10; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; transition: opacity 0.8s var(--ease); }
+.loader img { width: 96px; height: 96px; border-radius: 22px; animation: glow 2.4s ease-in-out infinite; }
+.loader i { width: 120px; height: 1px; background: rgba(242, 242, 242, 0.15); }
+.loader b { display: block; height: 1px; width: 0; background: var(--ink); transition: width 0.3s var(--ease); }
+.loader.out { opacity: 0; pointer-events: none; }
+@keyframes glow { 0%, 100% { filter: brightness(0.85); } 50% { filter: brightness(1.1); } }
+
+/* De drempel */
+.threshold { position: fixed; inset: 0; z-index: 9; background: radial-gradient(80% 60% at 50% 40%, #151515, #000); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; padding: 24px; text-align: center; animation: fade 1s var(--ease) both; transition: opacity 0.7s var(--ease); }
+.threshold[hidden] { display: none; }
+.threshold.out { opacity: 0; pointer-events: none; }
+.threshold .q { margin: 0; font: 400 clamp(28px, 7vw, 52px)/1.2 var(--title); letter-spacing: 0.03em; }
+.choices { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.choices button { height: 48px; padding: 0 24px; border-radius: 999px; font: 600 15px/48px var(--sans); box-shadow: inset 0 0 0 1.5px var(--ink); transition: transform 0.15s var(--ease); }
+.choices button:first-child { background: var(--ink); color: #0B0B0B; box-shadow: none; }
+.choices button:active { transform: scale(0.97); }
+.direct { font: 400 13px/20px var(--sans); color: var(--ink-3); }
+@keyframes fade { from { opacity: 0; } }
+
+/* Het slot */
+.cta { position: fixed; left: 24px; right: 24px; bottom: calc(env(safe-area-inset-bottom) + 8vh); z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; opacity: 0; transform: translateY(20px); pointer-events: none; transition: opacity 0.9s var(--ease), transform 0.9s var(--ease); }
+.cta.on { opacity: 1; transform: none; pointer-events: auto; }
+.cta img { display: none; }
+.cta h2 { margin: 0; font: 400 24px/32px var(--title); }
+.cta p { margin: 0; max-width: 320px; font: 400 14px/22px var(--sans); color: var(--ink-2); }
+.cta .btn { margin-top: 8px; height: 52px; padding: 0 28px; border-radius: 999px; background: var(--ink); color: #0B0B0B; font: 600 15px/52px var(--sans); text-decoration: none; }
+
+@media (prefers-reduced-motion: reduce) { .line, .plus.pop, .gate-ring::after, .gate-arrow, .loader img { animation: none !important; transition: none !important; } }

@@ -25,3 +25,8 @@ dist-ssr
 
 # Oude versies van de illustraties (lokaal bewaard, niet nodig om de app te bouwen)
 art/bron/oude-stijl/
+
+# Bronbeelden en stemproeven van het verhaal (groot; de site gebruikt de webp's in public/verhaal/art)
+art/verhaal/
+art/verhaal-oud/
+art/stem-test/

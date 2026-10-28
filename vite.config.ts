@@ -10,4 +10,6 @@ export default defineConfig({
   plugins: [react(), ...(https ? [basicSsl({ name: 'plusone-dev' })] : [])],
   // OneDrive-mappen geven niet altijd file-events door; pollen houdt hot reload betrouwbaar.
   server: { host: true, watch: { usePolling: true, interval: 300 } },
+  // De app, de verhaalwebsite (docs/BRIEF-VERHAAL.md) en de animatic om de pacing van dat verhaal goed te keuren
+  build: { rollupOptions: { input: { app: 'index.html', verhaal: 'verhaal.html', animatic: 'animatic.html' } } },
 })
