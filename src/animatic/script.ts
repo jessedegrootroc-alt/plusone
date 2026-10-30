@@ -326,12 +326,13 @@ export const SCENES: Scene[] = [
         layers: [{ src: V('aansteker-1-vonk'), fit: 'cover', pos: '50% 20%' }],
       },
       {
-        x: 40, y: 62, w: 56, h: 24, d: [64, 28, 34, 48], kind: 'inset', in: 0.36, from: 'right', depth: 1.4, bg: '#030303', fx: ['vig'],
-        glow: { x: 50, y: 46, r: 45, pulse: true },
-        shots: [[0.36, 1, 50, 50], [0.62, 1.7, 42, 40]],
+        // Op een telefoon groter (anders is de melding onleesbaar klein), en de camera duikt dieper in het scherm
+        x: 5, y: 55, w: 90, h: 34, d: [64, 28, 34, 48], kind: 'inset', in: 0.36, from: 'right', depth: 1.4, bg: '#030303', fx: ['vig'],
+        shots: [[0.36, 1.15, 44, 40], [0.62, 2.2, 44, 37]],
+        dshots: [[0.36, 1, 50, 50], [0.62, 1.7, 44, 37]],
         note: 'Close-up: zijn telefoon steekt uit zijn jaszak, het scherm licht op (klein, niet de hoofdzaak)',
-        // De melding zelf staat op het scherm; niemand hoeft hem voor te lezen
-        layers: [{ src: V('close-melding'), fit: 'cover', anim: 'tremble', pins: [{ x: 42, y: 42, w: 24, r: -5, kind: 'screen', text: '<b>+1</b>Dag één. Als je wilt.' }] }],
+        // De melding zelf staat op het scherm, zoals een echte melding van de app; niemand hoeft hem voor te lezen
+        layers: [{ src: V('close-melding'), fit: 'cover', anim: 'tremble', pins: [{ x: 44.5, y: 38.5, w: 23, r: -13, kind: 'screen', text: '<span class="n-head"><img src="/icons/icon-192.png" alt="" /><span>PlusOne</span><span>nu</span></span><span class="n-title">+1</span><span class="n-body">Dag één. Als je wilt.</span>' }] }],
       },
     ],
     captions: [],

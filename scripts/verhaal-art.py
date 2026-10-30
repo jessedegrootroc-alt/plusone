@@ -11,9 +11,10 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "art/verhaal"
 OUT = ROOT / "public/verhaal/art"
 MAX = 2048
-# Beelden die in de animatic flink worden opgeblazen (de rook draait rond en de camera duikt erin): die gaan eerst 2x
-# omhoog met Lanczos en licht verscherpt, anders rekt de browser ze zelf op en worden ze wazig en blokkerig
-GROOT = {"rook-val", "rook-val-kleur"}
+# Beelden die in de animatic flink worden opgeblazen (de rook draait rond, de camera duikt in de rook en in het scherm
+# van zijn telefoon): die gaan eerst 2x omhoog met Lanczos en licht verscherpt, anders rekt de browser ze zelf op en
+# worden ze wazig en blokkerig
+GROOT = {"rook-val", "rook-val-kleur", "close-melding"}
 
 
 def main():
