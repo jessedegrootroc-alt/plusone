@@ -31,6 +31,7 @@ document.body.innerHTML = `
   <div class="flash" aria-hidden="true"></div>
   <div class="disc" aria-hidden="true"><i></i><span></span></div>
   <button class="sound" type="button" aria-pressed="false">Geluid uit</button>
+  <div class="scrollcue" aria-hidden="true">Scrol naar beneden<i></i></div>
   <aside class="hud"><div class="hud-now"></div><div class="hud-cue" hidden></div><ol class="hud-list" hidden></ol></aside>
   <nav class="chapters" aria-hidden="true"></nav>
   <svg class="defs" aria-hidden="true" width="0" height="0"><filter id="ink"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="1.8"/></filter></svg>
@@ -48,6 +49,7 @@ const hudNow = $<HTMLElement>('.hud-now')
 const hudCue = $<HTMLElement>('.hud-cue')
 const hudList = $<HTMLOListElement>('.hud-list')
 const soundBtn = $<HTMLButtonElement>('.sound')
+const scrollCue = $<HTMLElement>('.scrollcue')
 const chapters = $<HTMLElement>('.chapters')
 
 // ── Panelen en lagen als HTML ──
@@ -695,6 +697,15 @@ const sceneAt = (y: number) => views.find((v) => y >= v.top && y < v.top + v.hei
 const heaviness = () => (sceneAt(yView)?.scene.pace ? 0.5 : 1)
 
 let lastChapter = ''
+// Scrol naar beneden: in het begin (de deur en de steeg) zodra het beeld even stilstaat, niet als er tekst staat
+let still = 0
+let yStill = 0
+const cueScroll = (y: number, dt: number, current: View | null) => {
+  if (Math.abs(y - yStill) > 1) { yStill = y; still = 0 } else still += dt
+  const early = !!current && views.indexOf(current) <= 1
+  const reading = !!current?.caps.some((c) => c.vis > 0.3)
+  scrollCue.classList.toggle('on', started && early && still > 1.2 && !reading && !activeAct)
+}
 const frame = (now: number) => {
   const dt = Math.min(0.05, (now - last) / 1000)
   last = now
@@ -731,6 +742,7 @@ const frame = (now: number) => {
     if (!reduce) v.frame.style.rotate = `x ${(-tilt * 0.3).toFixed(4)}rad`
   }
   veil.style.opacity = (easeInOut(veilT) * 0.96).toFixed(3)
+  cueScroll(y, dt, current)
   const act = (activeAct as View | null)?.scene.act // update() zet hem; TS ziet dat niet
   disc.classList.toggle('on', !!act)
   document.body.classList.toggle('acting', !!act && !touch)
