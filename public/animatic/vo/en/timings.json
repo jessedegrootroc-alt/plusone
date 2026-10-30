@@ -1,0 +1,707 @@
+{
+ "deur": {
+  "duration": 3.154,
+  "words": [
+   {
+    "text": "It",
+    "start": 0.12,
+    "end": 0.404
+   },
+   {
+    "text": "took",
+    "start": 0.404,
+    "end": 0.83
+   },
+   {
+    "text": "me",
+    "start": 0.83,
+    "end": 1.114
+   },
+   {
+    "text": "two",
+    "start": 1.114,
+    "end": 1.469
+   },
+   {
+    "text": "years",
+    "start": 1.469,
+    "end": 1.966
+   },
+   {
+    "text": "to",
+    "start": 1.966,
+    "end": 2.251
+   },
+   {
+    "text": "stand",
+    "start": 2.251,
+    "end": 2.748
+   },
+   {
+    "text": "here.",
+    "start": 2.748,
+    "end": 3.174
+   }
+  ]
+ },
+ "1": {
+  "duration": 4.745,
+  "words": [
+   {
+    "text": "I",
+    "start": 0.12,
+    "end": 0.308
+   },
+   {
+    "text": "used",
+    "start": 0.308,
+    "end": 0.685
+   },
+   {
+    "text": "to",
+    "start": 0.685,
+    "end": 0.936
+   },
+   {
+    "text": "box.",
+    "start": 0.936,
+    "end": 1.25
+   },
+   {
+    "text": "Now",
+    "start": 2.631,
+    "end": 2.945
+   },
+   {
+    "text": "I",
+    "start": 2.945,
+    "end": 3.133
+   },
+   {
+    "text": "can't",
+    "start": 3.133,
+    "end": 3.509
+   },
+   {
+    "text": "even",
+    "start": 3.509,
+    "end": 3.886
+   },
+   {
+    "text": "beat",
+    "start": 3.886,
+    "end": 4.263
+   },
+   {
+    "text": "myself.",
+    "start": 4.263,
+    "end": 4.765
+   }
+  ]
+ },
+ "2": {
+  "duration": 3.727,
+  "words": [
+   {
+    "text": "The",
+    "start": 0.12,
+    "end": 0.397
+   },
+   {
+    "text": "twentieth",
+    "start": 0.397,
+    "end": 1.008
+   },
+   {
+    "text": "today.",
+    "start": 1.008,
+    "end": 1.396
+   },
+   {
+    "text": "Or",
+    "start": 2.617,
+    "end": 2.839
+   },
+   {
+    "text": "the",
+    "start": 2.839,
+    "end": 3.117
+   },
+   {
+    "text": "thirtieth.",
+    "start": 3.117,
+    "end": 3.727
+   }
+  ]
+ },
+ "3": {
+  "duration": 2.394,
+  "words": [
+   {
+    "text": "Noor.",
+    "start": 0.12,
+    "end": 0.447
+   },
+   {
+    "text": "My",
+    "start": 1.644,
+    "end": 1.862
+   },
+   {
+    "text": "daughter.",
+    "start": 1.862,
+    "end": 2.407
+   }
+  ]
+ },
+ "4": {
+  "duration": 3.102,
+  "words": [
+   {
+    "text": "If",
+    "start": 0.12,
+    "end": 0.381
+   },
+   {
+    "text": "I",
+    "start": 0.381,
+    "end": 0.577
+   },
+   {
+    "text": "don't",
+    "start": 0.577,
+    "end": 0.968
+   },
+   {
+    "text": "look,",
+    "start": 0.968,
+    "end": 1.36
+   },
+   {
+    "text": "she",
+    "start": 1.947,
+    "end": 2.273
+   },
+   {
+    "text": "isn't",
+    "start": 2.273,
+    "end": 2.664
+   },
+   {
+    "text": "there.",
+    "start": 2.664,
+    "end": 3.121
+   }
+  ]
+ },
+ "drang-5a": {
+  "duration": 1.082,
+  "words": [
+   {
+    "text": "One",
+    "start": 0.12,
+    "end": 0.557
+   },
+   {
+    "text": "more.",
+    "start": 0.557,
+    "end": 1.082
+   }
+  ]
+ },
+ "5": {
+  "duration": 1.354,
+  "words": [
+   {
+    "text": "I'll",
+    "start": 0.12,
+    "end": 0.417
+   },
+   {
+    "text": "quit",
+    "start": 0.417,
+    "end": 0.773
+   },
+   {
+    "text": "tomorrow.",
+    "start": 0.773,
+    "end": 1.367
+   }
+  ]
+ },
+ "drang-5b": {
+  "duration": 1.829,
+  "words": [
+   {
+    "text": "You",
+    "start": 0.12,
+    "end": 0.425
+   },
+   {
+    "text": "said",
+    "start": 0.425,
+    "end": 0.792
+   },
+   {
+    "text": "that",
+    "start": 0.792,
+    "end": 1.158
+   },
+   {
+    "text": "yesterday.",
+    "start": 1.158,
+    "end": 1.83
+   }
+  ]
+ },
+ "drang-8": {
+  "duration": 3.816,
+  "words": [
+   {
+    "text": "Just",
+    "start": 0.12,
+    "end": 0.546
+   },
+   {
+    "text": "one.",
+    "start": 0.546,
+    "end": 0.902
+   },
+   {
+    "text": "You've",
+    "start": 2.466,
+    "end": 2.963
+   },
+   {
+    "text": "earned",
+    "start": 2.963,
+    "end": 3.532
+   },
+   {
+    "text": "it.",
+    "start": 3.532,
+    "end": 3.816
+   }
+  ]
+ },
+ "9": {
+  "duration": 1.045,
+  "words": [
+   {
+    "text": "Not",
+    "start": 0.12,
+    "end": 0.509
+   },
+   {
+    "text": "today.",
+    "start": 0.509,
+    "end": 1.054
+   }
+  ]
+ },
+ "drang-12": {
+  "duration": 1.07,
+  "words": [
+   {
+    "text": "Look",
+    "start": 0.12,
+    "end": 0.6
+   },
+   {
+    "text": "away.",
+    "start": 0.6,
+    "end": 1.08
+   }
+  ]
+ },
+ "13": {
+  "duration": 4.701,
+  "words": [
+   {
+    "text": "No",
+    "start": 0.12,
+    "end": 0.368
+   },
+   {
+    "text": "monster.",
+    "start": 0.368,
+    "end": 0.925
+   },
+   {
+    "text": "Worse.",
+    "start": 2.287,
+    "end": 2.72
+   },
+   {
+    "text": "Just",
+    "start": 4.082,
+    "end": 4.453
+   },
+   {
+    "text": "me.",
+    "start": 4.453,
+    "end": 4.701
+   }
+  ]
+ },
+ "drang-14": {
+  "duration": 2.776,
+  "words": [
+   {
+    "text": "You'll",
+    "start": 0.12,
+    "end": 0.787
+   },
+   {
+    "text": "never",
+    "start": 0.787,
+    "end": 1.455
+   },
+   {
+    "text": "keep",
+    "start": 1.455,
+    "end": 2.027
+   },
+   {
+    "text": "it",
+    "start": 2.027,
+    "end": 2.408
+   },
+   {
+    "text": "up.",
+    "start": 2.408,
+    "end": 2.789
+   }
+  ]
+ },
+ "14": {
+  "duration": 6.018,
+  "words": [
+   {
+    "text": "Not",
+    "start": 0.12,
+    "end": 0.448
+   },
+   {
+    "text": "everything",
+    "start": 0.448,
+    "end": 1.234
+   },
+   {
+    "text": "at",
+    "start": 1.234,
+    "end": 1.496
+   },
+   {
+    "text": "once.",
+    "start": 1.496,
+    "end": 1.889
+   },
+   {
+    "text": "One",
+    "start": 3.331,
+    "end": 3.659
+   },
+   {
+    "text": "thing.",
+    "start": 3.659,
+    "end": 4.118
+   },
+   {
+    "text": "Today.",
+    "start": 5.559,
+    "end": 6.018
+   }
+  ]
+ },
+ "15-rook": {
+  "duration": 5.477,
+  "words": [
+   {
+    "text": "No",
+    "start": 0.12,
+    "end": 0.353
+   },
+   {
+    "text": "smoking",
+    "start": 0.353,
+    "end": 0.877
+   },
+   {
+    "text": "today.",
+    "start": 0.877,
+    "end": 1.285
+   },
+   {
+    "text": "One",
+    "start": 2.566,
+    "end": 2.857
+   },
+   {
+    "text": "day.",
+    "start": 2.857,
+    "end": 3.148
+   },
+   {
+    "text": "I",
+    "start": 4.429,
+    "end": 4.604
+   },
+   {
+    "text": "can",
+    "start": 4.604,
+    "end": 4.895
+   },
+   {
+    "text": "do",
+    "start": 4.895,
+    "end": 5.128
+   },
+   {
+    "text": "that.",
+    "start": 5.128,
+    "end": 5.477
+   }
+  ]
+ },
+ "15-porno": {
+  "duration": 5.101,
+  "words": [
+   {
+    "text": "No",
+    "start": 0.12,
+    "end": 0.344
+   },
+   {
+    "text": "porn",
+    "start": 0.344,
+    "end": 0.68
+   },
+   {
+    "text": "today.",
+    "start": 0.68,
+    "end": 1.071
+   },
+   {
+    "text": "One",
+    "start": 2.303,
+    "end": 2.583
+   },
+   {
+    "text": "day.",
+    "start": 2.583,
+    "end": 2.862
+   },
+   {
+    "text": "I",
+    "start": 4.094,
+    "end": 4.262
+   },
+   {
+    "text": "can",
+    "start": 4.262,
+    "end": 4.541
+   },
+   {
+    "text": "do",
+    "start": 4.541,
+    "end": 4.765
+   },
+   {
+    "text": "that.",
+    "start": 4.765,
+    "end": 5.101
+   }
+  ]
+ },
+ "15-buurt": {
+  "duration": 7.101,
+  "words": [
+   {
+    "text": "Do",
+    "start": 0.12,
+    "end": 0.365
+   },
+   {
+    "text": "something",
+    "start": 0.365,
+    "end": 1.039
+   },
+   {
+    "text": "for",
+    "start": 1.039,
+    "end": 1.345
+   },
+   {
+    "text": "someone",
+    "start": 1.345,
+    "end": 1.896
+   },
+   {
+    "text": "else",
+    "start": 1.896,
+    "end": 2.263
+   },
+   {
+    "text": "today.",
+    "start": 2.263,
+    "end": 2.692
+   },
+   {
+    "text": "One",
+    "start": 4.039,
+    "end": 4.345
+   },
+   {
+    "text": "day.",
+    "start": 4.345,
+    "end": 4.652
+   },
+   {
+    "text": "I",
+    "start": 5.999,
+    "end": 6.182
+   },
+   {
+    "text": "can",
+    "start": 6.182,
+    "end": 6.489
+   },
+   {
+    "text": "do",
+    "start": 6.489,
+    "end": 6.734
+   },
+   {
+    "text": "that.",
+    "start": 6.734,
+    "end": 7.101
+   }
+  ]
+ },
+ "deugd": {
+  "duration": 1.563,
+  "words": [
+   {
+    "text": "Day",
+    "start": 0.12,
+    "end": 0.849
+   },
+   {
+    "text": "one.",
+    "start": 0.849,
+    "end": 1.578
+   }
+  ]
+ },
+ "17": {
+  "duration": 8.987,
+  "words": [
+   {
+    "text": "Alone",
+    "start": 0.12,
+    "end": 0.57
+   },
+   {
+    "text": "with",
+    "start": 0.57,
+    "end": 0.955
+   },
+   {
+    "text": "my",
+    "start": 0.955,
+    "end": 1.212
+   },
+   {
+    "text": "thoughts.",
+    "start": 1.212,
+    "end": 1.855
+   },
+   {
+    "text": "No",
+    "start": 3.268,
+    "end": 3.525
+   },
+   {
+    "text": "pack.",
+    "start": 3.525,
+    "end": 3.911
+   },
+   {
+    "text": "No",
+    "start": 5.325,
+    "end": 5.582
+   },
+   {
+    "text": "screen.",
+    "start": 5.582,
+    "end": 6.096
+   },
+   {
+    "text": "And",
+    "start": 7.509,
+    "end": 7.83
+   },
+   {
+    "text": "it",
+    "start": 7.83,
+    "end": 8.087
+   },
+   {
+    "text": "doesn't",
+    "start": 8.087,
+    "end": 8.601
+   },
+   {
+    "text": "hurt.",
+    "start": 8.601,
+    "end": 8.987
+   }
+  ]
+ },
+ "drang-18": {
+  "duration": 1.633,
+  "words": [
+   {
+    "text": "She",
+    "start": 0.12,
+    "end": 0.351
+   },
+   {
+    "text": "doesn't",
+    "start": 0.351,
+    "end": 0.72
+   },
+   {
+    "text": "want",
+    "start": 0.72,
+    "end": 0.997
+   },
+   {
+    "text": "to",
+    "start": 0.997,
+    "end": 1.182
+   },
+   {
+    "text": "see",
+    "start": 1.182,
+    "end": 1.413
+   },
+   {
+    "text": "you.",
+    "start": 1.413,
+    "end": 1.644
+   }
+  ]
+ },
+ "noor-18": {
+  "duration": 0.68,
+  "words": [
+   {
+    "text": "Daddy?",
+    "start": 0.12,
+    "end": 0.697
+   }
+  ]
+ }
+}

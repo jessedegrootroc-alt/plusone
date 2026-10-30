@@ -5,9 +5,11 @@
 // ?scene=ontwaken springt direct naar een scène.
 import Lenis from 'lenis'
 import { enableMotion, getMotion, startMotion } from '../lib/motion'
+import { lang, switchLang, t } from './lang'
 import { Score } from './score'
 import { CHOICES, SCENES, SPOTS, type Choice, type Fx, type Layer, type Panel, type Pin, type Scene, type Shot } from './script'
 import './animatic.css'
+import voEn from './vo.en.json'
 
 interface Word { text: string; start: number; end: number }
 interface Line { duration: number; words: Word[] }
@@ -31,15 +33,16 @@ document.body.innerHTML = `
   <div class="flash" aria-hidden="true"></div>
   <div class="bars" aria-hidden="true"><i></i><i></i></div>
   <div class="disc" aria-hidden="true"><i></i><span></span></div>
-  <button class="sound" type="button" aria-pressed="false">Geluid uit</button>
-  <div class="scrollcue" aria-hidden="true">Scrol naar beneden<i></i></div>
+  <button class="sound" type="button" aria-pressed="false">${t('Geluid uit', 'Sound off')}</button>
+  <div class="scrollcue" aria-hidden="true">${t('Scrol naar beneden', 'Scroll down')}<i></i></div>
   <aside class="hud"><div class="hud-now"></div><div class="hud-cue" hidden></div><ol class="hud-list" hidden></ol></aside>
   <nav class="chapters" aria-hidden="true"></nav>
   <svg class="defs" aria-hidden="true" width="0" height="0"><filter id="ink"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="1.8"/></filter></svg>
   <div class="gate">
-    <p class="q"><span>BEN JE KLAAR OM</span><span>EERLIJK TE KIJKEN?</span></p>
-    <div class="choices"><button type="button" data-sound="1">Met geluid</button><button type="button" data-sound="0">Zonder geluid</button></div>
-    <p class="hint">Animatic · tijdelijke stem</p>
+    <p class="q">${t('<span>BEN JE KLAAR OM</span><span>EERLIJK TE KIJKEN?</span>', '<span>ARE YOU READY</span><span>TO LOOK HONESTLY?</span>')}</p>
+    <div class="choices"><button type="button" data-sound="1">${t('Met geluid', 'With sound')}</button><button type="button" data-sound="0">${t('Zonder geluid', 'Without sound')}</button></div>
+    <p class="hint">${t('Animatic · tijdelijke stem', 'Animatic · temporary voice')}</p>
+    <div class="langs" role="group" aria-label="Taal / Language"><button type="button" data-lang="nl"${lang === 'nl' ? ' aria-pressed="true"' : ''}>NL</button><button type="button" data-lang="en"${lang === 'en' ? ' aria-pressed="true"' : ''}>EN</button></div>
   </div>`
 
 const $ = <E extends Element>(s: string, root: ParentNode = document) => root.querySelector<E>(s)!
@@ -179,7 +182,7 @@ const views: View[] = SCENES.map((scene) => {
         </div>
         ${scene.captions.map((c) => `<div class="cap${c.who ? ` ${c.who}` : ''}"><p></p></div>`).join('')}
         ${scene.act?.kind === 'knock' ? '<div class="dread" aria-hidden="true"></div>' : ''}
-        ${scene.act?.kind === 'rise' ? `<div class="verdict" aria-hidden="true"><div class="card"><i></i><b>DAG ÉÉN</b><i></i><small class="chosen-label">${label()}</small></div></div>` : ''}
+        ${scene.act?.kind === 'rise' ? `<div class="verdict" aria-hidden="true"><div class="card"><i></i><b>${t('DAG ÉÉN', 'DAY ONE')}</b><i></i><small class="chosen-label">${label()}</small></div></div>` : ''}
       </div>
     </div>`
   film.append(section)
@@ -210,7 +213,7 @@ for (const img of document.querySelectorAll<HTMLImageElement>('.panel img')) {
     img.closest<HTMLElement>('.ly')!.classList.add('missing')
     panel.classList.add('needs')
     const small = panel.querySelector('.need small')
-    if (small && !small.textContent!.includes(img.dataset.file!)) small.textContent = `${small.textContent ? `${small.textContent} · ` : 'nog te maken: '}${img.dataset.file}`
+    if (small && !small.textContent!.includes(img.dataset.file!)) small.textContent = `${small.textContent ? `${small.textContent} · ` : t('nog te maken: ', 'still to make: ')}${img.dataset.file}`
   })
 }
 
@@ -285,7 +288,9 @@ const layout = () => {
 // tegelijk, en hoeft iOS maar één element vrij te geven (met een element per zin liepen ze op een telefoon door elkaar)
 const voice = new Audio()
 voice.preload = 'auto'
-const voiceSrc = (key: string) => `/animatic/vo/${key}.m4a`
+// De stem per taal: de Engelse opnames staan in een eigen map
+const VO = lang === 'en' ? '/animatic/vo/en/' : '/animatic/vo/'
+const voiceSrc = (key: string) => `${VO}${key}.m4a`
 let score: Score | null = null
 let soundOn = false
 let playing: { key: string; el: HTMLAudioElement } | null = null
@@ -333,7 +338,7 @@ const setSound = async (on: boolean) => {
     if (playing) { playing.el.pause(); playing = null }
     queued = null
   }
-  soundBtn.textContent = on ? 'Geluid aan' : 'Geluid uit'
+  soundBtn.textContent = on ? t('Geluid aan', 'Sound on') : t('Geluid uit', 'Sound off')
   soundBtn.setAttribute('aria-pressed', String(on))
 }
 soundBtn.addEventListener('click', () => void setSound(!soundOn))
@@ -679,8 +684,25 @@ const setMask = (el: HTMLElement, img: string, size = 'auto') => {
   s.maskImage = s.webkitMaskImage = img
   s.maskSize = s.webkitMaskSize = size
 }
-/** Hoe ver de ogen open zijn: een eerste spleet, één keer knipperen, dan helemaal open */
-const lidOpen = (t: number) => (t < 0.38 ? 0.18 * easeOut(t / 0.38) : t < 0.5 ? 0.18 * (1 - smooth(0.38, 0.44, t)) + 0.04 * smooth(0.44, 0.5, t) : lerp(0.04, 1, easeInOut((t - 0.5) / 0.5)))
+/** Hoe ver de ogen open zijn (met je scroll): dicht, een zware spleet, half open, dan helemaal */
+const lidOpen = (t: number) => (t < 0.12 ? 0 : t < 0.3 ? 0.14 * easeOut((t - 0.12) / 0.18) : t < 0.56 ? lerp(0.14, 0.34, smooth(0.3, 0.56, t)) : lerp(0.34, 1, easeInOut((t - 0.56) / 0.44)))
+// Het knipperen gaat op echte snelheid, los van hoe snel je scrolt (aan je scroll gekoppeld werd het een flikkering):
+// eerst een zware, trage knipper (wakker worden), dan een snellere. Seconden: dicht, dicht blijven, weer open
+const BLINKS = [{ at: 0.3, close: 0.2, hold: 0.12, open: 0.36 }, { at: 0.58, close: 0.1, hold: 0.05, open: 0.2 }]
+const blinkStart = new Map<View, number[]>()
+const blink = (v: View, t: number) => {
+  const now = performance.now() / 1000
+  let starts = blinkStart.get(v)
+  if (!starts || t < 0.2) { starts = BLINKS.map(() => -1); blinkStart.set(v, starts) }
+  let lid = 1
+  BLINKS.forEach((b, i) => {
+    if (starts[i] < 0 && t >= b.at) starts[i] = now
+    if (starts[i] < 0) return
+    const e = now - starts[i]
+    lid = Math.min(lid, e < b.close ? 1 - easeInOut(e / b.close) : e < b.close + b.hold ? 0 : e < b.close + b.hold + b.open ? easeOut((e - b.close - b.hold) / b.open) : 1)
+  })
+  return lid
+}
 const transition = (v: View, prev: View | undefined, t: number) => {
   const kind = TR[v.scene.id] ?? (v.scene.world === 'zwart' ? 'fade' : 'ink')
   const st = v.stage
@@ -709,12 +731,14 @@ const transition = (v: View, prev: View | undefined, t: number) => {
     st.style.opacity = String(Math.min(1, k * 4))
     st.style.scale = (1.08 - k * 0.08).toFixed(4)
   } else if (kind === 'eyes') {
-    // Zwart, dan gaan zijn ogen open: een horizontale spleet met zachte randen, wazig tot hij scherp ziet
-    const h = lidOpen(t) * 62
-    const f = 4 + (1 - t) * 6
-    setMask(st, `linear-gradient(to bottom, transparent ${(50 - h).toFixed(2)}%, #000 ${(50 - h + f).toFixed(2)}%, #000 ${(50 + h - f).toFixed(2)}%, transparent ${(50 + h).toFixed(2)}%)`, '100% 100%')
-    st.style.opacity = h > 0.5 ? '1' : '0'
-    if (!reduce) v.cam.style.filter = `blur(${((1 - smooth(0.45, 1, t)) * 7).toFixed(2)}px) brightness(${(1.6 - smooth(0.3, 1, t) * 0.6).toFixed(3)})`
+    // Zwart, dan gaan zijn ogen open: een ovale opening met zachte randen zoals oogleden, twee keer knipperen, en
+    // wazig en overbelicht tot hij scherp ziet
+    const h = lidOpen(t) * (reduce ? 1 : blink(v, t))
+    // Eerst wordt het zwart (de val houdt op, zijn ogen zijn dicht): buiten de oogleden is alles donker, niet de rook
+    if (prev) prev.stage.style.opacity = (1 - smooth(0, 0.12, t)).toFixed(3)
+    setMask(st, `radial-gradient(ellipse ${(65 + h * 75).toFixed(1)}% ${(2 + h * 120).toFixed(1)}% at 50% 48%, #000 50%, transparent 100%)`, '100% 100%')
+    st.style.opacity = h > 0.004 ? '1' : '0'
+    if (!reduce) v.cam.style.filter = `blur(${((1 - smooth(0.5, 1, t)) * 6).toFixed(2)}px) brightness(${(1.5 - smooth(0.3, 1, t) * 0.5).toFixed(3)})`
   } else if (kind === 'zoom') {
     setMask(st, 'none')
     st.style.opacity = smooth(0.15, 0.85, t).toFixed(3)
@@ -803,7 +827,7 @@ const frame = (now: number) => {
   if (act) {
     const chosen = act.kind === 'choose' && (activeAct as View | null)?.done
     // Alleen als de tekst echt verandert (niet elk frame de tekst onder je vinger vervangen)
-    const text = chosen ? 'GEKOZEN\n↓' : (touch && act.touchText) || act.text
+    const text = chosen ? t('GEKOZEN\n↓', 'CHOSEN\n↓') : (touch && act.touchText) || act.text
     const span = $<HTMLElement>('span', disc)
     if (span.textContent !== text) span.textContent = text
     disc.classList.toggle('ok', !!chosen)
@@ -827,7 +851,7 @@ const frame = (now: number) => {
     const vo = current.scene.captions.reduce((n, c) => n + (T[voKey(c.vo)]?.duration ?? 0), 0)
     const p = (y - current.top) / (current.scene.sh * vh)
     // Alleen als de tekst verandert (niet elk frame nieuwe HTML maken)
-    const now = `<b>${current.scene.name}</b> · ${fmt(total)} · hier ${fmt(current.time)}${vo ? `/${fmt(vo)}` : ''}`
+    const now = `<b>${current.scene.name}</b> · ${fmt(total)} · ${t('hier', 'here')} ${fmt(current.time)}${vo ? `/${fmt(vo)}` : ''}`
     if (now !== hudNowHtml) hudNow.innerHTML = hudNowHtml = now
     const cue = `${current.scene.ref} · p ${clamp(p, -1, 2).toFixed(2)}<br/><span>${current.scene.cue}</span>`
     if (!hudList.hidden && cue !== hudCueHtml) hudCue.innerHTML = hudCueHtml = cue
@@ -839,9 +863,9 @@ const frame = (now: number) => {
 const renderList = () => {
   hudList.innerHTML = views.map((v) => {
     const vo = v.scene.captions.reduce((n, c) => n + (T[voKey(c.vo)]?.duration ?? 0), 0)
-    const flag = vo && v.time ? (v.time < vo * 0.8 ? ' ⚠ sneller dan de stem' : '') : ''
-    return `<li>${v.scene.name} · ${v.scene.sh} sh · jij ${fmt(v.time)}${vo ? ` / stem ${fmt(vo)}` : ''}${flag}</li>`
-  }).join('') + `<li><b>Totaal ${fmt(total)}</b></li>`
+    const flag = vo && v.time ? (v.time < vo * 0.8 ? t(' ⚠ sneller dan de stem', ' ⚠ faster than the voice') : '') : ''
+    return `<li>${v.scene.name} · ${v.scene.sh} sh · ${t('jij', 'you')} ${fmt(v.time)}${vo ? ` / ${t('stem', 'voice')} ${fmt(vo)}` : ''}${flag}</li>`
+  }).join('') + `<li><b>${t('Totaal', 'Total')} ${fmt(total)}</b></li>`
 }
 $<HTMLElement>('.hud').addEventListener('click', () => { hudList.hidden = !hudList.hidden; hudCue.hidden = hudList.hidden; renderList() })
 addEventListener('keydown', (e) => { if (e.key === 'h') $<HTMLElement>('.hud').classList.toggle('off') })
@@ -865,8 +889,8 @@ const trace = (current: View | null) => {
   const ua = navigator.userAgent
   try {
     localStorage.setItem(TRACE, JSON.stringify({
-      scene: current.scene.name, t: Math.round(total), sound: soundOn ? 'met geluid' : 'zonder geluid',
-      act: (activeAct as View | null)?.holding ? 'tijdens vasthouden' : '',
+      scene: current.scene.name, t: Math.round(total), sound: soundOn ? t('met geluid', 'with sound') : t('zonder geluid', 'without sound'),
+      act: (activeAct as View | null)?.holding ? t('tijdens vasthouden', 'while holding') : '',
       phone: /iPhone|iPad/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : 'computer',
       browser: /CriOS|Chrome/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : 'browser',
       heap: mem ? Math.round(mem.usedJSHeapSize / 1048576) : '',
@@ -878,14 +902,27 @@ if (lastRun) {
   const r = lastRun
   const hint = $<HTMLElement>('.gate .hint')
   hint.classList.add('crash')
-  hint.textContent = `Vorige keer gestopt bij ${r.scene} na ${fmt(Number(r.t))}, ${r.sound}${r.act ? `, ${r.act}` : ''} · ${r.phone}, ${r.browser}${r.heap ? ` · ${r.heap} MB` : ''}`
+  hint.textContent = `${t('Vorige keer gestopt bij', 'Last time it stopped at')} ${r.scene} ${t('na', 'after')} ${fmt(Number(r.t))}, ${r.sound}${r.act ? `, ${r.act}` : ''} · ${r.phone}, ${r.browser}${r.heap ? ` · ${r.heap} MB` : ''}`
 }
+
+/** Woordtijden geschat uit de tekst (dezelfde verdeling als het stemscript), voor een taal waarvan de stem nog niet is
+ *  opgenomen: dan lopen de ondertitels gewoon mee, zonder geluid */
+const estimated = (lines: Record<string, string>) => Object.fromEntries(Object.entries(lines).map(([key, text]) => {
+  const words = text.split(/\s+/)
+  const weight = (w: string) => w.replace(/[^\p{L}\p{N}]/gu, '').length + 2
+  const pause = (w: string) => (/[.!?]$/.test(w) ? 22 : /[,;:]$/.test(w) ? 9 : 0)
+  let at = 0.12
+  const timed = words.map((w) => { const word = { text: w, start: at, end: at + weight(w) * 0.06 }; at += (weight(w) + pause(w)) * 0.06; return word })
+  return [key, { duration: at, words: timed }]
+})) as Record<string, Line>
 
 // ── Start ──
 const start = async () => {
+  document.documentElement.lang = lang
   history.scrollRestoration = 'manual'
   startMotion()
-  T = await fetch('/animatic/vo/timings.json').then((r) => r.json())
+  // De zinnen met hun woordtijden. Is de Engelse stem nog niet opgenomen, dan de Engelse ondertitels zonder geluid
+  T = await fetch(`${VO}timings.json`).then((r) => r.json()).catch(() => (lang === 'en' ? estimated(voEn) : {}))
   // De zinnen alvast binnenhalen, zodat een zin meteen begint als hij aan de beurt is
   for (const key of Object.keys(T)) void fetch(voiceSrc(key)).catch(() => {})
   layout()
@@ -914,6 +951,8 @@ const start = async () => {
     if (target && lenis) lenis.scrollTo(target.top, { immediate: true })
     else if (target) scrollTo(0, target.top)
   }
-  gate.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.addEventListener('click', () => go(b.dataset.sound === '1')))
+  gate.querySelectorAll<HTMLButtonElement>('.choices button').forEach((b) => b.addEventListener('click', () => go(b.dataset.sound === '1')))
+  // NL · EN: de pagina opnieuw in de andere taal (alle tekst en de stem wisselen mee)
+  gate.querySelectorAll<HTMLButtonElement>('.langs button').forEach((b) => b.addEventListener('click', () => { if (b.dataset.lang !== lang) switchLang(b.dataset.lang as 'nl' | 'en') }))
 }
 void start()

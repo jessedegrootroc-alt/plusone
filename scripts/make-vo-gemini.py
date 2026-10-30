@@ -9,6 +9,8 @@ Gebruik:
     python3 scripts/make-vo-gemini.py --proef Charon Algenib Gacrux   # dezelfde drie regels per stem, in art/stem-test/, met controle
     python3 scripts/make-vo-gemini.py --stem Algenib                   # alle regels uit vo.json, naar public/animatic/vo/
     python3 scripts/make-vo-gemini.py --schoon                         # ruisstoot aan het eind weghalen, zonder opnieuw op te nemen
+    python3 scripts/make-vo-gemini.py --taal en --stem Algenib         # de Engelse versie (vo.en.json, naar public/animatic/vo/en/)
+    python3 scripts/make-vo-gemini.py --taal en --pauzes 0.8           # te lange stiltes midden in een zin inkorten
 
 Het gratis gebruik heeft een kleine daglimiet (10 verzoeken per dag voor dit model). Elke regel is één verzoek; na elke
 regel wordt opgeslagen, dus stopt het bij de limiet, dan gaat het de volgende dag verder. Wat niet veranderd is, wordt
@@ -90,6 +92,17 @@ Accent: native Netherlands Dutch.
 """
 # Per stem: de regie en het tempo (Daan iets trager dan het model hem uit zichzelf zegt; de toonhoogte blijft gelijk)
 ROLES = {"daan": (DIRECTION, 0.93), "drang": (DRANG, 1.0), "noor": (NOOR, 1.0)}
+LANG_CODE, LANG_NAME = "nl-NL", "Dutch"
+
+
+def english():
+    """De Engelse versie: dezelfde stemmen en regie, maar in natuurlijk Engels, met eigen bestanden en mappen (de
+    Nederlandse opnames blijven staan)."""
+    global SRC, OUT, STAGE, ROLES, LANG_CODE, LANG_NAME
+    SRC, OUT, STAGE = ROOT / "src/animatic/vo.en.json", ROOT / "public/animatic/vo/en", TEST / "gemini-vo-en"
+    accent = lambda d: d.replace("Accent: native Netherlands Dutch.", "Accent: natural, neutral English, no regional accent.")
+    ROLES = {k: (accent(d), tempo) for k, (d, tempo) in ROLES.items()}
+    LANG_CODE, LANG_NAME = "en-US", "English"
 # Een eigen stem en toonhoogte per rol (de rest gebruikt de stem van --stem): Noor is een jonge stem, iets hoger gezet
 # (+2,4 halve tonen, ook de klankkleur), zodat er een kind praat in plaats van een jonge vrouw
 VOICE = {"noor": "Leda"}
@@ -136,8 +149,8 @@ def tts(voice: str, lines: list[str], wav: Path, direction: str = DIRECTION):
         "contents": [{"parts": [{"text": direction + "\n\n".join(lines)}]}],
         "generationConfig": {
             "responseModalities": ["AUDIO"],
-            # Altijd Nederlands: bij korte regels ("Noor. Mijn dochter.") raadt het model anders soms Duits
-            "speechConfig": {"languageCode": "nl-NL", "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}},
+            # Altijd de taal van deze versie: bij korte regels ("Noor. Mijn dochter.") raadt het model anders soms Duits
+            "speechConfig": {"languageCode": LANG_CODE, "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}},
         },
     }
     for attempt in range(3):
@@ -149,7 +162,7 @@ def tts(voice: str, lines: list[str], wav: Path, direction: str = DIRECTION):
         except HTTPError as e:
             msg = e.read().decode(errors="replace")[:400]
             if e.code == 400 and "language" in msg.lower() and "languageCode" in body["generationConfig"]["speechConfig"]:
-                # Kent dit model de taalcode niet, dan zonder (de regie vraagt al om Nederlands)
+                # Kent dit model de taalcode niet, dan zonder (de regie vraagt al om de taal)
                 del body["generationConfig"]["speechConfig"]["languageCode"]
                 continue
             if e.code == 429 and attempt < 2 and "free_tier_requests, limit" not in msg:
@@ -336,7 +349,7 @@ def transcribe(path: Path) -> str:
         body = {"contents": [{"parts": [
             {"inlineData": {"mimeType": "audio/mp3", "data": base64.b64encode(mp3.read_bytes()).decode()}},
             {"text": "Transcribe exactly what is spoken. Put each sentence on its own line with its start time [m:ss]. "
-                     "Mark every silence longer than one second as (stilte N s). Say if the speech is not Dutch or has an accent, "
+                     "Mark every silence longer than one second as (stilte N s). " + f"Say if the speech is not {LANG_NAME} or has an accent, "
                      "and describe the voice in one line (pitch, texture, pace)."},
         ]}]}
         # Druk bij Google (503): even wachten, of een ander model
@@ -436,6 +449,29 @@ def schoon():
     publish(lines, timings)
 
 
+def pauzes(maximum: float):
+    """Lange stiltes midden in een regel inkorten tot `maximum` seconden, zonder opnieuw op te nemen (het tweede
+    spraakmodel liet tussen twee zinnen soms 3 tot 6 s stilte vallen), en de woorden opnieuw over de regel verdelen."""
+    lines = json.loads(SRC.read_text())
+    timings_file = STAGE / "timings.json"
+    timings = json.loads(timings_file.read_text())
+    for k in lines:
+        m4a = STAGE / f"{k}.m4a"
+        was = seconds(m4a)
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / m4a.name
+            ff("-i", m4a, "-af", f"silenceremove=stop_periods=-1:stop_duration={maximum}:stop_threshold=-40dB:stop_silence={maximum}",
+               "-c:a", "aac", "-b:a", "96k", out)
+            now = seconds(out)
+            if was - now < 0.25:
+                continue
+            shutil.move(out, m4a)
+        timings[k] = {"duration": round(now, 3), "words": words_with_times(lines[k], now - LEAD)}
+        print(f"{k:10} pauzes ingekort: {was:.1f}s → {now:.1f}s")
+    timings_file.write_text(json.dumps({k: timings[k] for k in lines if k in timings}, ensure_ascii=False, indent=1))
+    publish(lines, timings)
+
+
 def main():
     global MODEL
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -444,11 +480,17 @@ def main():
     ap.add_argument("--alleen", choices=list(ROLES), help="alleen de regels van Daan of van de drang (elk op één model)")
     ap.add_argument("--model", choices=MODELS, help="ander spraakmodel (eigen daglimiet); standaard " + MODEL)
     ap.add_argument("--schoon", action="store_true", help="ruisstoot achter de laatste zin weghalen uit wat al is opgenomen")
+    ap.add_argument("--taal", choices=["nl", "en"], default="nl", help="nl (standaard) of en: de Engelse versie")
+    ap.add_argument("--pauzes", type=float, metavar="S", help="stiltes midden in een regel inkorten tot S seconden (zonder opnieuw op te nemen)")
     a = ap.parse_args()
+    if a.taal == "en":
+        english()
     if a.model:
         MODEL = a.model
     if a.schoon:
         schoon()
+    elif a.pauzes:
+        pauzes(a.pauzes)
     elif a.proef:
         proef(a.proef)
     elif a.stem:

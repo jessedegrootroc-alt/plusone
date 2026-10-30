@@ -337,7 +337,7 @@ export const SCENES: Scene[] = [
         dshots: [[0.36, 1, 50, 50], [0.62, 1.7, 44, 37]],
         note: 'Close-up: zijn telefoon steekt uit zijn jaszak, het scherm licht op (klein, niet de hoofdzaak)',
         // De melding zelf staat op het scherm, zoals een echte melding van de app; niemand hoeft hem voor te lezen
-        layers: [{ src: V('close-melding'), fit: 'cover', anim: 'tremble', pins: [{ x: 44.5, y: 38.5, w: 23, r: -13, kind: 'screen', text: '<span class="n-head"><img src="/icons/icon-192.png" alt="" /><span>PlusOne</span><span>' + t('nu', 'now') + '</span></span><span class="n-title">+1</span><span class="n-body">' + t('Dag één. Als je wilt.', 'Day one. If you want.') + '</span>' }] }],
+        layers: [{ src: V('close-melding'), fit: 'cover', anim: 'tremble', pins: [{ x: 44.5, y: 38.5, w: 23, r: -13, kind: 'screen', text: '<span class="n-head"><img src="/icons/icon-192.png" alt="" /><span>PlusOne</span><span>' + t('nu', 'now') + '</span></span><span class="n-title">+1</span><span class="n-body">' + t('Dag één. Als je wilt.', 'Day one. No excuses.') + '</span>' }] }],
       },
     ],
     captions: [],
@@ -614,11 +614,11 @@ export const SCENES: Scene[] = [
     id: 'ritueel', name: t('16 · Zo werkt het', '16 · How it works'), ref: 'Taste', sh: 1.6, world: 'zwart', panels: [], captions: [],
     cue: '♪ thema zacht in een lus',
     html: `<div class="brand"><div class="b-col b-wide">
-      <div class="b-head"><p class="b-eyebrow">Zo werkt PlusOne</p><h2 class="b-display">Wees eerlijk nu.<br/>Word wie je bent.</h2></div>
+      <div class="b-head"><p class="b-eyebrow">${t('Zo werkt PlusOne', 'How PlusOne works')}</p><h2 class="b-display">${t('Wees eerlijk nu.<br/>Word wie je bent.', 'Be honest now.<br/>Become who you are.')}</h2></div>
       <div class="b-cards">
-        <div class="b-card"><span class="b-ico">${mirrorIco}</span><p class="b-eyebrow">De spiegel</p><h3 class="b-h2">Kijk.</h3><p class="b-lead">Eén waarheid per post-it, zo eerlijk als je durft.</p></div>
-        <div class="b-card"><span class="b-ico">${compassIco}</span><p class="b-eyebrow">Het kompas</p><h3 class="b-h2">Kies.</h3><p class="b-lead">Niet alles tegelijk. Eén ding, vandaag.</p></div>
-        <div class="b-card"><span class="b-ico">${mountainIco}</span><p class="b-eyebrow">De reis</p><h3 class="b-h2">Klim.</h3><p class="b-lead">Elke dag één trede. Wat je haalt, blijft.</p></div>
+        <div class="b-card"><span class="b-ico">${mirrorIco}</span><p class="b-eyebrow">${t('De spiegel', 'The mirror')}</p><h3 class="b-h2">${t('Kijk.', 'Look.')}</h3><p class="b-lead">${t('Eén waarheid per post-it, zo eerlijk als je durft.', 'One truth per post-it, as honest as you dare.')}</p></div>
+        <div class="b-card"><span class="b-ico">${compassIco}</span><p class="b-eyebrow">${t('Het kompas', 'The compass')}</p><h3 class="b-h2">${t('Kies.', 'Choose.')}</h3><p class="b-lead">${t('Niet alles tegelijk. Eén ding, vandaag.', 'Not everything at once. One thing, today.')}</p></div>
+        <div class="b-card"><span class="b-ico">${mountainIco}</span><p class="b-eyebrow">${t('De reis', 'The journey')}</p><h3 class="b-h2">${t('Klim.', 'Climb.')}</h3><p class="b-lead">${t('Elke dag één trede. Wat je haalt, blijft.', 'One step a day. What you reach, you keep.')}</p></div>
       </div>
     </div></div>`,
   },
@@ -626,40 +626,40 @@ export const SCENES: Scene[] = [
     id: 'jouwspiegel', name: t('17 · Jouw spiegel', '17 · Your mirror'), ref: 'Collection', sh: 1.6, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
     // Precies het blok uit de app: kop, het prikbord met twee post-its (waarheid, stap, ladder, termijn, vinkje)
     html: `<div class="brand"><div class="b-col">
-      <div class="b-section-head"><h2 class="b-h2">De spiegel</h2><span class="b-small">telt elke dag mee</span></div>
+      <div class="b-section-head"><h2 class="b-h2">${t('De spiegel', 'The mirror')}</h2><span class="b-small">${t('telt elke dag mee', 'counts every day')}</span></div>
       <div class="b-board">
-        <div class="b-board-col"><div class="b-note" style="--rot:-1.5deg;--tape:-4deg"><i class="b-tape"></i><p class="b-truth">Ik scroll tot 2 uur 's nachts.</p><p class="b-note-text">Om 23:00 de telefoon in de keuken.</p><div class="b-ladder"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div><div class="b-note-foot"><span class="b-date">nog 3 dagen</span><span class="b-check"></span></div></div></div>
-        <div class="b-board-col"><div class="b-note" style="--rot:1.2deg;--tape:5deg"><i class="b-tape"></i><p class="b-truth">Ik rook dertig per dag.</p><p class="b-note-text">Vandaag niet roken.</p><div class="b-ladder"><i class="on"></i><i></i><i></i><i></i></div><div class="b-note-foot"><span class="b-date">vandaag</span><span class="b-check on"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.4"/></svg></span></div></div></div>
+        <div class="b-board-col"><div class="b-note" style="--rot:-1.5deg;--tape:-4deg"><i class="b-tape"></i><p class="b-truth">${t('Ik scroll tot 2 uur \'s nachts.', 'I scroll until 2 a.m.')}</p><p class="b-note-text">${t('Om 23:00 de telefoon in de keuken.', 'Phone in the kitchen at 11 p.m.')}</p><div class="b-ladder"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div><div class="b-note-foot"><span class="b-date">${t('nog 3 dagen', '3 days left')}</span><span class="b-check"></span></div></div></div>
+        <div class="b-board-col"><div class="b-note" style="--rot:1.2deg;--tape:5deg"><i class="b-tape"></i><p class="b-truth">${t('Ik rook dertig per dag.', 'I smoke thirty a day.')}</p><p class="b-note-text">${t('Vandaag niet roken.', 'No smoking today.')}</p><div class="b-ladder"><i class="on"></i><i></i><i></i><i></i></div><div class="b-note-foot"><span class="b-date">${t('vandaag', 'today')}</span><span class="b-check on"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.4"/></svg></span></div></div></div>
       </div>
-      <p class="b-lead b-center">In de app plak je je eigen waarheden op je spiegel. Elke dag scheur je er één af: gedaan, niet gezegd.</p>
+      <p class="b-lead b-center">${t('In de app plak je je eigen waarheden op je spiegel. Elke dag scheur je er één af: gedaan, niet gezegd.', 'In the app you stick your own truths on your mirror. Every day you tear one off: done, not said.')}</p>
     </div></div>`,
   },
   {
     id: 'app', name: t('18 · De app', '18 · The app'), ref: 'Products', sh: 1.4, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
     html: `<div class="brand"><div class="b-col b-center">
       <img class="b-appicon" src="/icons/icon-512.png" alt="" />
-      <div class="b-head b-center"><p class="b-eyebrow">De app</p><h2 class="b-display">PlusOne</h2><p class="b-lead">Elke dag één stap beter. In zwart-wit, zonder afleiding.</p></div>
+      <div class="b-head b-center"><p class="b-eyebrow">${t('De app', 'The app')}</p><h2 class="b-display">PlusOne</h2><p class="b-lead">${t('Elke dag één stap beter. In zwart-wit, zonder afleiding.', 'One step better every day. In black and white, without distraction.')}</p></div>
       <nav class="b-tabbar" aria-hidden="true">
-        <span class="b-tab on"><span class="b-tab-ico">${mirrorIco}</span>Spiegel</span>
-        <span class="b-tab"><span class="b-tab-ico">${compassIco}</span>Kompas</span>
-        <span class="b-tab"><span class="b-tab-ico">${mountainIco}</span>Reis</span>
+        <span class="b-tab on"><span class="b-tab-ico">${mirrorIco}</span>${t('Spiegel', 'Mirror')}</span>
+        <span class="b-tab"><span class="b-tab-ico">${compassIco}</span>${t('Kompas', 'Compass')}</span>
+        <span class="b-tab"><span class="b-tab-ico">${mountainIco}</span>${t('Reis', 'Journey')}</span>
       </nav>
     </div></div>`,
   },
   {
     id: 'installeer', name: t('19 · Installeren', '19 · Install'), ref: 'Retail', sh: 1.4, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
     html: `<div class="brand"><div class="b-col">
-      <div class="b-head"><p class="b-eyebrow">Begin vandaag</p><h2 class="b-display">Zet PlusOne op je beginscherm.</h2><p class="b-lead">Het werkt als een app, zonder app store.</p></div>
+      <div class="b-head"><p class="b-eyebrow">${t('Begin vandaag', 'Start today')}</p><h2 class="b-display">${t('Zet PlusOne op je beginscherm.', 'Put PlusOne on your home screen.')}</h2><p class="b-lead">${t('Het werkt als een app, zonder app store.', 'It works like an app, without an app store.')}</p></div>
       <ol class="b-steps">
-        <li><span class="b-dot"></span><div><p class="b-step-t">Open de app</p><p class="b-small">Tik hieronder op Begin dag één.</p></div></li>
-        <li><span class="b-dot"></span><div><p class="b-step-t">Tik op Deel</p><p class="b-small">Het vierkantje met de pijl omhoog.</p></div></li>
-        <li class="now"><span class="b-dot"></span><div><p class="b-step-t">Zet op beginscherm</p><p class="b-small">Daarna staat PlusOne tussen je apps.</p></div></li>
+        <li><span class="b-dot"></span><div><p class="b-step-t">${t('Open de app', 'Open the app')}</p><p class="b-small">${t('Tik hieronder op Begin dag één.', 'Tap Start day one below.')}</p></div></li>
+        <li><span class="b-dot"></span><div><p class="b-step-t">${t('Tik op Deel', 'Tap Share')}</p><p class="b-small">${t('Het vierkantje met de pijl omhoog.', 'The square with the arrow pointing up.')}</p></div></li>
+        <li class="now"><span class="b-dot"></span><div><p class="b-step-t">${t('Zet op beginscherm', 'Add to Home Screen')}</p><p class="b-small">${t('Daarna staat PlusOne tussen je apps.', 'Then PlusOne sits among your apps.')}</p></div></li>
       </ol>
-      <a class="b-btn" href="/">Begin dag één</a>
+      <a class="b-btn" href="/">${t('Begin dag één', 'Start day one')}</a>
     </div></div>`,
   },
   {
     id: 'footer', name: t('20 · Slot', '20 · Ending'), ref: 'Footer', sh: 1, world: 'zwart', panels: [], captions: [], cue: '',
-    html: `<div class="brand"><div class="b-col b-center"><img class="b-laurel" src="/art/item-lauwerkrans.webp" alt="" /><p class="b-end">Wat je morgen bent,<br/>kies je vandaag.</p><p class="b-eyebrow">PlusOne</p></div></div>`,
+    html: `<div class="brand"><div class="b-col b-center"><img class="b-laurel" src="/art/item-lauwerkrans.webp" alt="" /><p class="b-end">${t('Wat je morgen bent,<br/>kies je vandaag.', 'Who you are tomorrow,<br/>you choose today.')}</p><p class="b-eyebrow">PlusOne</p></div></div>`,
   },
 ]
