@@ -674,11 +674,13 @@ const update = (v: View, p: number, dt: number) => {
  * - eyes: door zijn ogen: een smalle spleet licht die opengaat, even knippert, dan scherp wordt;
  * - light: door wit heen, als een sluier van licht die opkomt en weer wegtrekt;
  * - cut: een harde cut, voor een match cut (dezelfde hand, eerst overdag, dan 's nachts);
- * - dip: eerst helemaal naar zwart, dan het nieuwe beeld (tekst schuift nooit over tekst, zoals in het merkdeel).
+ * - dip: eerst helemaal naar zwart, dan het nieuwe beeld (tekst schuift nooit over tekst, zoals in het merkdeel);
+ * - match: hetzelfde beeld loopt gewoon door (de spiegel met de post-its); alleen de tekst op de blaadjes wisselt: de
+ *   oude vervaagt, en de nieuwe schrijft zich erop. Je merkt niet dat er een andere scène begint.
  */
-type Tr = 'ink' | 'fade' | 'zoom' | 'eyes' | 'light' | 'cut' | 'dip'
+type Tr = 'ink' | 'fade' | 'zoom' | 'eyes' | 'light' | 'cut' | 'dip' | 'match'
 const TR: Record<string, Tr> = {
-  deur: 'fade', steeg: 'cut', vlam: 'zoom', breken: 'ink', val: 'fade', ontwaken: 'eyes', keuze: 'zoom', visie: 'light', muren: 'light', noor: 'light', titeldrop: 'fade',
+  deur: 'fade', steeg: 'cut', vlam: 'zoom', breken: 'ink', val: 'fade', ontwaken: 'eyes', keuze: 'match', visie: 'light', muren: 'light', noor: 'light', titeldrop: 'fade',
   ritueel: 'dip', jouwspiegel: 'dip', app: 'dip', installeer: 'dip', footer: 'dip',
 }
 const veil = document.createElement('div')
@@ -709,6 +711,18 @@ const blink = (v: View, t: number) => {
   })
   return lid
 }
+/** De tekst op de post-its bij een match: de oude vervaagt (t 0,05 → 0,45), de nieuwe schrijft zich erop (0,5 → 0,95),
+ *  zoals de waarheden verschenen. Met t = null weer zoals de CSS het wil (alleen als er iets stond). */
+const rewriting = new Set<View>()
+const rewrite = (v: View, prev: View | undefined, t: number | null) => {
+  if (t != null) rewriting.add(v)
+  else if (!rewriting.delete(v)) return
+  if (prev) for (const s of prev.stage.querySelectorAll<HTMLElement>('.postit span')) s.style.opacity = t == null ? '' : (1 - smooth(0.05, 0.45, t)).toFixed(3)
+  for (const s of v.stage.querySelectorAll<HTMLElement>('.postit span')) {
+    s.style.transition = t == null ? '' : 'none'
+    s.style.clipPath = t == null ? '' : `inset(0 ${(100 - 110 * smooth(0.5, 0.95, t)).toFixed(1)}% 0 0)`
+  }
+}
 const transition = (v: View, prev: View | undefined, t: number) => {
   const kind = TR[v.scene.id] ?? (v.scene.world === 'zwart' ? 'fade' : 'ink')
   const st = v.stage
@@ -716,11 +730,15 @@ const transition = (v: View, prev: View | undefined, t: number) => {
   const busy = t > 0 && t < 1
   if (prev) {
     const dark = kind === 'dip' ? 1 - smooth(0, 0.5, t) : 1 - k * 0.55
-    prev.cam.style.filter = busy && kind !== 'light' && kind !== 'eyes' ? `brightness(${dark.toFixed(3)})` : ''
-    prev.stage.style.scale = busy ? (1 + k * 0.05).toFixed(4) : ''
+    prev.cam.style.filter = busy && kind !== 'light' && kind !== 'eyes' && kind !== 'match' ? `brightness(${dark.toFixed(3)})` : ''
+    prev.stage.style.scale = busy && kind !== 'match' ? (1 + k * 0.05).toFixed(4) : ''
   }
   if (kind === 'light' && busy) veilT = Math.max(veilT, Math.sin(Math.PI * t))
-  if (t >= 1 || reduce) { setMask(st, 'none'); st.style.opacity = ''; st.style.scale = ''; v.cam.style.filter = ''; return }
+  if (t >= 1 || reduce) {
+    setMask(st, 'none'); st.style.opacity = ''; st.style.scale = ''; v.cam.style.filter = ''
+    if (kind === 'match') rewrite(v, prev, null)
+    return
+  }
   st.style.scale = ''
   v.cam.style.filter = ''
   if (kind === 'dip') {
@@ -749,6 +767,12 @@ const transition = (v: View, prev: View | undefined, t: number) => {
     setMask(st, 'none')
     st.style.opacity = smooth(0.15, 0.85, t).toFixed(3)
     st.style.scale = (1.22 - k * 0.22).toFixed(4)
+  } else if (kind === 'match') {
+    // Hetzelfde beeld: de nieuwe scène staat er pas als de oude tekst weg is, en is dan niet van de oude te onderscheiden
+    // (nét niet 0, zodat hij al getekend klaarstaat en er bij de wissel geen leeg beeld flitst)
+    setMask(st, 'none')
+    st.style.opacity = t > 0.45 ? '1' : '0.001'
+    rewrite(v, prev, t)
   } else if (kind === 'light') {
     // Onder de witte sluier wisselt het beeld; je ziet de wissel nooit
     setMask(st, 'none')
@@ -817,7 +841,7 @@ const frame = (now: number) => {
     // dus je scrolt nooit een blad weg: het ene beeld gaat over in het andere.
     const on = y >= v.top - vh && y < v.top + v.height
     v.stage.classList.toggle('on', on)
-    if (!on) continue
+    if (!on) { rewrite(v, views[i - 1], null); continue } // snel teruggescrold midden in een match: de post-its weer zoals ze waren
     const p = (y - v.top) / (v.scene.sh * vh)
     if (!current && y >= v.top - vh * 0.5 && y < v.top + v.height - vh * 0.5) current = v
     update(v, p, dt)

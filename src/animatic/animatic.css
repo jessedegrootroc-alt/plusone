@@ -4,6 +4,9 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; background: #000; color: var(--bone); font: 400 14px/20px var(--sans); -webkit-font-smoothing: antialiased; }
 html.lenis, html.lenis body { height: auto; }
+/* Op een telefoon geen scrolbalk: op zo'n lange pagina maakt iOS er een knopje van dat je met je duim pakt, en dan schiet je
+   in één keer helemaal naar boven */
+@media (pointer: coarse) { html, body { scrollbar-width: none; } ::-webkit-scrollbar { display: none; } }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 body:not(.playing) { overflow: hidden; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
