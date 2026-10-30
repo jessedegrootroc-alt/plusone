@@ -775,6 +775,7 @@ const frame = (now: number) => {
   }
   veil.style.opacity = (easeInOut(veilT) * 0.96).toFixed(3)
   cueScroll(y, dt, current)
+  trace(current)
   const act = (activeAct as View | null)?.scene.act // update() zet hem; TS ziet dat niet
   disc.classList.toggle('on', !!act)
   document.body.classList.toggle('acting', !!act && !touch)
@@ -829,6 +830,35 @@ chapters.addEventListener('click', (e) => {
   if (v && lenis) lenis.scrollTo(v.top, { duration: 1.6 })
   else if (v) scrollTo({ top: v.top, behavior: 'smooth' })
 })
+
+// ── Crashverslag: schiet de telefoon de pagina af en laadt hij hem opnieuw, dan zegt het startscherm waar het stopte ──
+// Elke 2 s gaat op dit toestel een spoortje in localStorage; sluit je de pagina netjes (pagehide), dan gaat het weg.
+// Staat het er bij het openen nog, dan is de vorige keer vastgelopen
+const TRACE = 'animatic-spoor'
+const lastRun = (() => { try { return JSON.parse(localStorage.getItem(TRACE) ?? 'null') as Record<string, string | number> | null } catch { return null } })()
+let traced = 0
+const trace = (current: View | null) => {
+  if (!started || !current || total - traced < 2) return
+  traced = total
+  const mem = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory
+  const ua = navigator.userAgent
+  try {
+    localStorage.setItem(TRACE, JSON.stringify({
+      scene: current.scene.name, t: Math.round(total), sound: soundOn ? 'met geluid' : 'zonder geluid',
+      act: (activeAct as View | null)?.holding ? 'tijdens vasthouden' : '',
+      phone: /iPhone|iPad/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : 'computer',
+      browser: /CriOS|Chrome/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : 'browser',
+      heap: mem ? Math.round(mem.usedJSHeapSize / 1048576) : '',
+    }))
+  } catch { /* privémodus: dan geen spoor */ }
+}
+addEventListener('pagehide', () => { try { localStorage.removeItem(TRACE) } catch { /* idem */ } })
+if (lastRun) {
+  const r = lastRun
+  const hint = $<HTMLElement>('.gate .hint')
+  hint.classList.add('crash')
+  hint.textContent = `Vorige keer gestopt bij ${r.scene} na ${fmt(Number(r.t))}, ${r.sound}${r.act ? `, ${r.act}` : ''} · ${r.phone}, ${r.browser}${r.heap ? ` · ${r.heap} MB` : ''}`
+}
 
 // ── Start ──
 const start = async () => {

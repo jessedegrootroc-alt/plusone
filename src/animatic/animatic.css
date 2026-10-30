@@ -357,6 +357,7 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 .choices button { height: 56px; padding: 0 28px; border-radius: 999px; font: 600 16px/56px var(--sans); box-shadow: inset 0 0 0 1.5px var(--app-ink); }
 .choices button:first-child { background: var(--app-ink); color: var(--app-paper); box-shadow: none; }
 .gate .hint { margin: 0; font: 400 13px/20px var(--sans); color: var(--app-ink-3); animation: fadeIn 0.8s 1.5s both; }
+.gate .hint.crash { max-width: min(90vw, 420px); text-align: center; color: var(--app-ink-2); } /* waar het de vorige keer vastliep */
 @keyframes fadeIn { from { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
