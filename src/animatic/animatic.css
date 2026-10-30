@@ -374,4 +374,9 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
   .hud, .sound, .scrollcue { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(20, 20, 20, 0.92); }
   body::after { inset: 0; animation: none; }
   .stage::before { display: none; }
+  /* Het inktfilter (SVG) op het handschrift rekent Safari op een iPhone uit op de processor, op 3x resolutie, elk frame
+     dat de post-its bewegen; rond de keuze liep de pagina daardoor vast. Op een telefoon: het handschrift zelf */
+  .tag.note, .postit span { filter: none; mix-blend-mode: normal; }
+  .ring path { filter: drop-shadow(0 0 4px rgba(242, 242, 242, 0.5)); }
+  .picked .pickit:not(.chosen) { filter: brightness(0.62); }
 }
