@@ -16,8 +16,11 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 
 /* Scène: vastgezet podium; het beeldkader is een staande pagina (op desktop met wazige wereld eromheen) */
 .scene { position: relative; }
-.stage { position: fixed; inset: 0; height: 100svh; overflow: hidden; perspective: 1400px; background: #000; visibility: hidden; transform-origin: 50% 50%; mask-repeat: no-repeat; mask-position: 50% 50%; -webkit-mask-repeat: no-repeat; -webkit-mask-position: 50% 50%; }
-.stage.on { visibility: visible; }
+.stage { position: fixed; inset: 0; height: 100svh; overflow: hidden; perspective: 1400px; background: #000; display: none; transform-origin: 50% 50%; mask-repeat: no-repeat; mask-position: 50% 50%; -webkit-mask-repeat: no-repeat; -webkit-mask-position: 50% 50%; }
+/* Alleen de scènes rond je scroll bestaan; de rest is helemaal weg (display: none, niet alleen onzichtbaar). WebKit, de
+   techniek van iPhone-browsers, hield van elke scène die je voorbij was de beeldlagen in het geheugen, tot de iPhone
+   de pagina opgaf (rond de keuze, ruim 1 GB grafisch geheugen) */
+.stage.on { display: block; }
 .stage::before { content: ''; position: absolute; inset: -60px; background: var(--bd, none) center / cover; filter: blur(34px) brightness(0.32) grayscale(1); transform: scale(1.1); }
 .frame { position: relative; height: 100%; width: min(100vw, 66svh); margin: 0 auto; background: var(--paper); transform-origin: 50% 50%; overflow: hidden; }
 /* Met muis of trackpad helt het beeld mee met je scrollsnelheid; iets groter dan het scherm, zodat de rand dan nooit
