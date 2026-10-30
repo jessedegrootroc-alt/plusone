@@ -545,11 +545,16 @@ export const SCENES: Scene[] = [
       {
         // Het doel van alles: alleen met zijn gedachten kunnen zijn, zonder pijn. Niets beweegt behalve zijn adem.
         x: 0, y: 0, w: 100, h: 100, d: [0, 0, 100, 100], kind: 'main', depth: 0.2, bg: '#e3ded2',
-        shots: [[0, 1.12, 34, 60], [1, 1, 40, 55]],
+        // Op een telefoon (staand) zie je maar een smalle strook van het brede beeld: daar schuift het naar rechts, zodat
+        // de zon erin staat, en zoomt de camera niet naar links (de zon zou er weer uit vallen)
+        shots: [[0, 1.03, 50, 50], [1, 1, 50, 50]],
+        dshots: [[0, 1.12, 34, 60], [1, 1, 40, 55]],
         note: 'De top van de berg, net na zonsopgang, stil; Daan zit alleen op een platte steen, ogen dicht, handen open, in vrede',
         layers: [
-          { src: K('berg-top'), fit: 'cover', depth: 0.1 },
-          { src: K('daan-stil'), fit: 'fig', x: 32, b: 24, h: 26, d: [30, 22, 38], depth: 0.4, anim: 'breathe' },
+          // De zon iets dichter bij de rots (scripts/berg-zon.py), zodat ze op een telefoon samen in beeld passen
+          { src: K('berg-top-zon'), alt: K('berg-top'), fit: 'cover', pos: '65% 50%', depth: 0.1 },
+          // Op de rots: zijn eigen steen ligt op de rand van de klif, niet ervoor
+          { src: K('daan-stil'), fit: 'fig', x: 25, b: 30, h: 18, d: [30, 25, 38], depth: 0.4, anim: 'breathe' },
         ],
       },
     ],
