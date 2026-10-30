@@ -5,12 +5,15 @@ Lange zijde maximaal 2048 px, transparantie blijft. Draai opnieuw na elk nieuw b
 """
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "art/verhaal"
 OUT = ROOT / "public/verhaal/art"
 MAX = 2048
+# Beelden die in de animatic flink worden opgeblazen (de rook draait rond en de camera duikt erin): die gaan eerst 2x
+# omhoog met Lanczos en licht verscherpt, anders rekt de browser ze zelf op en worden ze wazig en blokkerig
+GROOT = {"rook-val", "rook-val-kleur"}
 
 
 def main():
@@ -20,7 +23,10 @@ def main():
         if out.exists() and out.stat().st_mtime >= png.stat().st_mtime:
             continue
         im = Image.open(png)
-        im.thumbnail((MAX, MAX), Image.LANCZOS)
+        if png.stem in GROOT:
+            im = im.resize((im.width * 2, im.height * 2), Image.LANCZOS).filter(ImageFilter.UnsharpMask(radius=2, percent=55, threshold=2))
+        else:
+            im.thumbnail((MAX, MAX), Image.LANCZOS)
         im.save(out, "WEBP", quality=84, method=4)
         print(f"{png.name:32} → {out.relative_to(ROOT)}  {im.size[0]}×{im.size[1]}")
 

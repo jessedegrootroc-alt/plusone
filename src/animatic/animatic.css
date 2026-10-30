@@ -80,10 +80,11 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 .a-float { animation: float 4.2s ease-in-out infinite; transform-origin: 50% 50%; }
 @keyframes float { 50% { transform: translateY(-2.5%) rotate(0.6deg); } }
 .a-spin { animation: spin 48s linear infinite; transform-origin: 50% 50%; }
-@keyframes spin { from { transform: rotate(0deg) scale(1.75); } to { transform: rotate(360deg) scale(1.75); } } /* groot genoeg dat de hoeken nooit in beeld draaien */
+@keyframes spin { to { transform: rotate(360deg); } } /* de laag zelf is groot genoeg (zie layerHtml) */
 .ro-split-l .mv { clip-path: inset(0 50% 0 0); }
 .ro-split-r .mv { clip-path: inset(0 0 0 50%); }
 .ro-thumb { z-index: 3; mask: radial-gradient(closest-side, #000 62%, transparent); } /* zachte randen: de hand komt uit het donker */
+.ro-riser { z-index: 2; } /* hij zweeft vóór de lichtzuil: het licht staat achter hem, niet over hem heen */
 
 /* Pose naar pose: een nieuwe pose springt erin met een kleine overshoot (Darkest Dungeon) */
 .ly.snap .mv { animation: snap 0.28s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
@@ -169,12 +170,6 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 
 /* Rook: getekende slierten die langzaam opstijgen en vervagen */
 
-/* Jouw spiegel (merkdeel): twee post-its op een donker glas */
-.mini-mirror { position: relative; width: min(70%, 300px); aspect-ratio: 3 / 4; border-radius: 48% 48% 8px 8px / 30% 30% 8px 8px; background: radial-gradient(80% 60% at 50% 30%, #2a2a2a, #0f0f0f); box-shadow: inset 0 0 0 6px #262626, inset 0 0 40px rgba(0, 0, 0, 0.9); }
-.mini-mirror i { position: absolute; left: 50%; width: 70%; translate: -50% 0; padding: 16px 12px 10px; background: #F2F2F2; color: #0B0B0B; border-radius: 2px 2px 4px 12px / 2px 2px 4px 4px; font: 400 15px/20px var(--title); font-style: normal; text-align: left; rotate: var(--r); box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.7); }
-.mini-mirror i:first-child { top: 22%; }
-.mini-mirror i + i { top: 52%; }
-
 /* De val: inkt druipt traag over de steeg, de rook neemt het over, dan zwart, dan licht */
 .drip { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: calc(1 - clamp(0, (var(--p, 0) - 0.42) / 0.12, 1)); }
 .drip i { position: absolute; top: 0; width: calc(100% / 26 + 1px); height: 100%; background: #000; transform-origin: top; transform: scaleY(clamp(0, calc((var(--p, 0) - var(--d) * 0.8) / 0.24), 1)); border-radius: 0 0 50% 50%; }
@@ -234,23 +229,73 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 }
 @keyframes breathe2 { 50% { scale: 1.06; } }
 
-/* Merkdelen */
-.jar img { height: 34svh; animation: float 4s ease-in-out infinite; }
-.brand .sub { margin: 0; max-width: 36ch; font: 400 14px/21px var(--sans); color: rgba(238, 238, 238, 0.7); }
-.brand { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 24px; text-align: center; color: #EEE; }
-.brand h2 { margin: 0; font: 400 clamp(30px, 9vw, 52px)/1.1 var(--title); letter-spacing: 0.04em; }
-.brand h3 { margin: 0; font: 400 24px/30px var(--title); letter-spacing: 0.04em; }
-.cards { display: flex; gap: 10px; width: 100%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
-.cards div { flex: 0 0 72%; scroll-snap-align: center; padding: 18px; border: 2px solid #EEE; display: flex; flex-direction: column; gap: 6px; text-align: left; }
-.cards b { font: 400 28px/32px var(--title); }
-.cards span { font: 400 13px/18px var(--sans); opacity: 0.75; }
-.medals { display: grid; grid-template-columns: repeat(4, 64px); gap: 12px; justify-content: center; }
-.medals i { width: 64px; height: 64px; border-radius: 50%; border: 2px solid #EEE; background: #1a1917 center / 92% no-repeat; animation: sway 5s ease-in-out infinite; }
-.medals i:nth-child(odd) { animation-delay: -2s; }
-.phone { width: 46%; aspect-ratio: 9 / 19; border: 3px solid #EEE; border-radius: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font: 400 13px/20px var(--sans); color: var(--app-ink-2); }
-.phone img { width: 44%; border-radius: 22%; animation: float 4s ease-in-out infinite; }
-.btn { height: 50px; padding: 0 26px; border-radius: 999px; background: #EEE; color: #0B0B0B; font: 600 15px/50px var(--sans); text-decoration: none; }
-.end { margin: 0; font: 400 28px/36px var(--title); }
+/* Merkdeel: dezelfde bouwstenen als de app (src/index.css). 4-puntsraster; Marcellus voor titels (40/48, 20/28),
+   Inter voor tekst (16/24, 13/20); drie tekstkleuren; kaarten #141414 met radius 24; de spiegel als prikbord met
+   post-its; de tabbalk; de witte pil-knop. Op een telefoon één kolom zo breed als de app, op desktop de kaarten naast elkaar. */
+.brand { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; color: var(--app-ink); text-align: left; }
+.brand a { pointer-events: auto; }
+.b-col { width: 100%; max-width: 412px; display: flex; flex-direction: column; gap: 24px; }
+.wide .b-col { max-width: 460px; }
+.wide .b-col.b-wide { max-width: 1040px; }
+.b-center { align-items: center; text-align: center; }
+.b-head { display: flex; flex-direction: column; gap: 8px; }
+.b-eyebrow { margin: 0; font: 600 13px/20px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--app-ink-3); }
+.b-display { margin: 0; font: 400 40px/48px var(--title); color: var(--app-ink); }
+.wide .b-display { font-size: 56px; line-height: 64px; }
+.b-h2 { margin: 0; font: 400 20px/28px var(--title); color: var(--app-ink); }
+.b-lead { margin: 0; font: 400 16px/24px var(--sans); color: var(--app-ink-2); }
+.b-small { font: 400 13px/20px var(--sans); color: var(--app-ink-3); }
+
+/* Zo werkt het: drie kaarten. Telefoon: icoon links, tekst rechts. Desktop: drie kolommen. */
+.b-cards { display: grid; gap: 12px; }
+.b-card { display: grid; grid-template-columns: 40px 1fr; gap: 2px 16px; align-items: start; padding: 20px; border-radius: 24px; background: var(--app-card); }
+.b-card .b-ico { grid-row: span 3; }
+.wide .b-cards { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.wide .b-card { display: flex; flex-direction: column; gap: 4px; padding: 24px; }
+.wide .b-card .b-ico { margin-bottom: 12px; }
+.b-ico, .b-tab-ico { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--app-ink); }
+.b-ico { background: rgba(242, 242, 242, 0.08); }
+.b-ico svg, .b-tab-ico svg { width: 24px; height: 24px; }
+
+/* Jouw spiegel: het prikbord uit de app, met twee post-its (waarheid, stap, ladder, termijn, vinkje) */
+.b-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.b-board { display: flex; gap: 12px; align-items: flex-start; padding: 24px 16px 16px; border-radius: 24px; background: radial-gradient(120% 80% at 50% 0%, rgba(242, 242, 242, 0.05), transparent 60%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), #161616; box-shadow: inset 0 0 0 1px #262626, inset 0 2px 24px rgba(0, 0, 0, 0.8); }
+.b-board-col { flex: 1; min-width: 0; }
+/* De rechterkolom hangt iets lager, zodat het geen rooster wordt */
+.b-board-col + .b-board-col { padding-top: 24px; }
+.b-note { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 24px 12px 8px; background: #F2F2F2; color: #0B0B0B; border-radius: 2px; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 10px 18px -8px rgba(0, 0, 0, 0.8); transform: rotate(var(--rot, 0deg)); }
+.b-tape { position: absolute; top: -10px; left: 50%; width: 72px; height: 22px; transform: translateX(-50%) rotate(var(--tape, 0deg)); background: rgba(220, 220, 214, 0.55); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); clip-path: polygon(0 8%, 6% 0, 12% 10%, 18% 2%, 82% 2%, 88% 10%, 94% 0, 100% 8%, 100% 92%, 94% 100%, 88% 90%, 82% 98%, 18% 98%, 12% 90%, 6% 100%, 0 92%); }
+.b-truth { margin: 0; font: 400 12px/16px var(--sans); color: #6B6B6B; }
+.b-note-text { margin: 0; font: 400 16px/22px var(--title); color: #0B0B0B; text-wrap: pretty; }
+.b-ladder { display: flex; gap: 3px; margin-top: 8px; }
+.b-ladder i { flex: 1; height: 3px; border-radius: 2px; background: rgba(11, 11, 11, 0.15); }
+.b-ladder i.on { background: #0B0B0B; }
+.b-note-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; margin-top: 4px; }
+.b-date { font: 600 11px/16px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: #6B6B6B; }
+.b-check { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 1.5px #0B0B0B; opacity: 0.85; }
+.b-check.on { background: #0B0B0B; color: #F2F2F2; box-shadow: none; opacity: 1; }
+.b-check svg { width: 18px; height: 18px; }
+
+/* De app: het icoon, de naam en de tabbalk zoals onderin de app */
+.b-appicon { width: 112px; height: 112px; border-radius: 26px; box-shadow: 0 0 0 1px var(--app-line), 0 24px 48px -16px rgba(0, 0, 0, 0.9); animation: float 4s ease-in-out infinite; }
+.b-tabbar { display: flex; justify-content: space-around; width: 100%; padding: 8px 12px; border-radius: 24px; background: var(--app-paper); box-shadow: inset 0 0 0 1px var(--app-line); }
+.b-tab { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 80px; padding: 4px 0; font: 600 13px/20px var(--sans); color: var(--app-ink-3); }
+.b-tab.on { color: var(--app-ink); }
+.b-tab.on .b-tab-ico { background: rgba(242, 242, 242, 0.14); }
+
+/* Installeren: drie stappen als de tijdlijn van de app (de stip van nu is gevuld), dan de witte knop */
+.b-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 24px; }
+.b-steps li { position: relative; display: flex; gap: 16px; align-items: flex-start; }
+.b-steps li:not(:last-child)::before { content: ''; position: absolute; left: 7px; top: 24px; bottom: -24px; width: 1px; background: var(--app-line); }
+.b-dot { flex: none; width: 15px; height: 15px; margin-top: 4px; border-radius: 50%; background: var(--app-paper); box-shadow: inset 0 0 0 1.5px var(--app-ink-3); }
+.b-steps li.now .b-dot { background: var(--app-ink); box-shadow: 0 0 0 4px rgba(242, 242, 242, 0.12); }
+.b-step-t { margin: 0; font: 600 16px/24px var(--sans); color: var(--app-ink); }
+.b-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; border-radius: 999px; background: var(--app-ink); color: var(--app-paper); font: 600 16px/24px var(--sans); text-decoration: none; transition: transform 0.15s var(--ease); }
+.b-btn:active { transform: scale(0.98); }
+
+/* Het slot */
+.b-laurel { width: 96px; height: auto; opacity: 0.9; }
+.b-end { margin: 0; font: 400 28px/36px var(--title); color: var(--app-ink); }
 
 /* Tempo-meter, geluid, hoofdstukken */
 .hud { position: fixed; left: 12px; top: calc(env(safe-area-inset-top) + 12px); z-index: 25; max-width: calc(100vw - 132px); padding: 8px 12px; border-radius: 12px; background: rgba(20, 20, 20, 0.8); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: inset 0 0 0 1px var(--app-line); color: var(--app-ink-2); font: 400 12px/16px var(--sans); font-variant-numeric: tabular-nums; cursor: pointer; }

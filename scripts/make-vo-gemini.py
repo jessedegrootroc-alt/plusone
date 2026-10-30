@@ -8,6 +8,7 @@ De sleutel komt uit GOOGLE_API_KEY / GEMINI_API_KEY of uit ~/.config/skills/.env
 Gebruik:
     python3 scripts/make-vo-gemini.py --proef Charon Algenib Gacrux   # dezelfde drie regels per stem, in art/stem-test/, met controle
     python3 scripts/make-vo-gemini.py --stem Algenib                   # alle regels uit vo.json, naar public/animatic/vo/
+    python3 scripts/make-vo-gemini.py --schoon                         # ruisstoot aan het eind weghalen, zonder opnieuw op te nemen
 
 Het gratis gebruik heeft een kleine daglimiet (10 verzoeken per dag voor dit model). Elke regel is één verzoek; na elke
 regel wordt opgeslagen, dus stopt het bij de limiet, dan gaat het de volgende dag verder. Wat niet veranderd is, wordt
@@ -30,6 +31,8 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+import numpy as np
+
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src/animatic/vo.json"
 OUT = ROOT / "public/animatic/vo"
@@ -37,8 +40,10 @@ TEST = ROOT / "art/stem-test"
 # Opnames komen eerst hier; pas als álle regels klaar zijn, gaan ze samen naar de animatic (geen mix van twee stemmen)
 STAGE = TEST / "gemini-vo"
 MODEL = "gemini-3.8-flash-tts"
+# Andere spraakmodellen met dezelfde stemmen, elk met een eigen gratis daglimiet (--model): om niet op morgen te wachten
+MODELS = ["gemini-3.8-flash-tts", "gemini-3.1-flash-tts-preview", "gemini-3.8-flash-lite-tts", "gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"]
 CHECK = "gemini-3.8-flash"  # luistert mee: schrijft uit wat er echt gezegd is
-API = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
+api = lambda: f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
 
 # De regie voor de stem, in de opbouw die Google voor TTS aanraadt: alleen het TRANSCRIPT wordt uitgesproken.
 # (Losse instructies in de tekst leest het model hardop voor; een systeeminstructie kent het TTS-model niet.)
@@ -80,7 +85,9 @@ def role(key: str) -> str:
 BATCH = 1  # regels per verzoek: één regel per opname (knippen op stiltes bleek onbetrouwbaar; de pauzes van het model wisselen te veel)
 WAIT = 22  # seconden tussen verzoeken (gratis: een paar per minuut)
 LEAD = 0.12
-FILM = "lowshelf=g=2.5:f=120,acompressor=threshold=-18dB:ratio=2.5:attack=10:release=200:makeup=2,alimiter=limit=0.95"
+# Het einde: stilte eraf en de laatste 40 ms zacht laten uitlopen (geen tik als de stem stopt)
+TAIL = "areverse,silenceremove=start_periods=1:start_threshold=-45dB,afade=t=in:d=0.04,areverse"
+FILM ="lowshelf=g=2.5:f=120,acompressor=threshold=-18dB:ratio=2.5:attack=10:release=200:makeup=2,alimiter=limit=0.95"
 PROEF = ["1", "13", "17"]
 PAUSE = {".": 22, "!": 22, "?": 22, ",": 9, ";": 9, ":": 9}
 
@@ -111,18 +118,23 @@ def tts(voice: str, lines: list[str], wav: Path, direction: str = DIRECTION):
         "contents": [{"parts": [{"text": direction + "\n\n".join(lines)}]}],
         "generationConfig": {
             "responseModalities": ["AUDIO"],
-            "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}},
+            # Altijd Nederlands: bij korte regels ("Noor. Mijn dochter.") raadt het model anders soms Duits
+            "speechConfig": {"languageCode": "nl-NL", "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}},
         },
     }
     for attempt in range(3):
-        req = Request(API, data=json.dumps(body).encode(), headers={"x-goog-api-key": key(), "Content-Type": "application/json"})
+        req = Request(api(), data=json.dumps(body).encode(), headers={"x-goog-api-key": key(), "Content-Type": "application/json"})
         try:
             with urlopen(req, timeout=300) as r:
                 data = json.loads(r.read())
             break
         except HTTPError as e:
             msg = e.read().decode(errors="replace")[:400]
-            if e.code == 429 and attempt < 2:
+            if e.code == 400 and "language" in msg.lower() and "languageCode" in body["generationConfig"]["speechConfig"]:
+                # Kent dit model de taalcode niet, dan zonder (de regie vraagt al om Nederlands)
+                del body["generationConfig"]["speechConfig"]["languageCode"]
+                continue
+            if e.code == 429 and attempt < 2 and "free_tier_requests, limit" not in msg:
                 print("  limiet bereikt, even wachten…")
                 time.sleep(65)
                 continue
@@ -214,12 +226,47 @@ def words_with_times(text: str, total: float):
     return out
 
 
+def tail_noise(path: Path):
+    """Gemini zet soms een ruisstoot achter de laatste zin: na een korte stilte ~0,13 s gesis, even hard als de stem.
+    Geeft het moment (in seconden) net na de laatste zin, of None als het einde schoon is. Niet vlak vóór de stoot:
+    die begint soms al met een tik in de stilte."""
+    raw = subprocess.run(["ffmpeg", "-v", "quiet", "-i", str(path), "-f", "s16le", "-ac", "1", "-ar", "44100", "-"],
+                         capture_output=True).stdout
+    x = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768
+    w = 441  # vensters van 10 ms
+    frames = x[: len(x) // w * w].reshape(-1, w)
+    rms = np.sqrt((frames ** 2).mean(axis=1))
+    loud = rms > 0.01  # boven -40 dB
+    end = len(loud)
+    while end and not loud[end - 1]:
+        end -= 1
+    start = end
+    while start and loud[start - 1]:
+        start -= 1
+    gap = start
+    while gap and not loud[gap - 1]:
+        gap -= 1
+    # 0,1–0,18 s, los van de zin, en geen stem: even hard als de stem maar met veel nuldoorgangen (stem ~0,02,
+    # gesis ~0,16). Een losse k of t aan het eind ("Dat kan ik.") lijkt erop, maar duurt hooguit 50 ms.
+    if not gap or not 10 <= end - start <= 18 or start - gap < 6:
+        return None
+    burst = frames[start:end].ravel()
+    hiss = np.mean(np.abs(np.diff(np.sign(burst)))) / 2 > 0.12
+    as_loud = np.sqrt((burst ** 2).mean()) > 0.3 * rms[:gap][loud[:gap]].mean()
+    return (gap + 3) * w / 44100 if hiss and as_loud else None
+
+
 def finish(src: Path, a: float, b: float, out: Path, text: str, tempo: float = 1.0):
-    """Knip één regel uit, haal stilte aan de randen weg, mix hem als filmstem en schat de woorden."""
+    """Knip één regel uit, haal stilte (en een ruisstoot) aan de randen weg, mix hem als filmstem en schat de woorden."""
     with tempfile.TemporaryDirectory() as tmp:
         cut = Path(tmp) / "cut.wav"
-        trim = "silenceremove=start_periods=1:start_threshold=-45dB,areverse,silenceremove=start_periods=1:start_threshold=-45dB,areverse"
-        ff("-i", src, "-ss", f"{a:.3f}", "-to", f"{b:.3f}", "-af", f"{trim},aresample=44100", "-ac", "1", cut)
+        trim = "silenceremove=start_periods=1:start_threshold=-45dB"
+        ff("-i", src, "-ss", f"{a:.3f}", "-to", f"{b:.3f}", "-af", f"{trim},{TAIL},aresample=44100", "-ac", "1", cut)
+        noise = tail_noise(cut)
+        if noise is not None:
+            clean = Path(tmp) / "clean.wav"
+            ff("-i", cut, "-af", f"atrim=end={noise:.3f},{TAIL}", clean)
+            cut = clean
         spoken = seconds(cut) / tempo
         ff("-i", cut, "-af", f"atempo={tempo},adelay={int(LEAD * 1000)},{FILM}", "-c:a", "aac", "-b:a", "96k", out)
     return {"duration": round(seconds(out), 3), "words": words_with_times(text, spoken)}
@@ -273,16 +320,16 @@ def transcribe(path: Path) -> str:
                      "and describe the voice in one line (pitch, texture, pace)."},
         ]}]}
         # Druk bij Google (503): even wachten, of een ander model
-        for model in (CHECK, CHECK, "gemini-3.5-flash"):
+        for model in (CHECK, "gemini-flash-latest", "gemini-3.1-flash-lite", "gemini-3.5-flash"):
             req = Request(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
                           data=json.dumps(body).encode(), headers={"x-goog-api-key": key(), "Content-Type": "application/json"})
             try:
                 with urlopen(req, timeout=180) as r:
                     return json.loads(r.read())["candidates"][0]["content"]["parts"][0]["text"]
             except HTTPError as e:
-                if e.code not in (429, 500, 503):
+                if e.code not in (404, 429, 500, 503):
                     raise
-                time.sleep(15)
+                time.sleep(5 if e.code == 404 else 15)
             except OSError:  # time-out
                 time.sleep(15)
         return "(controle lukte niet: Google is even overbelast)"
@@ -303,15 +350,17 @@ def proef(voices):
         print(transcribe(out))
 
 
-def stem(voice):
+def stem(voice, only=None):
     lines = json.loads(SRC.read_text())
     STAGE.mkdir(parents=True, exist_ok=True)
     cache_file = STAGE / ".cache.json"  # buiten public/, zodat het niet mee online gaat
     cache = json.loads(cache_file.read_text()) if cache_file.exists() else {}
     timings_file = STAGE / "timings.json"
     timings = json.loads(timings_file.read_text()) if timings_file.exists() else {}
-    sig = lambda k, t: hashlib.sha1(f"{voice}|{MODEL}|{ROLES[role(k)]}|{FILM}|{t}".encode()).hexdigest()
-    todo = [(k, t) for k, t in lines.items() if not (cache.get(k) == sig(k, t) and (STAGE / f"{k}.m4a").exists() and k in timings)]
+    sig = lambda k, t, m=MODEL: hashlib.sha1(f"{voice}|{m}|{ROLES[role(k)]}|{FILM}|{t}".encode()).hexdigest()
+    # Een regel is klaar als hij met deze stem en tekst is opgenomen, met welk van de spraakmodellen ook
+    done = lambda k, t: cache.get(k) in {sig(k, t, m) for m in MODELS} and (STAGE / f"{k}.m4a").exists() and k in timings
+    todo = [(k, t) for k, t in lines.items() if not done(k, t) and (only is None or role(k) == only)]
     print(f"{len(lines) - len(todo)} ongewijzigd, {len(todo)} te maken")
     def save():
         timings_file.write_text(json.dumps({k: timings[k] for k in lines if k in timings}, ensure_ascii=False, indent=1))
@@ -326,9 +375,17 @@ def stem(voice):
             sys.exit(f"Gestopt bij {k}: {e}. Wat klaar is, is bewaard; draai het script later opnieuw.")
         cache[k] = sig(k, t)
         save()
+    missing = [k for k in lines if k not in timings]
+    if missing:
+        print(f"nog {len(missing)} te gaan: {', '.join(missing)}")
+        return
     total = sum(timings[k]["duration"] for k in lines if not k.startswith(("15-porno", "15-buurt")))
     print(f"totaal (één route): {total:.1f}s")
-    # Alles klaar: in één keer naar de animatic
+    publish(lines, timings)
+
+
+def publish(lines, timings):
+    """Alles klaar: in één keer naar de animatic."""
     OUT.mkdir(parents=True, exist_ok=True)
     for k in lines:
         shutil.copy(STAGE / f"{k}.m4a", OUT / f"{k}.m4a")
@@ -336,15 +393,46 @@ def stem(voice):
     print(f"alle {len(lines)} regels staan nu in {OUT.relative_to(ROOT)}")
 
 
+def schoon():
+    """De ruisstoot uit regels halen die al zijn opgenomen, zonder ze opnieuw op te nemen."""
+    lines = json.loads(SRC.read_text())
+    timings_file = STAGE / "timings.json"
+    timings = json.loads(timings_file.read_text())
+    for k in lines:
+        m4a = STAGE / f"{k}.m4a"
+        at = tail_noise(m4a)
+        if at is None:
+            continue
+        with tempfile.TemporaryDirectory() as tmp:
+            clean = Path(tmp) / m4a.name
+            ff("-i", m4a, "-af", f"atrim=end={at:.3f},{TAIL}", "-c:a", "aac", "-b:a", "96k", clean)
+            shutil.move(clean, m4a)
+        was = timings[k]["duration"]
+        # De woorden waren over de stilte vóór de stoot uitgesmeerd: opnieuw verdelen over wat er nu klinkt
+        now = seconds(m4a)
+        timings[k] = {"duration": round(now, 3), "words": words_with_times(lines[k], now - LEAD)}
+        print(f"{k:10} ruis eraf: {was:.2f}s → {now:.2f}s")
+    timings_file.write_text(json.dumps({k: timings[k] for k in lines if k in timings}, ensure_ascii=False, indent=1))
+    publish(lines, timings)
+
+
 def main():
+    global MODEL
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--proef", nargs="+", metavar="STEM", help="proefje per stem (regels 1, 13 en 17)")
     ap.add_argument("--stem", metavar="STEM", help="alle regels met deze stem")
+    ap.add_argument("--alleen", choices=list(ROLES), help="alleen de regels van Daan of van de drang (elk op één model)")
+    ap.add_argument("--model", choices=MODELS, help="ander spraakmodel (eigen daglimiet); standaard " + MODEL)
+    ap.add_argument("--schoon", action="store_true", help="ruisstoot achter de laatste zin weghalen uit wat al is opgenomen")
     a = ap.parse_args()
-    if a.proef:
+    if a.model:
+        MODEL = a.model
+    if a.schoon:
+        schoon()
+    elif a.proef:
         proef(a.proef)
     elif a.stem:
-        stem(a.stem)
+        stem(a.stem, a.alleen)
     else:
         ap.print_help()
 

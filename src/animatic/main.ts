@@ -52,12 +52,14 @@ const chapters = $<HTMLElement>('.chapters')
 
 // ── Panelen en lagen als HTML ──
 const file = (src: string) => src.split('/').pop()
-const im = (src: string, cls: string, style = '', alt = '') => `<img class="${cls}" src="/${src}.webp" alt="" decoding="async" data-file="${file(src)}.png"${alt ? ` data-alt="/${alt}.webp"` : ''}${style ? ` style="${style}"` : ''}/>`
+/** De zwart-witversie als terugval voor een kleurbeeld dat nog niet gemaakt is (`naam-kleur` → `naam`) */
+const plain = (src: string) => (src.endsWith('-kleur') ? src.slice(0, -6) : '')
+const im = (src: string, cls: string, style = '', alt = plain(src)) => `<img class="${cls}" src="/${src}.webp" alt="" decoding="async" data-file="${file(src)}.png"${alt ? ` data-alt="/${alt}.webp"` : ''}${style ? ` style="${style}"` : ''}/>`
 
 const label = () => CHOICES.find((c) => c.id === choice)!.label
 const pinHtml = (pn: Pin) => {
   const at = `left:${pn.x}%;top:${pn.y}%;width:${pn.w}%;--r:${pn.r ?? 0}deg`
-  if (pn.src) return `<img class="pin" src="/${pn.src}.webp" alt="" decoding="async" style="${at}${pn.clip ? `;clip-path:${pn.clip}` : ''}"/>`
+  if (pn.src) return `<img class="pin" src="/${pn.src}.webp" alt="" decoding="async"${plain(pn.src) ? ` data-alt="/${plain(pn.src)}.webp"` : ''} style="${at}${pn.clip ? `;clip-path:${pn.clip}` : ''}"/>`
   return `<b class="tag ${pn.kind ?? 'note'}${pn.text ? '' : ' chosen-label'}" style="${at}">${pn.text ?? label()}</b>`
 }
 
@@ -77,9 +79,13 @@ const RING = '<svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none"
 
 const layerHtml = (l: Layer, i: number) => {
   const fit = l.fit ?? 'cover'
-  const wrap = fit === 'cover'
-    ? `inset:-${3 + (l.depth ?? 0.5) * 5}%` // ruimte rondom voor de parallax
-    : `left:${l.x ?? 50}%;bottom:${l.b ?? 0}%;height:${l.h ?? 50}%`
+  const wrap = l.anim === 'spin'
+    // Draait rond: een vierkant precies zo groot als de diagonaal (plus wat parallax), dan draaien de hoeken nooit
+    // in beeld en wordt het beeld niet verder opgeblazen dan nodig
+    ? '--s:calc(hypot(100cqw, 100cqh) * 1.04);left:calc(50% - var(--s) / 2);top:calc(50% - var(--s) / 2);width:var(--s);height:var(--s)'
+    : fit === 'cover'
+      ? `inset:-${3 + (l.depth ?? 0.5) * 5}%` // ruimte rondom voor de parallax
+      : `left:${l.x ?? 50}%;bottom:${l.b ?? 0}%;height:${l.h ?? 50}%`
   const filter = l.dark ? `filter:brightness(${(1 - l.dark).toFixed(2)});` : ''
   const mv = `${l.rot ? `rotate:${l.rot}deg;` : ''}${filter}${l.op != null ? `opacity:${l.op};` : ''}animation-delay:-${((i * 0.73) % 3).toFixed(2)}s`
   const pos = l.pos ? `object-position:${l.pos}` : ''
@@ -120,7 +126,7 @@ const panelHtml = (pn: Panel) => {
     <i class="edge"></i></div>`
 }
 
-interface CapState { el: HTMLElement; words: HTMLElement[]; key: string; played: boolean }
+interface CapState { el: HTMLElement; words: HTMLElement[]; key: string; played: boolean; vis: number }
 interface LayerView { l: Layer; el: HTMLElement; shown: boolean }
 interface PanelView { p: Panel; el: HTMLElement; pi: HTMLElement; layers: LayerView[]; seen: boolean }
 interface View {
@@ -161,7 +167,7 @@ const views: View[] = SCENES.map((scene) => {
   const title = scene.title ? `<div class="title"><div class="strokes"><i></i><i></i><i></i></div><b>${scene.title.big}</b>${scene.title.sub ? `<small>${scene.title.sub}</small>` : ''}</div>` : ''
   const bd = backdrop(scene)
   section.innerHTML = `
-    <div class="stage"${bd ? ` style="--bd:url(/${bd}.webp)"` : ''}>
+    <div class="stage"${bd ? ` style="--bd:url(/${bd}.webp)${plain(bd) ? `, url(/${plain(bd)}.webp)` : ''}"` : ''}>
       <div class="frame">
         <div class="cam">
           ${(scene.fx ?? []).map(fxHtml).join('')}
@@ -186,7 +192,7 @@ const views: View[] = SCENES.map((scene) => {
       const lyEls = [...el.querySelectorAll<HTMLElement>('.ly')]
       return { p, el, pi: $<HTMLElement>('.pi', el), layers: (p.layers ?? []).map((l, k) => ({ l, el: lyEls[k], shown: false })), seen: false }
     }),
-    caps: scene.captions.map((_, i) => ({ el: section.querySelectorAll<HTMLElement>('.cap')[i], words: [], key: '', played: false })),
+    caps: scene.captions.map((_, i) => ({ el: section.querySelectorAll<HTMLElement>('.cap')[i], words: [], key: '', played: false, vis: 0 })),
     top: 0, height: 0, time: 0, holding: false, value: 0, t: 0, done: false, fired: new Set(), walk: 0,
     pull: { gx: 0, gy: 0 }, shown: 0,
   }
@@ -203,6 +209,17 @@ for (const img of document.querySelectorAll<HTMLImageElement>('.panel img')) {
     const small = panel.querySelector('.need small')
     if (small && !small.textContent!.includes(img.dataset.file!)) small.textContent = `${small.textContent ? `${small.textContent} · ` : 'nog te maken: '}${img.dataset.file}`
   })
+}
+
+// De beelden van deze en de volgende twee scènes alvast uitpakken. Anders gebeurt dat pas als ze in beeld komen,
+// allemaal tegelijk, en hapert het beeld (op een telefoon een paar honderd ms)
+const decoded = new Set<View>()
+const decodeAhead = (v: View) => {
+  for (const w of views.slice(views.indexOf(v), views.indexOf(v) + 3)) {
+    if (decoded.has(w)) continue
+    decoded.add(w)
+    for (const img of w.section.querySelectorAll('img')) void img.decode().catch(() => {})
+  }
 }
 
 chapters.innerHTML = views.filter((v) => v.scene.panels.length).map((v) => `<a data-id="${v.scene.id}">${v.scene.name}</a>`).join('')
@@ -255,14 +272,28 @@ const audio = new Map<string, HTMLAudioElement>()
 let score: Score | null = null
 let soundOn = false
 let playing: { key: string; el: HTMLAudioElement } | null = null
-const play = (key: string) => {
-  if (!soundOn) return
+/** De zin die wacht tot de vorige uit is (alleen de nieuwste wacht) */
+let queued: string | null = null
+const speaking = () => !!playing && !playing.el.paused && !playing.el.ended
+const speak = (key: string) => {
   const el = audio.get(key)
   if (!el) return
   if (playing) playing.el.pause()
   el.currentTime = 0
   void el.play().catch(() => {})
   playing = { key, el }
+}
+// Het beeld wacht nooit op de stem: ben je al bij de volgende zin terwijl de vorige nog klinkt, dan komt die erna
+const play = (key: string) => {
+  if (!soundOn) return
+  if (speaking()) queued = key
+  else speak(key)
+}
+const playQueued = () => {
+  const key = queued
+  queued = null
+  // Alleen als die zin nog bij wat je ziet hoort (niet na een sprong naar een heel andere scène)
+  if (key && soundOn && views.some((v) => v.stage.classList.contains('on') && v.caps.some((c) => c.key === key))) speak(key)
 }
 /** iOS geeft geluid pas vrij binnen een tik: elk bestand één keer stil starten en weer stoppen. */
 const unlock = () => {
@@ -281,6 +312,7 @@ const setSound = async (on: boolean) => {
   } else {
     score?.mute(true)
     if (playing) { playing.el.pause(); playing = null }
+    queued = null
   }
   soundBtn.textContent = on ? 'Geluid aan' : 'Geluid uit'
   soundBtn.setAttribute('aria-pressed', String(on))
@@ -359,7 +391,6 @@ let started = false
 let total = 0
 let tilt = 0
 let last = performance.now()
-const speedUp = (t: number) => t * t * (2 - t) * t // langzaam beginnen, dan versnellen (zoals hun speedUpEase)
 
 const update = (v: View, p: number, dt: number) => {
   const s = v.scene
@@ -426,7 +457,7 @@ const update = (v: View, p: number, dt: number) => {
         ly -= k * 0.4 * vh
         extra = ` rotate(${(dir * k * 9).toFixed(2)}deg)`
       }
-      if (l.role === 'riser') ly -= Math.max(smooth(0.25, 0.8, p), v.value) * 0.2 * vh
+      if (l.role === 'riser') ly -= v.shown * 0.12 * vh // hij komt los van de grond, maar blijft helemaal in beeld
       if (l.role === 'faller') {
         // Hij valt langzaam achterover de rook in: van boven naar het midden, steeds kleiner, licht draaiend
         const k = smooth(0.4, 0.86, p)
@@ -446,16 +477,22 @@ const update = (v: View, p: number, dt: number) => {
   s.captions.forEach((c, i) => {
     const cs = v.caps[i]
     fillCaption(cs, c.vo)
-    const vis = smooth(c.at, c.at + 0.04, p) * (1 - smooth(c.to - 0.03, c.to, p))
+    const here = smooth(c.at, c.at + 0.04, p) * (1 - smooth(c.to - 0.03, c.to, p))
+    // Met geluid staat een zin in beeld zolang hij klinkt, ook als je al verder bent; een zin die op de vorige wacht,
+    // verschijnt pas als hij begint (nooit twee kaders over elkaar)
+    const own = soundOn && playing?.key === cs.key && speaking() ? playing : null
+    const want = own ? 1 : soundOn && queued === cs.key ? 0 : here
+    cs.vis += (want - cs.vis) * (1 - Math.exp(-dt * 12))
+    const vis = cs.vis
     cs.el.style.opacity = vis.toFixed(3)
     cs.el.style.transform = `translateY(${((1 - vis) * (c.y > 50 ? 14 : -14)).toFixed(1)}px)`
-    if (p < c.at - 0.02) cs.played = false
+    if (p < c.at - 0.02) { cs.played = false; if (queued === cs.key) queued = null }
     if (p >= c.at && p < c.to && !cs.played) { cs.played = true; play(cs.key) }
     const line = T[cs.key]
     let idx = -1
     if (line) {
-      if (soundOn && playing?.key === cs.key && !playing.el.paused) {
-        const t = playing.el.currentTime
+      if (own) {
+        const t = own.el.currentTime
         idx = line.words.findIndex((w, k) => t >= w.start && t < (line.words[k + 1]?.start ?? w.end + 0.3))
       } else if (!soundOn && vis > 0.5) {
         idx = Math.floor(clamp((p - c.at) / (c.to - c.at - 0.05)) * (line.words.length - 0.001))
@@ -472,7 +509,7 @@ const update = (v: View, p: number, dt: number) => {
   }
   if (s.impact != null) {
     if (p < s.impact - 0.03) v.fired.delete('impact')
-    if (p >= s.impact && !v.fired.has('impact')) { v.fired.add('impact'); impact(v.cam); if (playing) playing.el.pause() }
+    if (p >= s.impact && !v.fired.has('impact')) { v.fired.add('impact'); impact(v.cam); if (playing) playing.el.pause(); queued = null }
   }
   if (s.shake && !reduce) {
     const a = 0.5 + p * 2.5
@@ -508,31 +545,41 @@ const update = (v: View, p: number, dt: number) => {
   if (!act) return
   if (p >= act.from && p <= act.to && !(v.done && act.kind !== 'choose')) activeAct = v
   if (act.kind === 'pour') {
-    // Afscheuren zoals in de app: vasthouden in 3 s, loslaten laat hem in 1 s terugveren
-    const before = v.shown
-    v.value = clamp(v.value + (v.holding ? dt / 3 : -dt / 1))
-    v.shown = Math.max(smooth(0.3, 0.88, p), v.value)
-    if (p < act.from) v.done = false
-    if (v.shown >= 1 && !v.done && before < 1) { v.done = true; score?.tear(); impact(v.cam, 0.7) }
+    // Afscheuren zoals in de app: vasthouden bouwt in 3 s spanning op, loslaten laat hem in 1 s terugveren. Dan
+    // scheurt hij in één klap (geen overvloeier) en blijft hij eraf. Scrol je alleen door, dan scheurt hij laat vanzelf.
+    if (p < act.from) { v.done = false; v.t = 0 }
+    if (!v.done) v.t = clamp(v.t + (v.holding ? dt / 3 : -dt / 1))
+    v.value = v.done ? 0 : Math.max(v.t, smooth(0.45, 0.85, p))
+    if (v.value >= 1 && !v.done) { v.done = true; v.value = 0; endHold(); score?.tear(); impact(v.cam, 0.7) }
+    v.shown = v.done ? 1 : 0
+    // De spanning: het beeld trekt naar je toe en trilt steeds harder
+    const a = reduce ? 0 : v.value * v.value * 3
+    v.cam.style.scale = v.value ? (1 + 0.06 * easeOut(v.value)).toFixed(4) : ''
+    v.cam.style.translate = a ? `${((Math.random() - 0.5) * a).toFixed(1)}px ${((Math.random() - 0.5) * a).toFixed(1)}px` : ''
     disc.style.setProperty('--v', v.value.toFixed(3))
   }
   if (act.kind === 'rise') {
-    v.t = clamp(v.t + (v.holding ? dt / 6 : -dt / 3))
-    v.value = speedUp(v.t)
-    const shown = Math.max(smooth(0.25, 0.8, p), v.value)
+    // Vasthouden: in 3 s verandert hij van onder naar boven in de man die hij kan zijn; loslaten veert terug. Eenmaal
+    // helemaal veranderd blijft hij dat. Scrol je alleen door, dan gebeurt het laat in de scène vanzelf.
+    if (p < act.from) { v.done = false; v.t = 0 }
+    v.t = v.done ? 1 : clamp(v.t + (v.holding ? dt / 3 : -dt / 2))
+    v.value = v.t
+    v.shown = Math.max(smooth(0.4, 0.85, p), v.value)
+    const shown = v.shown
     v.frame.style.setProperty('--rv', shown.toFixed(3))
-    v.cam.style.scale = (1 + 0.1 * shown).toFixed(4)
+    v.cam.style.scale = (1 + 0.04 * shown).toFixed(4)
     v.cam.style.setProperty('--beam', shown.toFixed(3))
-    if (p < act.from) v.done = false
     if (shown >= 0.98 && !v.done) {
       // Het moment van de waarheid (Darkest Dungeon): het beeld stokt, een trom, dan het oordeel
       v.done = true
+      v.t = 1
+      endHold()
       const verdict = $<HTMLElement>('.virtue', v.frame)
       score?.drum()
       impact(v.cam, 0.6)
       pop(verdict, true)
       setTimeout(() => pop(verdict, false), 2400)
-      play('deugd')
+      if (soundOn) { queued = null; speak('deugd') } // tegelijk met het oordeel, niet in de rij
     }
     disc.style.setProperty('--v', v.value.toFixed(3))
   }
@@ -564,11 +611,13 @@ const update = (v: View, p: number, dt: number) => {
  * - zoom: een match cut naar een close-up, het nieuwe beeld zakt van dichtbij op zijn plek;
  * - eyes: door zijn ogen: een smalle spleet licht die opengaat, even knippert, dan scherp wordt;
  * - light: door wit heen, als een sluier van licht die opkomt en weer wegtrekt;
- * - cut: een harde cut, voor een match cut (dezelfde hand, eerst overdag, dan 's nachts).
+ * - cut: een harde cut, voor een match cut (dezelfde hand, eerst overdag, dan 's nachts);
+ * - dip: eerst helemaal naar zwart, dan het nieuwe beeld (tekst schuift nooit over tekst, zoals in het merkdeel).
  */
-type Tr = 'ink' | 'fade' | 'zoom' | 'eyes' | 'light' | 'cut'
+type Tr = 'ink' | 'fade' | 'zoom' | 'eyes' | 'light' | 'cut' | 'dip'
 const TR: Record<string, Tr> = {
   deur: 'fade', steeg: 'cut', vlam: 'zoom', breken: 'ink', val: 'fade', ontwaken: 'eyes', keuze: 'zoom', visie: 'light', noor: 'light', titeldrop: 'fade',
+  ritueel: 'dip', jouwspiegel: 'dip', app: 'dip', installeer: 'dip', footer: 'dip',
 }
 const veil = document.createElement('div')
 veil.className = 'veil'
@@ -587,14 +636,18 @@ const transition = (v: View, prev: View | undefined, t: number) => {
   const k = easeInOut(t)
   const busy = t > 0 && t < 1
   if (prev) {
-    prev.cam.style.filter = busy && kind !== 'light' && kind !== 'eyes' ? `brightness(${(1 - k * 0.55).toFixed(3)})` : ''
+    const dark = kind === 'dip' ? 1 - smooth(0, 0.5, t) : 1 - k * 0.55
+    prev.cam.style.filter = busy && kind !== 'light' && kind !== 'eyes' ? `brightness(${dark.toFixed(3)})` : ''
     prev.stage.style.scale = busy ? (1 + k * 0.05).toFixed(4) : ''
   }
   if (kind === 'light' && busy) veilT = Math.max(veilT, Math.sin(Math.PI * t))
   if (t >= 1 || reduce) { setMask(st, 'none'); st.style.opacity = ''; st.style.scale = ''; v.cam.style.filter = ''; return }
   st.style.scale = ''
   v.cam.style.filter = ''
-  if (kind === 'cut') {
+  if (kind === 'dip') {
+    setMask(st, 'none')
+    st.style.opacity = smooth(0.5, 1, t).toFixed(3)
+  } else if (kind === 'cut') {
     // Een harde cut (de match cut van de deur naar de steeg): halverwege het scherm wisselt het beeld in één keer
     setMask(st, 'none')
     st.style.opacity = t > 0.5 ? '1' : '0'
@@ -626,12 +679,40 @@ const transition = (v: View, prev: View | undefined, t: number) => {
   }
 }
 
+// ── Tempo: in de rustige momenten bepaalt het verhaal het tempo, maar je duim wordt nooit genegeerd ──
+// Het beeld volgt je scroll (yView). In een scène met `pace` loopt het in dat tempo, en hoe verder je vooruit scrolt,
+// hoe harder het meetrekt: elke veeg doet iets, en het loopt hooguit MAX_LAG achter. Daarbuiten haalt het een
+// achterstand zacht in (geen sprong). Terug scrollen en sprongen (hoofdstukken) gaan direct. Het beeld wacht nooit
+// op de stem: die praat zijn zin uit en het tekstkader blijft zolang staan (zie `play` en de tekstkaders).
+let yView = 0
+let yScrollLast = 0
+let jumping = 0
+const MAX_LAG = 1.5 // schermhoogtes: verder dan dit loopt het beeld nooit achter
+const PULL = 1.2 // per seconde: hoe hard een achterstand het beeld meetrekt in een rustige scène
+const CATCH_UP = 8 // per seconde: hoe snel een achterstand daarbuiten wordt ingehaald (95% in ~0,4 s)
+const sceneAt = (y: number) => views.find((v) => y >= v.top && y < v.top + v.height)
+/** Zwaarder scrollen in een rustige scène: hetzelfde wieltje legt minder af. */
+const heaviness = () => (sceneAt(yView)?.scene.pace ? 0.5 : 1)
+
 let lastChapter = ''
 const frame = (now: number) => {
   const dt = Math.min(0.05, (now - last) / 1000)
   last = now
   lenis?.raf(now)
-  const y = lenis ? lenis.scroll : scrollY
+  const yScroll = lenis ? lenis.scroll : scrollY
+  if (jumping > 0 || yScroll <= yView) {
+    yView = yScroll
+    jumping = Math.max(0, jumping - dt)
+  } else {
+    const v = sceneAt(yView)
+    const lag = yScroll - yView
+    const next = v?.scene.pace
+      ? yView + (vh / v.scene.pace + lag * PULL) * dt
+      : yView + Math.max(yScroll - yScrollLast, lag * (1 - Math.exp(-CATCH_UP * dt)))
+    yView = Math.max(Math.min(next, yScroll), yScroll - MAX_LAG * vh)
+  }
+  yScrollLast = yScroll
+  const y = yView
   // De camera helt mee met je scrollsnelheid en veert terug als je stopt (zoals bij Santioni)
   tilt += (clamp((lenis?.velocity ?? 0) * 0.004, -0.2, 0.2) - tilt) * 0.06
   activeAct = null
@@ -666,6 +747,7 @@ const frame = (now: number) => {
     score?.duck(!!playing && !playing.el.paused)
     if (current.scene.id !== lastChapter) {
       lastChapter = current.scene.id
+      decodeAhead(current)
       chapters.querySelectorAll('a').forEach((a) => a.classList.toggle('on', a.dataset.id === lastChapter))
     }
   }
@@ -693,6 +775,7 @@ $<HTMLElement>('.hud').addEventListener('click', () => { hudList.hidden = !hudLi
 addEventListener('keydown', (e) => { if (e.key === 'h') $<HTMLElement>('.hud').classList.toggle('off') })
 chapters.addEventListener('click', (e) => {
   const v = views.find((w) => w.scene.id === (e.target as HTMLElement).dataset.id)
+  jumping = 1.8 // een sprong gaat direct, zonder tempo
   if (v && lenis) lenis.scrollTo(v.top, { duration: 1.6 })
   else if (v) scrollTo({ top: v.top, behavior: 'smooth' })
 })
@@ -705,11 +788,19 @@ const start = async () => {
   for (const key of Object.keys(T)) {
     const el = new Audio(`/animatic/vo/${key}.m4a`)
     el.preload = 'auto'
+    el.addEventListener('ended', playQueued)
     audio.set(key, el)
   }
   layout()
   addEventListener('resize', layout)
-  if (!reduce) lenis = new Lenis({ lerp: 0.08, smoothWheel: true })
+  if (!reduce) {
+    lenis = new Lenis({
+      lerp: 0.08,
+      smoothWheel: true,
+      // Zwaarder scrollen in de rustige momenten (Lenis laat ons de afstand per wieltje aanpassen)
+      virtualScroll: (e) => { const k = heaviness(); e.deltaX *= k; e.deltaY *= k; return true },
+    })
+  }
   requestAnimationFrame(frame)
   const jump = new URLSearchParams(location.search).get('scene')
   const gate = $<HTMLElement>('.gate')
@@ -721,6 +812,7 @@ const start = async () => {
     started = true
     document.body.classList.add('playing')
     const target = views.find((v) => v.scene.id === jump)
+    jumping = 0.5
     if (target && lenis) lenis.scrollTo(target.top, { immediate: true })
     else if (target) scrollTo(0, target.top)
   }

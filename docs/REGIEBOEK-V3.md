@@ -4,7 +4,7 @@ Het antwoord op [REGIE-PROMPT.md](REGIE-PROMPT.md), geschreven vanuit een senior
 
 **De vier grootste veranderingen**
 1. **Een cold open.** Het verhaal begint bij het einde: zijn knokkels voor een deur in de ochtendzon. Daar bevriest het beeld en verschijnt de titel. Dan een harde cut naar dezelfde hand, 's nachts, om een pakje. De kijker wil vanaf seconde één weten wiens deur dat is.
-2. **Twee stemmen in één hoofd.** **Daan** spreekt laag en eerlijk. **De drang** fluistert, dichtbij, en zegt de leugen hardop ("Ze wil je niet zien.") die Daan zelf nooit uitspreekt.
+2. **Twee stemmen in één hoofd.** **Daan** spreekt laag en eerlijk. **De drang** fluistert, dichtbij, en zegt de leugen hardop ("Ze wil jou niet zien.") die Daan zelf nooit uitspreekt.
 3. **Een prijs.** Bij Noors deur grijpt zijn hand uit gewoonte naar zijn jaszak, naar het pakje. Hij vindt de afgescheurde post-it. Pas dan klopt hij.
 4. **Een eigen menselijk detail met gevolgen.** In de steeg staat naast hem een doorweekt verjaardagscadeautje dat hij nooit heeft gebracht. Bij haar deur heeft hij het opnieuw ingepakt onder zijn arm. Niemand zegt "verjaardag".
 
@@ -134,7 +134,7 @@ Per scène: waar elk motief staat. Een streepje betekent bewust afwezig.
   3. De inzet klapt dicht (het paneel sluit met een klik van het pakje).
      - Overgang: actie-op-actie.
 - **Inferentie:** we zien hem niet wegkijken. Het paneel gaat dicht, en dat is het wegkijken.
-- **Stem (Daan):** "Noor. Mijn dochter." / "Als ik niet kijk, is ze er niet."
+- **Stem (Daan):** "Noor. Mijn dochter." / "Als ik niet kijk, is zij er niet."
 - **Geluid en muziek:** de regen klinkt gedempt, alsof we in zijn hoofd zitten. **Noors melodie helder**, vier noten op een speeldoos, die stopt bij de klik van het pakje. Hartslag 60.
 - **Animatie:** adem; een regendruppel loopt over zijn wang (traan of regen, de kijker beslist).
 - **Interactie:** geen.
@@ -353,7 +353,7 @@ Per scène: waar elk motief staat. Een streepje betekent bewust afwezig.
   6. Hij knielt, zij rent in zijn armen (`daan-noor`). De camera zakt mee **tot haar ooghoogte**.
   7. Inzet (`close-handen`): haar hand in zijn bokshand.
 - **Inferentie:** we zien haar moeder niet, de twee jaar niet, en we horen niet wat Noor zegt. Het cadeautje vertelt dat hij haar verjaardag miste en het nu goed wil maken.
-- **Stem:** drang (zachter dan ooit, de laatste keer): "Ze wil je niet zien." · Daan: "Hoi, Noor."
+- **Stem:** drang (zachter dan ooit, de laatste keer): "Ze wil jou niet zien." · Daan: "Hoi, Noor."
 - **Geluid en muziek:**
   - hartslag 84 bij de deur, harder bij de jaszak;
   - drie kloppen op hout; het hart **stopt** als de deur opengaat;
@@ -482,7 +482,7 @@ Real transparent background (PNG with alpha channel), not a checkerboard pattern
 | 0 | Daan | Ik heb ooit gebokst. Nu win ik niet eens meer van mezelf. |
 | 0 | Daan | De twintigste vandaag. Of de dertigste. |
 | 1 | Daan | Noor. Mijn dochter. |
-| 1 | Daan | Als ik niet kijk, is ze er niet. |
+| 1 | Daan | Als ik niet kijk, is zij er niet. |
 | 2 | drang | Nog één. |
 | 2 | Daan | Morgen stop ik. |
 | 2 | drang | Dat zei je gisteren ook. |
@@ -495,7 +495,7 @@ Real transparent background (PNG with alpha channel), not a checkerboard pattern
 | 11 | Daan | Vandaag niet roken. Eén dag. Dat kan ik. (en de twee andere keuzes) |
 | 11 | Daan | Dag één. |
 | 13 | Daan | Alleen met mijn gedachten. Zonder pakje. Zonder scherm. En het doet geen pijn. |
-| 14 | drang | Ze wil je niet zien. |
+| 14 | drang | Ze wil jou niet zien. |
 | 14 | Daan | Hoi, Noor. |
 
 **De drang** spreekt in de jij-vorm: zo praat een verslaving tegen je. Het is dezelfde stem als Daan, maar fluisterend, dichter op de microfoon en een fractie sneller. In Gemini wordt dat dezelfde stem met een eigen regie: "whispering, intimate, too close".

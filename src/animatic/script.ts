@@ -1,3 +1,7 @@
+import compassIco from '../icons/compass.svg?raw'
+import mirrorIco from '../icons/mirror.svg?raw'
+import mountainIco from '../icons/mountain.svg?raw'
+
 // Het regieboek (docs/BRIEF-VERHAAL.md §5) als data: elke scène met haar scrolllengte, panelen, lagen, zinnen en cues.
 // De beelden komen uit docs/ILLUSTRATIES-VERHAAL.md (public/verhaal/art/…). Ontbreekt er een, dan toont het paneel
 // wat er straks komt te staan. Posities zijn procenten van het beeldkader; `d` is de indeling op een breed scherm.
@@ -144,24 +148,34 @@ export interface Scene {
   html?: string
   /** Geluiden op een vast moment (eenmalig, ook terug bij terugscrollen) */
   sounds?: Sound[]
+  /** Een rustig moment: het beeld loopt hier nooit sneller dan zoveel seconden per schermhoogte, ook als je snel
+   *  scrolt (het speelt dan door tot waar je bent), en scrollen voelt zwaarder. Zonder: zo snel als je scrolt. */
+  pace?: number
 }
 
 const V = (n: string) => `verhaal/art/${n}`
+/** Na de klap van zijn vuist is de wereld in kleur: `naam-kleur`. Zolang die er niet is, toont de speler de zwart-witversie. */
+const K = (n: string) => `verhaal/art/${n}-kleur`
 const STAD: Layer[] = [
   { src: V('stad-ver'), fit: 'cover', depth: 0.15 },
   { src: V('stad-steeg'), fit: 'cover', depth: 0.4 },
 ]
-const STAD_VOOR: Layer = { src: V('stad-voorgrond'), fit: 'cover', depth: 1.2 }
-const BERG: Layer[] = [
-  { src: V('berg-ver'), fit: 'cover', depth: 0.12 },
-  { src: V('berg-midden'), fit: 'cover', depth: 0.4 },
+const STAD_KLEUR: Layer[] = [
+  { src: K('stad-ver'), fit: 'cover', depth: 0.15 },
+  { src: K('stad-steeg'), fit: 'cover', depth: 0.4 },
 ]
-const BERG_VOOR: Layer = { src: V('berg-voorgrond'), fit: 'cover', depth: 1.1 }
+const STAD_VOOR: Layer = { src: V('stad-voorgrond'), fit: 'cover', depth: 1.2 }
+// De spiegel staat op de top, in de tekening zelf; op een breed scherm blijft die top in beeld
+const BERG: Layer[] = [
+  { src: K('berg-spiegel'), alt: K('berg-ver'), fit: 'cover', pos: '50% 0%', depth: 0.12 },
+  { src: K('berg-midden'), fit: 'cover', depth: 0.4 },
+]
+const BERG_VOOR: Layer = { src: K('berg-voorgrond'), fit: 'cover', depth: 1.1 }
 
 export const SCENES: Scene[] = [
   {
     // Cold open: het einde vooraf. Zijn knokkels voor een deur in de ochtendzon; het beeld bevriest, de titel
-    id: 'deur', name: 'De deur', ref: 'Intro', sh: 1.4, world: 'licht',
+    id: 'deur', name: 'De deur', ref: 'Intro', sh: 1.4, world: 'licht', pace: 3,
     cue: '♪ vogels ver weg · één druppel · zachte hartslag · twee noten speeldoos, afgekapt door de titel',
     title: { big: 'PLUSONE', sub: 'HET VERHAAL VAN DAAN', at: 0.6 },
     sounds: [{ at: 0.1, play: 'melody', n: 2 }],
@@ -171,7 +185,7 @@ export const SCENES: Scene[] = [
         // Traag induwen en dan stilstaan (bevroren beeld)
         shots: [[0, 1, 50, 50], [0.55, 1.12, 50, 50], [1, 1.12, 50, 50]],
         note: 'Extreme close-up: zijn knokkels vlak voor een houten deur, in laag ochtendlicht van voren',
-        layers: [{ src: V('close-klop'), fit: 'cover', anim: 'tremble' }],
+        layers: [{ src: K('close-klop'), fit: 'cover', anim: 'tremble' }],
       },
     ],
     captions: [{ vo: 'deur', at: 0.08, to: 0.56, y: 88 }],
@@ -246,7 +260,7 @@ export const SCENES: Scene[] = [
     ],
   },
   {
-    id: 'gezicht', name: '1 · Het gezicht', ref: 'Profile', sh: 2.6, world: 'nacht',
+    id: 'gezicht', name: '1 · Het gezicht', ref: 'Profile', sh: 2.6, world: 'nacht', pace: 2.4,
     // Haar melodie, helder, tot het pakje dichtklapt
     sounds: [{ at: 0.2, play: 'melody', n: 4 }, { at: 0.62, play: 'click' }],
     cue: '♪ regen dempt · één pianotoon bij de foto',
@@ -271,7 +285,7 @@ export const SCENES: Scene[] = [
     ],
   },
   {
-    id: 'drang', name: '2 · De drang', ref: 'Approach', sh: 3.6, world: 'nacht',
+    id: 'drang', name: '2 · De drang', ref: 'Approach', sh: 3.6, world: 'nacht', pace: 3,
     cue: '♪ alles valt weg tot een hartslag die versnelt · de langste adem',
     panels: [
       {
@@ -323,7 +337,7 @@ export const SCENES: Scene[] = [
     captions: [],
   },
   {
-    id: 'vlam', name: '4 · De vlam', ref: 'Hand', sh: 3.4, world: 'nacht',
+    id: 'vlam', name: '4 · De vlam', ref: 'Hand', sh: 3.4, world: 'nacht', pace: 2.6,
     cue: '♪ de vlam ruist · hartslag · toon stijgt terwijl je trekt',
     act: { kind: 'move', text: 'HOUD VAST\n& TREK WEG', touchText: 'HOUD VAST\n& SLEEP', from: 0.14, to: 0.92 },
     panels: [
@@ -352,37 +366,43 @@ export const SCENES: Scene[] = [
         x: 0, y: 0, w: 100, h: 100, d: [0, 0, 100, 100], kind: 'main', depth: 0.5, bg: '#030303', fx: ['rain', 'wind', 'vig'],
         shots: [[0, 1.2, 50, 70], [0.6, 1, 50, 50], [0.66, 1.15, 50, 30], [1, 1.1, 50, 35]],
         note: 'Daan staat in één ruk op en verpulvert het pakje in zijn geheven vuist',
-        layers: [...STAD.map((l) => ({ ...l, dark: 0.3 })), { src: V('daan-breken'), fit: 'fig', x: 50, b: 2, h: 76, depth: 0.7, vis: [0.62, 2] }, { src: V('daan-aansteker'), fit: 'fig', x: 44, b: 2, h: 56, depth: 0.7, vis: [-1, 0.62], anim: 'tremble' }],
+        // Op de klap (0.64, achter de witte flits) springt alles naar kleur: de eerste kleur van het verhaal
+        layers: [
+          ...STAD.map((l) => ({ ...l, dark: 0.3, vis: [-1, 0.64] as [number, number] })),
+          ...STAD_KLEUR.map((l) => ({ ...l, dark: 0.2, vis: [0.64, 2] as [number, number] })),
+          { src: K('daan-breken'), fit: 'fig', x: 50, b: 2, h: 76, depth: 0.7, vis: [0.64, 2] },
+          { src: V('daan-aansteker'), fit: 'fig', x: 44, b: 2, h: 56, depth: 0.7, vis: [-1, 0.64], anim: 'tremble' },
+        ],
       },
       {
         x: 54, y: 10, w: 40, h: 0, d: [62, 12, 28, 0], kind: 'round', in: 0.64, from: 'top', depth: 1.4, bg: '#000', fx: ['sparks'],
         note: 'Close-up: de vuist die het pakje kapotknijpt, tabak en vonken spatten eruit',
-        layers: [{ src: V('close-vuist'), fit: 'cover' }],
+        layers: [{ src: K('close-vuist'), fit: 'cover' }],
       },
     ],
     captions: [],
   },
   {
-    id: 'val', name: '6 · De val', ref: 'Transition', sh: 4, world: 'zwart', fall: true,
+    id: 'val', name: '6 · De val', ref: 'Transition', sh: 4, world: 'zwart', pace: 3.5, fall: true,
     cue: '♪ de rook zuigt alles weg: riser → sub drop → stilte → licht',
     panels: [
       {
         x: 0, y: 0, w: 100, h: 100, d: [0, 0, 100, 100], kind: 'main', depth: 0.3, bg: '#000',
-        shots: [[0, 1, 50, 50], [0.8, 1.6, 50, 50]],
+        shots: [[0, 1, 50, 50], [0.8, 1.35, 50, 50]],
         note: 'Een draaikolk van sigarettenrook die in het zwart verdwijnt; Daan valt er achterover in, armen gespreid',
         layers: [
           // Eerst nog de steeg en Daan met zijn vuist; de inkt druipt eroverheen
-          ...STAD.map((l) => ({ ...l, dark: 0.3, vis: [-1, 0.44] as [number, number] })),
-          { src: V('daan-breken'), fit: 'fig', x: 50, b: 2, h: 76, depth: 0.7, vis: [-1, 0.44] },
-          { src: V('rook-val'), fit: 'cover', anim: 'spin', depth: 0.2, fade: [0.36, 0.56] },
-          { src: V('daan-val'), fit: 'fig', x: 50, b: 30, h: 46, d: [50, 28, 52], depth: 0.6, role: 'faller' },
+          ...STAD_KLEUR.map((l) => ({ ...l, dark: 0.2, vis: [-1, 0.44] as [number, number] })),
+          { src: K('daan-breken'), fit: 'fig', x: 50, b: 2, h: 76, depth: 0.7, vis: [-1, 0.44] },
+          { src: K('rook-val'), fit: 'cover', anim: 'spin', depth: 0.2, fade: [0.36, 0.56] },
+          { src: K('daan-val'), fit: 'fig', x: 50, b: 30, h: 46, d: [50, 28, 52], depth: 0.6, role: 'faller' },
         ],
       },
     ],
     captions: [],
   },
   {
-    id: 'ontwaken', name: '7 · Ontwaken', ref: 'Cathedral', sh: 4, world: 'licht',
+    id: 'ontwaken', name: '7 · Ontwaken', ref: 'Cathedral', sh: 4, world: 'licht', pace: 2.4,
     cue: '♪ stilte, dan strijkers en een zacht koor · voetstappen op steen',
     panels: [
       {
@@ -391,21 +411,20 @@ export const SCENES: Scene[] = [
         x: 0, y: 0, w: 100, h: 100, d: [0, 0, 100, 100], kind: 'main', depth: 0.3, bg: '#d8d3c7', fx: ['rays', 'dust'],
         // Aan het eind kantelt de camera omhoog naar de top: daar staat de spiegel
         shots: [[0, 1.3, 50, 35], [0.45, 1, 50, 55], [0.7, 1, 50, 55, 0], [1, 2.3, 75, 16, 0.35]],
-        dshots: [[0, 1.3, 50, 35], [0.45, 1, 50, 55], [0.7, 1, 50, 55, 0], [1, 2, 57.5, 13.7, 0.23]],
+        dshots: [[0, 1.3, 50, 35], [0.45, 1, 50, 55], [0.7, 1, 50, 55, 0], [1, 2, 58, 13.5, 0.33]],
         note: 'De voet van een enorme berg boven de wolken; Daan staat op en loopt naar een spiegel, zo hoog als een deur',
         layers: [
-          { ...BERG[0], aspect: 1.5, pins: [{ x: 57, y: 24, w: 5.2, src: V('spiegel-leeg'), clip: 'polygon(50% 4%, 57% 10%, 66% 12%, 75% 15%, 77% 22%, 79% 30%, 79% 70%, 84% 76%, 88% 84%, 90% 92%, 10% 92%, 13% 84%, 18% 76%, 23% 70%, 23% 30%, 25% 22%, 27% 15%, 36% 12%, 43% 10%)' }] },
-          BERG[1],
+          ...BERG,
           BERG_VOOR,
-          { src: V('daan-ontwaken'), fit: 'fig', x: 40, b: 6, h: 22, d: [38, 6, 34], depth: 0.7, vis: [0.3, 0.56] },
-          { src: V('daan-lopen'), fit: 'fig', x: 18, b: 4, h: 40, d: [26, 4, 52], depth: 0.7, vis: [0.56, 2], anim: 'walk', role: 'walker' },
+          { src: K('daan-ontwaken'), fit: 'fig', x: 40, b: 6, h: 22, d: [38, 6, 34], depth: 0.7, vis: [0.3, 0.56] },
+          { src: K('daan-lopen'), fit: 'fig', x: 18, b: 4, h: 40, d: [26, 4, 52], depth: 0.7, vis: [0.56, 2], anim: 'walk', role: 'walker' },
         ],
       },
     ],
     captions: [],
   },
   {
-    id: 'spiegel', name: '8 · De spiegel', ref: 'Eyes Open', sh: 4.2, world: 'licht', impact: 0.48,
+    id: 'spiegel', name: '8 · De spiegel', ref: 'Eyes Open', sh: 4.2, world: 'licht', pace: 3.2, impact: 0.48,
     cue: '♪ de muziek valt helemaal weg · wind en zijn adem · een klap als hij terugkijkt · bij elke post-it plakband',
     panels: [
       {
@@ -415,17 +434,17 @@ export const SCENES: Scene[] = [
         note: 'De spiegel van voren; in het glas zijn spiegelbeeld zoals hij nu is. Daan staat er met zijn rug naar ons voor, kijkt weg, en dan toch',
         postits: TRUTHS.map((t, i) => ({ t, ...SPOTS[i], at: 0.58 + i * 0.1 })),
         layers: [
-          { src: V('spiegel-leeg'), fit: 'cover' },
-          { src: V('spiegel-nu'), fit: 'cover', fade: [0.22, 0.36] },
-          { src: V('daan-spiegel'), fit: 'fig', x: 50, b: -8, h: 66, d: [50, -8, 76], depth: 0.8, anim: 'breathe', vis: [-1, 0.22] },
-          { src: V('daan-wegkijken'), fit: 'fig', x: 50, b: -8, h: 66, d: [50, -8, 76], depth: 0.8, anim: 'tremble', vis: [0.36, 0.48] },
-          { src: V('daan-spiegel'), fit: 'fig', x: 50, b: -8, h: 66, d: [50, -8, 76], depth: 0.8, anim: 'breathe', vis: [0.48, 0.56] },
+          { src: K('spiegel-leeg'), fit: 'cover' },
+          { src: K('spiegel-nu'), fit: 'cover', fade: [0.22, 0.36] },
+          { src: K('daan-spiegel'), fit: 'fig', x: 50, b: -8, h: 66, d: [50, -8, 76], depth: 0.8, anim: 'breathe', vis: [-1, 0.22] },
+          { src: K('daan-wegkijken'), fit: 'fig', x: 50, b: -8, h: 66, d: [50, -8, 76], depth: 0.8, anim: 'tremble', vis: [0.36, 0.48] },
+          { src: K('daan-spiegel'), fit: 'fig', x: 50, b: -8, h: 66, d: [50, -8, 76], depth: 0.8, anim: 'breathe', vis: [0.48, 0.56] },
         ],
       },
       {
         x: -2, y: 6, w: 104, h: 15, d: [-2, 8, 104, 20], kind: 'eyes', in: 0.12, out: 0.3, depth: 1.2, bg: '#000',
         note: 'Alleen zijn ogen, wijd open: hij kijkt',
-        layers: [{ src: V('close-ogen-open'), fit: 'cover' }],
+        layers: [{ src: K('close-ogen-open'), fit: 'cover' }],
       },
     ],
     captions: [
@@ -443,7 +462,7 @@ export const SCENES: Scene[] = [
         shots: [[0, 1.2, 50, 40], [1, 1.32, 50, 40]],
         note: 'Dezelfde spiegel, nu met drie post-its op het glas: wat hij vandaag aanpakt',
         pick: true,
-        layers: [{ src: V('spiegel-nu'), fit: 'cover' }],
+        layers: [{ src: K('spiegel-nu'), fit: 'cover' }],
       },
     ],
     captions: [
@@ -462,8 +481,8 @@ export const SCENES: Scene[] = [
         shots: [[0, 1.05, 50, 50], [1, 1.2, 50, 46]],
         note: 'Close-up: zijn hand pakt de post-it op het glas vast, en scheurt hem af',
         layers: [
-          { src: V('scheur-1'), fit: 'cover', pins: [{ x: 44, y: 51, w: 19, r: 3 }] },
-          { src: V('scheur-2'), fit: 'cover', byAct: true },
+          { src: K('scheur-1'), fit: 'cover', pins: [{ x: 44, y: 51, w: 19, r: 3 }] },
+          { src: K('scheur-2'), fit: 'cover', byAct: true },
         ],
       },
     ],
@@ -479,14 +498,14 @@ export const SCENES: Scene[] = [
         shots: [[0, 1, 50, 50], [0.5, 1.1, 42, 50], [1, 1.05, 50, 50]],
         note: 'Een zuil van licht; Daan zweeft erin en verandert van onder naar boven in de man die hij kan zijn',
         layers: [
-          { src: V('berg-licht'), fit: 'cover', depth: 0.15 },
-          { src: V('daan-licht'), fit: 'fig', x: 44, b: 10, h: 62, d: [40, 8, 80], depth: 0.6, anim: 'float', reveal: V('daan-best'), role: 'riser' },
+          { src: K('berg-licht'), fit: 'cover', depth: 0.15 },
+          { src: K('daan-licht'), fit: 'fig', x: 44, b: 10, h: 62, d: [40, 6, 66], depth: 0.6, anim: 'float', reveal: K('daan-best'), role: 'riser' },
         ],
       },
       {
         x: 58, y: 8, w: 38, h: 30, d: [70, 10, 26, 56], kind: 'inset', in: 0.1, from: 'right', depth: 1.3, bg: '#111', fx: ['vig'],
         note: 'In de spiegel: de man die hij kan worden',
-        layers: [{ src: V('spiegel-straks'), fit: 'cover' }],
+        layers: [{ src: K('spiegel-straks'), fit: 'cover' }],
       },
     ],
     captions: [
@@ -502,17 +521,17 @@ export const SCENES: Scene[] = [
         shots: [[0, 1.2, 50, 50], [0.7, 1, 50, 50]],
         note: 'De muren van de steeg staan om hem heen en scheuren open; erachter de berg',
         layers: [
-          { src: V('berg-ver'), fit: 'cover', depth: 0.15 },
-          { src: V('stad-breekt'), fit: 'cover', depth: 0.5, role: 'split-l' },
-          { src: V('stad-breekt'), fit: 'cover', depth: 0.5, role: 'split-r' },
-          { src: V('daan-best'), fit: 'fig', x: 50, b: 4, h: 52, d: [50, 2, 74], depth: 0.7, anim: 'breathe' },
+          { src: K('berg-ver'), fit: 'cover', depth: 0.15 },
+          { src: K('stad-breekt'), fit: 'cover', depth: 0.5, role: 'split-l' },
+          { src: K('stad-breekt'), fit: 'cover', depth: 0.5, role: 'split-r' },
+          { src: K('daan-best'), fit: 'fig', x: 50, b: 4, h: 52, d: [50, 2, 74], depth: 0.7, anim: 'breathe' },
         ],
       },
     ],
     captions: [],
   },
   {
-    id: 'stilte', name: '13 · Stilte', ref: 'Colosseum', sh: 3.4, world: 'licht',
+    id: 'stilte', name: '13 · Stilte', ref: 'Colosseum', sh: 3.4, world: 'licht', pace: 4,
     cue: '♪ bijna niets: wind, één lang aangehouden akkoord, zijn adem',
     panels: [
       {
@@ -521,8 +540,8 @@ export const SCENES: Scene[] = [
         shots: [[0, 1.12, 34, 60], [1, 1, 40, 55]],
         note: 'De top van de berg, net na zonsopgang, stil; Daan zit alleen op een platte steen, ogen dicht, handen open, in vrede',
         layers: [
-          { src: V('berg-top'), fit: 'cover', depth: 0.1 },
-          { src: V('daan-stil'), fit: 'fig', x: 32, b: 24, h: 26, d: [30, 22, 38], depth: 0.4, anim: 'breathe' },
+          { src: K('berg-top'), fit: 'cover', depth: 0.1 },
+          { src: K('daan-stil'), fit: 'fig', x: 32, b: 24, h: 26, d: [30, 22, 38], depth: 0.4, anim: 'breathe' },
         ],
       },
     ],
@@ -531,7 +550,7 @@ export const SCENES: Scene[] = [
   },
   {
     // Hij is goed genoeg om haar weer te zien. Bij de deur komt de drang nog één keer terug (de prijs); dan klopt hij
-    id: 'noor', name: '14 · Noor', ref: 'Reunion', sh: 5, world: 'licht',
+    id: 'noor', name: '14 · Noor', ref: 'Reunion', sh: 5, world: 'licht', pace: 2.8,
     cue: '♪ ochtend: druppels, één vogel · zijn hart · drie kloppen · stilte als de deur opengaat · zij neuriet de melodie, de laatste noot valt',
     act: { kind: 'knock', text: 'KLOP\nAAN', touchText: 'TIK\nDRIE KEER', from: 0.42, to: 0.58 },
     sounds: [{ at: 0.72, play: 'melody', mode: 'hum' }],
@@ -541,26 +560,26 @@ export const SCENES: Scene[] = [
         shots: [[0, 1.12, 50, 45], [0.28, 1.2, 56, 42], [0.3, 1.04, 50, 50], [0.42, 1.08, 50, 50], [0.58, 1.04, 50, 45], [0.8, 1.12, 50, 42], [1, 1, 50, 50]],
         note: 'De steeg in de ochtend; Daan rechtop voor haar deur met het cadeautje. Zijn hand in zijn jaszak vindt de post-it. Zijn knokkels voor het hout. De deur gaat open: Noor. Hij knielt, zij rent in zijn armen',
         layers: [
-          { src: V('stad-ochtend'), fit: 'cover', depth: 0.2, vis: [-1, 0.8] },
-          { src: V('daan-deur'), fit: 'fig', x: 60, b: 2, h: 66, d: [60, 0, 84], depth: 0.6, anim: 'breathe', vis: [-1, 0.3] },
+          { src: K('stad-ochtend'), fit: 'cover', depth: 0.2, vis: [-1, 0.8] },
+          { src: K('daan-deur'), fit: 'fig', x: 60, b: 2, h: 66, d: [60, 0, 84], depth: 0.6, anim: 'breathe', vis: [-1, 0.3] },
           // De prijs: zijn hand zoekt het pakje en vindt de post-it
-          { src: V('close-jaszak'), fit: 'cover', anim: 'tremble', vis: [0.3, 0.42] },
+          { src: K('close-jaszak'), fit: 'cover', anim: 'tremble', vis: [0.3, 0.42] },
           // Het beeld van de opening: nu klop jij
-          { src: V('close-klop'), fit: 'cover', vis: [0.42, 0.8] },
+          { src: K('close-klop'), fit: 'cover', vis: [0.42, 0.8] },
           // Wat hij ziet als de deur opengaat: zij, op de plek van de foto
-          { src: V('deur-open'), fit: 'cover', depth: 0.3, byAct: true, vis: [0.42, 0.8] },
-          { src: V('daan-noor'), fit: 'cover', pos: '42% 50%', depth: 0.3, vis: [0.8, 2], anim: 'breathe' },
+          { src: K('deur-open'), fit: 'cover', pos: '50% 15%', depth: 0.3, byAct: true, vis: [0.42, 0.8] },
+          { src: K('daan-noor'), fit: 'cover', pos: '42% 50%', depth: 0.3, vis: [0.8, 2], anim: 'breathe' },
         ],
       },
       {
         x: -2, y: 8, w: 104, h: 15, d: [-2, 8, 104, 20], kind: 'eyes', in: 0.6, out: 0.74, depth: 1.2, bg: '#000',
         note: 'Alleen haar ogen, wijd open: ze ziet hem',
-        layers: [{ src: V('close-noor-ogen'), fit: 'cover' }],
+        layers: [{ src: K('close-noor-ogen'), fit: 'cover' }],
       },
       {
         x: 50, y: 58, w: 44, h: 22, d: [68, 50, 28, 40], kind: 'inset', in: 0.88, from: 'right', depth: 1.4, bg: '#111', fx: ['vig'],
         note: 'Close-up: haar kleine hand in zijn grote bokshand',
-        layers: [{ src: V('close-handen'), fit: 'cover' }],
+        layers: [{ src: K('close-handen'), fit: 'cover' }],
       },
     ],
     captions: [
@@ -578,30 +597,62 @@ export const SCENES: Scene[] = [
         x: 0, y: 0, w: 100, h: 100, d: [0, 0, 100, 100], kind: 'main', depth: 0.3, bg: '#d9d4c8', fx: ['rays', 'dust'],
         shots: [[0, 1.6, 50, 70], [1, 1, 50, 50]],
         note: 'De steeg in de ochtend, van hoog boven',
-        layers: [{ src: V('stad-ochtend'), fit: 'cover', depth: 0.3 }],
+        layers: [{ src: K('stad-ochtend'), fit: 'cover', depth: 0.3 }],
       },
     ],
     captions: [],
   },
+  // ── Het merkdeel: dezelfde bouwstenen als de app (kaarten, de spiegel met post-its, de tabbalk, de witte knop) ──
   {
-    id: 'ritueel', name: '16 · Het ritueel', ref: 'Taste', sh: 1.6, world: 'zwart', panels: [], captions: [],
+    id: 'ritueel', name: '16 · Zo werkt het', ref: 'Taste', sh: 1.6, world: 'zwart', panels: [], captions: [],
     cue: '♪ thema zacht in een lus',
-    html: `<div class="brand"><h2>WEES EERLIJK NU<br/>WORD WIE JE BENT</h2><div class="cards"><div><b>Kijk.</b><span>De spiegel: één waarheid, één post-it</span></div><div><b>Kies.</b><span>Het kompas: waar je vandaag aan werkt</span></div><div><b>Klim.</b><span>De reis: elke dag één trede</span></div></div></div>`,
+    html: `<div class="brand"><div class="b-col b-wide">
+      <div class="b-head"><p class="b-eyebrow">Zo werkt PlusOne</p><h2 class="b-display">Wees eerlijk nu.<br/>Word wie je bent.</h2></div>
+      <div class="b-cards">
+        <div class="b-card"><span class="b-ico">${mirrorIco}</span><p class="b-eyebrow">De spiegel</p><h3 class="b-h2">Kijk.</h3><p class="b-lead">Eén waarheid per post-it, zo eerlijk als je durft.</p></div>
+        <div class="b-card"><span class="b-ico">${compassIco}</span><p class="b-eyebrow">Het kompas</p><h3 class="b-h2">Kies.</h3><p class="b-lead">Niet alles tegelijk. Eén ding, vandaag.</p></div>
+        <div class="b-card"><span class="b-ico">${mountainIco}</span><p class="b-eyebrow">De reis</p><h3 class="b-h2">Klim.</h3><p class="b-lead">Elke dag één trede. Wat je haalt, blijft.</p></div>
+      </div>
+    </div></div>`,
   },
   {
-    id: 'jouwspiegel', name: '17 · Jouw spiegel', ref: 'Collection', sh: 1.4, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
-    html: `<div class="brand"><h3>JOUW SPIEGEL</h3><div class="mini-mirror"><i style="--r:-4deg">Ik scroll tot 2 uur 's nachts.</i><i style="--r:3deg">Vandaag om 23:00 naar bed.</i></div><p class="sub">In de app plak je je eigen waarheden op je spiegel. Elke dag scheur je er één af: gedaan, niet gezegd.</p></div>`,
+    id: 'jouwspiegel', name: '17 · Jouw spiegel', ref: 'Collection', sh: 1.6, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
+    // Precies het blok uit de app: kop, het prikbord met twee post-its (waarheid, stap, ladder, termijn, vinkje)
+    html: `<div class="brand"><div class="b-col">
+      <div class="b-section-head"><h2 class="b-h2">De spiegel</h2><span class="b-small">telt elke dag mee</span></div>
+      <div class="b-board">
+        <div class="b-board-col"><div class="b-note" style="--rot:-1.5deg;--tape:-4deg"><i class="b-tape"></i><p class="b-truth">Ik scroll tot 2 uur 's nachts.</p><p class="b-note-text">Om 23:00 de telefoon in de keuken.</p><div class="b-ladder"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div><div class="b-note-foot"><span class="b-date">nog 3 dagen</span><span class="b-check"></span></div></div></div>
+        <div class="b-board-col"><div class="b-note" style="--rot:1.2deg;--tape:5deg"><i class="b-tape"></i><p class="b-truth">Ik rook dertig per dag.</p><p class="b-note-text">Vandaag niet roken.</p><div class="b-ladder"><i class="on"></i><i></i><i></i><i></i></div><div class="b-note-foot"><span class="b-date">vandaag</span><span class="b-check on"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.4"/></svg></span></div></div></div>
+      </div>
+      <p class="b-lead b-center">In de app plak je je eigen waarheden op je spiegel. Elke dag scheur je er één af: gedaan, niet gezegd.</p>
+    </div></div>`,
   },
   {
     id: 'app', name: '18 · De app', ref: 'Products', sh: 1.4, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
-    html: `<div class="brand"><div class="phone"><img src="/icons/icon-512.png" alt="" /><span>Spiegel · Kompas · Reis</span></div></div>`,
+    html: `<div class="brand"><div class="b-col b-center">
+      <img class="b-appicon" src="/icons/icon-512.png" alt="" />
+      <div class="b-head b-center"><p class="b-eyebrow">De app</p><h2 class="b-display">PlusOne</h2><p class="b-lead">Elke dag één stap beter. In zwart-wit, zonder afleiding.</p></div>
+      <nav class="b-tabbar" aria-hidden="true">
+        <span class="b-tab on"><span class="b-tab-ico">${mirrorIco}</span>Spiegel</span>
+        <span class="b-tab"><span class="b-tab-ico">${compassIco}</span>Kompas</span>
+        <span class="b-tab"><span class="b-tab-ico">${mountainIco}</span>Reis</span>
+      </nav>
+    </div></div>`,
   },
   {
-    id: 'installeer', name: '19 · Installeren', ref: 'Retail', sh: 1.2, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
-    html: `<div class="brand"><h3>ZET PLUSONE OP<br/>JE BEGINSCHERM</h3><a class="btn" href="/">Begin dag één</a></div>`,
+    id: 'installeer', name: '19 · Installeren', ref: 'Retail', sh: 1.4, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
+    html: `<div class="brand"><div class="b-col">
+      <div class="b-head"><p class="b-eyebrow">Begin vandaag</p><h2 class="b-display">Zet PlusOne op je beginscherm.</h2><p class="b-lead">Het werkt als een app, zonder app store.</p></div>
+      <ol class="b-steps">
+        <li><span class="b-dot"></span><div><p class="b-step-t">Open de app</p><p class="b-small">Tik hieronder op Begin dag één.</p></div></li>
+        <li><span class="b-dot"></span><div><p class="b-step-t">Tik op Deel</p><p class="b-small">Het vierkantje met de pijl omhoog.</p></div></li>
+        <li class="now"><span class="b-dot"></span><div><p class="b-step-t">Zet op beginscherm</p><p class="b-small">Daarna staat PlusOne tussen je apps.</p></div></li>
+      </ol>
+      <a class="b-btn" href="/">Begin dag één</a>
+    </div></div>`,
   },
   {
-    id: 'footer', name: '20 · Footer', ref: 'Footer', sh: 1, world: 'zwart', panels: [], captions: [], cue: '',
-    html: `<div class="brand"><p class="end">Wat je morgen bent,<br/>kies je vandaag.</p></div>`,
+    id: 'footer', name: '20 · Slot', ref: 'Footer', sh: 1, world: 'zwart', panels: [], captions: [], cue: '',
+    html: `<div class="brand"><div class="b-col b-center"><img class="b-laurel" src="/art/item-lauwerkrans.webp" alt="" /><p class="b-end">Wat je morgen bent,<br/>kies je vandaag.</p><p class="b-eyebrow">PlusOne</p></div></div>`,
   },
 ]

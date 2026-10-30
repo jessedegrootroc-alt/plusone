@@ -27,7 +27,8 @@ const MIX: Record<string, (p: number, v: number) => Mix> = {
   // De spiegel: de muziek trekt zich terug; alleen een lage toon en wind, zodat de waarheid hard aankomt
   spiegel: (p) => ({ drone: 0.25, pad: 0.3 * (1 - smooth(0.2, 0.5, p)), wind: 0.08 }),
   keuze: () => ({ drone: 0.2, choir: 0.18 }),
-  scheur: (p, v) => { const k = Math.max(v, smooth(0.3, 0.88, p)); return { drone: 0.2, riser: k * 0.3, pad: k * 0.3 } },
+  // v is de spanning (vasthouden of doorscrollen); na het scheuren valt hij weg: een klap en stilte
+  scheur: (_p, v) => ({ drone: 0.2, riser: v * 0.35, pad: v * 0.3 }),
   visie: (p, v) => { const k = Math.max(v, smooth(0.25, 0.8, p)); return { pad: 0.45 + k * 0.35, choir: 0.25 + k * 0.4, riser: k * 0.3, major: k > 0.97 } },
   muren: (p) => ({ drone: 0.35, rumble: smooth(0.1, 0.5, p) * 0.6 * (1 - smooth(0.85, 1, p)), pad: 0.35, major: true }),
   // Stilte: het doel van alles. Bijna niets: wind en één zacht aangehouden akkoord
