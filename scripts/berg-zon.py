@@ -14,8 +14,10 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "art/verhaal/berg-top-kleur.png"
 OUT = ROOT / "art/verhaal/berg-top-zon-kleur.png"
-SHIFT = 80  # zoveel pixels schuift de zon naar links (van ~1150 naar ~1070 in het 1536-beeld)
-SQUEEZE = (930, 1095)  # hier wordt samengedrukt: rechts van de rand van de rots, tot net links van de zon
+SHIFT = 70  # zoveel pixels schuift de zon naar links (van 1150 naar 1080 in het 1536-beeld; straal ~50 met de rand)
+# Hier wordt samengedrukt (in het nieuwe beeld): rechts van de rand van de rots, en klaar vóór de zon begint (1080 - 50),
+# zodat de zon in zijn geheel opschuift en rond blijft
+SQUEEZE = (910, 1022)
 STRETCH = (1290, 1536)  # en hier opgerekt
 STILL = (690, 800)  # onder deze rijen loopt de rots verder naar rechts: daar schuift niets (zacht overgaand)
 

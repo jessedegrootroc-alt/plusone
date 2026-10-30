@@ -552,9 +552,9 @@ export const SCENES: Scene[] = [
         note: 'De top van de berg, net na zonsopgang, stil; Daan zit alleen op een platte steen, ogen dicht, handen open, in vrede',
         layers: [
           // De zon iets dichter bij de rots (scripts/berg-zon.py), zodat ze op een telefoon samen in beeld passen
-          { src: K('berg-top-zon'), alt: K('berg-top'), fit: 'cover', pos: '65% 50%', depth: 0.1 },
+          { src: K('berg-top-zon'), alt: K('berg-top'), fit: 'cover', pos: '66% 50%', depth: 0.1 },
           // Op de rots: zijn eigen steen ligt op de rand van de klif, niet ervoor
-          { src: K('daan-stil'), fit: 'fig', x: 25, b: 30, h: 18, d: [30, 25, 38], depth: 0.4, anim: 'breathe' },
+          { src: K('daan-stil'), fit: 'fig', x: 23, b: 30, h: 18, d: [30, 25, 38], depth: 0.4, anim: 'breathe' },
         ],
       },
     ],
