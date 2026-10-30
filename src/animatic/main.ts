@@ -178,7 +178,7 @@ const views: View[] = SCENES.map((scene) => {
           ${scene.html ?? ''}
         </div>
         ${scene.captions.map((c) => `<div class="cap${c.who ? ` ${c.who}` : ''}"><p></p></div>`).join('')}
-        ${scene.act?.kind === 'rise' ? '<div class="pop virtue">DAG ÉÉN.</div>' : ''}
+        ${scene.act?.kind === 'rise' ? `<div class="verdict" aria-hidden="true"><div class="card"><i></i><b>DAG ÉÉN</b><i></i><small class="chosen-label">${label()}</small></div></div>` : ''}
       </div>
     </div>`
   film.append(section)
@@ -387,10 +387,14 @@ const impact = (cam: HTMLElement, deep = 1) => {
   score?.hit(deep)
   if (navigator.userActivation?.hasBeenActive) navigator.vibrate?.(30) // trillen mag pas na een echte tik
   if (reduce) return
-  flash.classList.remove('on'); void flash.offsetWidth; flash.classList.add('on')
+  flash.classList.remove('on', 'soft'); void flash.offsetWidth; flash.classList.add('on')
   cam.classList.remove('impact'); void cam.offsetWidth; cam.classList.add('impact')
 }
-const pop = (el: HTMLElement | null | undefined, on: boolean) => { if (el) el.classList.toggle('on', on) }
+/** Een zachte bloei van licht (geen harde flits): voor het oordeel */
+const bloom = () => {
+  if (reduce) return
+  flash.classList.remove('on', 'soft'); void flash.offsetWidth; flash.classList.add('soft')
+}
 
 /** De camera volgt de vertelling: tussen twee shots beweegt hij rustig in en uit */
 const shot = (shots: Shot[], p: number) => {
@@ -586,15 +590,16 @@ const update = (v: View, p: number, dt: number) => {
     v.cam.style.scale = (1 + 0.04 * shown).toFixed(4)
     v.cam.style.setProperty('--beam', shown.toFixed(3))
     if (shown >= 0.98 && !v.done) {
-      // Het moment van de waarheid (Darkest Dungeon): het beeld stokt, een trom, dan het oordeel
+      // Het moment van de waarheid (Darkest Dungeon): een trom, het licht bloeit zacht op, het beeld zakt weg in het
+      // donker en in het midden verschijnt rustig "DAG ÉÉN" met wat hij vandaag doet; daarna trekt het weer op
       v.done = true
       v.t = 1
       endHold()
-      const verdict = $<HTMLElement>('.virtue', v.frame)
       score?.drum()
-      impact(v.cam, 0.6)
-      pop(verdict, true)
-      setTimeout(() => pop(verdict, false), 2400)
+      if (navigator.userActivation?.hasBeenActive) navigator.vibrate?.(30)
+      bloom()
+      v.frame.classList.add('judged')
+      setTimeout(() => v.frame.classList.remove('judged'), 2600)
       if (soundOn) { queued = null; speak('deugd') } // tegelijk met het oordeel, niet in de rij
     }
     disc.style.setProperty('--v', v.value.toFixed(3))
@@ -632,7 +637,7 @@ const update = (v: View, p: number, dt: number) => {
  */
 type Tr = 'ink' | 'fade' | 'zoom' | 'eyes' | 'light' | 'cut' | 'dip'
 const TR: Record<string, Tr> = {
-  deur: 'fade', steeg: 'cut', vlam: 'zoom', breken: 'ink', val: 'fade', ontwaken: 'eyes', keuze: 'zoom', visie: 'light', noor: 'light', titeldrop: 'fade',
+  deur: 'fade', steeg: 'cut', vlam: 'zoom', breken: 'ink', val: 'fade', ontwaken: 'eyes', keuze: 'zoom', visie: 'light', muren: 'light', noor: 'light', titeldrop: 'fade',
   ritueel: 'dip', jouwspiegel: 'dip', app: 'dip', installeer: 'dip', footer: 'dip',
 }
 const veil = document.createElement('div')

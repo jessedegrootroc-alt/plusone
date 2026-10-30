@@ -517,7 +517,7 @@ export const SCENES: Scene[] = [
     cue: '♪ steen breekt · puin vliegt weg · thema bouwt op',
     panels: [
       {
-        x: 0, y: 6, w: 100, h: 70, d: [0, 0, 100, 100], kind: 'main', depth: 0.4, bg: '#d9d4c8', fx: ['dust'],
+        x: 0, y: 0, w: 100, h: 100, d: [0, 0, 100, 100], kind: 'main', depth: 0.4, bg: '#d9d4c8', fx: ['dust'],
         shots: [[0, 1.2, 50, 50], [0.7, 1, 50, 50]],
         note: 'De muren van de steeg staan om hem heen en scheuren open; erachter de berg',
         layers: [
