@@ -12,6 +12,7 @@ Gebruik:
     python3 scripts/make-vo-gemini.py --taal en --stem Algenib         # de Engelse versie (vo.en.json, naar public/animatic/vo/en/)
     python3 scripts/make-vo-gemini.py --taal en --pauzes 0.8           # te lange stiltes midden in een zin inkorten
     python3 scripts/make-vo-gemini.py --taal en --sneller 13 14        # deze regels iets sneller (standaard 1,15×)
+    python3 scripts/make-vo-gemini.py --woorden noor-blij 2.3 3.6      # de woorden alleen tussen 2,3 en 3,6 s (lachje ervoor en erna)
 
 Het gratis gebruik heeft een kleine daglimiet (10 verzoeken per dag voor dit model). Elke regel is één verzoek; na elke
 regel wordt opgeslagen, dus stopt het bij de limiet, dan gaat het de volgende dag verder. Wat niet veranderd is, wordt
@@ -91,8 +92,22 @@ Accent: native Netherlands Dutch.
 
 #### TRANSCRIPT
 """
+# In zijn armen: dezelfde Noor, nu lachend van blijdschap. Het lachje staat vooraan in het transcript, dus niet in de ondertitel
+NOOR_BLIJ = """# AUDIO PROFILE: Noor
+A little Dutch girl of about seven, Daan's daughter. A small, sweet, light child's voice.
+
+## THE SCENE
+She has just opened the door and it really is her father, after two years. She runs into his arms; he kneels and holds her tight, her cheek pressed against his.
+
+### DIRECTOR'S NOTES
+Style: pure, bubbling joy and relief. She laughs, a bright, breathless little giggle with happy tears in it, then says the line through her laughter, from the heart: she has missed him every single day. Warm and close, right next to his ear. Never shouted, never cute on purpose.
+Pace: the giggle first, a quick happy breath, then the words, a little fast and tumbling, the last word squeezed tight like the hug.
+Accent: native Netherlands Dutch.
+
+#### TRANSCRIPT
+[laughs] """
 # Per stem: de regie en het tempo (Daan iets trager dan het model hem uit zichzelf zegt; de toonhoogte blijft gelijk)
-ROLES = {"daan": (DIRECTION, 0.93), "drang": (DRANG, 1.0), "noor": (NOOR, 1.0)}
+ROLES = {"daan": (DIRECTION, 0.93), "drang": (DRANG, 1.0), "noor": (NOOR, 1.0), "noor-blij": (NOOR_BLIJ, 1.0)}
 LANG_CODE, LANG_NAME = "nl-NL", "Dutch"
 
 
@@ -106,11 +121,13 @@ def english():
     LANG_CODE, LANG_NAME = "en-US", "English"
 # Een eigen stem en toonhoogte per rol (de rest gebruikt de stem van --stem): Noor is een jonge stem, iets hoger gezet
 # (+2,4 halve tonen, ook de klankkleur), zodat er een kind praat in plaats van een jonge vrouw
-VOICE = {"noor": "Leda"}
-PITCH = {"noor": 1.15}
+VOICE = {"noor": "Leda", "noor-blij": "Leda"}
+PITCH = {"noor": 1.15, "noor-blij": 1.15}
 
 
 def role(key: str) -> str:
+    if key in ROLES:  # een regel met een eigen regie heet zoals die regie
+        return key
     return "drang" if key.startswith("drang-") else "noor" if key.startswith("noor-") else "daan"
 
 
@@ -493,6 +510,19 @@ def sneller(keys, factor: float):
     publish(lines, timings)
 
 
+def woorden(k: str, start: float, end: float):
+    """De woorden van één regel alleen over [start, end] verdelen: voor een regel met een lachje of zucht ervoor of erna
+    (de geschatte tijden lopen anders mee tijdens het lachen)."""
+    lines = json.loads(SRC.read_text())
+    timings_file = STAGE / "timings.json"
+    timings = json.loads(timings_file.read_text())
+    words = words_with_times(lines[k], end - start)
+    timings[k]["words"] = [{"text": w["text"], "start": round(w["start"] - LEAD + start, 3), "end": round(w["end"] - LEAD + start, 3)} for w in words]
+    print(f"{k:10} woorden van {start:.2f}s tot {end:.2f}s (regel {timings[k]['duration']:.1f}s)")
+    timings_file.write_text(json.dumps({k: timings[k] for k in lines if k in timings}, ensure_ascii=False, indent=1))
+    publish(lines, timings)
+
+
 def main():
     global MODEL
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -505,6 +535,7 @@ def main():
     ap.add_argument("--pauzes", type=float, metavar="S", help="stiltes midden in een regel inkorten tot S seconden (zonder opnieuw op te nemen)")
     ap.add_argument("--sneller", nargs="+", metavar="REGEL", help="deze regels iets sneller laten spreken (zonder opnieuw op te nemen)")
     ap.add_argument("--factor", type=float, default=1.15, help="hoeveel sneller bij --sneller (standaard 1.15)")
+    ap.add_argument("--woorden", nargs=3, metavar=("REGEL", "BEGIN", "EIND"), help="de woorden van een regel alleen tussen BEGIN en EIND (s)")
     a = ap.parse_args()
     if a.taal == "en":
         english()
@@ -516,6 +547,8 @@ def main():
         pauzes(a.pauzes)
     elif a.sneller:
         sneller(a.sneller, a.factor)
+    elif a.woorden:
+        woorden(a.woorden[0], float(a.woorden[1]), float(a.woorden[2]))
     elif a.proef:
         proef(a.proef)
     elif a.stem:

@@ -723,5 +723,30 @@
     "end": 0.819
    }
   ]
+ },
+ "noor-blij": {
+  "duration": 5.125,
+  "words": [
+   {
+    "text": "Ik",
+    "start": 2.3,
+    "end": 2.548
+   },
+   {
+    "text": "heb",
+    "start": 2.548,
+    "end": 2.857
+   },
+   {
+    "text": "je",
+    "start": 2.857,
+    "end": 3.105
+   },
+   {
+    "text": "gemist!",
+    "start": 3.105,
+    "end": 3.6
+   }
+  ]
  }
 }

@@ -592,6 +592,8 @@ export const SCENES: Scene[] = [
       { vo: 'drang-18', at: 0.3, to: 0.42, y: 88, who: 'drang' },
       // Niet hij maar zij: "Papa?", vragend en vol hoop
       { vo: 'noor-18', at: 0.64, to: 0.8, y: 88, who: 'noor' },
+      // In zijn armen: ze lacht en zegt het, ze heeft hem echt gemist
+      { vo: 'noor-blij', at: 0.82, to: 0.97, y: 88, who: 'noor' },
     ],
   },
   {
