@@ -344,3 +344,14 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 }
 
 .defs { position: absolute; width: 0; height: 0; }
+
+/* Op een telefoon: wat elk frame opnieuw berekend moet worden eruit, zodat scrollen vloeiend blijft. Matglas (blur
+   achter de kaders) wordt een effen donkere achtergrond, de filmkorrel staat stil op schermformaat, en de wazige
+   achtergrond achter een scène valt weg (net als op een breed scherm). */
+@media (pointer: coarse) {
+  .cap p { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(11, 11, 11, 0.88); }
+  .cap.drang p { background: rgba(0, 0, 0, 0.7); }
+  .hud, .sound, .scrollcue { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(20, 20, 20, 0.92); }
+  body::after { inset: 0; animation: none; }
+  .stage::before { display: none; }
+}

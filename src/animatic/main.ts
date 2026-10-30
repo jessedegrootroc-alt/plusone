@@ -692,12 +692,13 @@ const transition = (v: View, prev: View | undefined, t: number) => {
 // hoe harder het meetrekt: elke veeg doet iets, en het loopt hooguit MAX_LAG achter. Daarbuiten haalt het een
 // achterstand zacht in (geen sprong). Terug scrollen en sprongen (hoofdstukken) gaan direct. Het beeld wacht nooit
 // op de stem: die praat zijn zin uit en het tekstkader blijft zolang staan (zie `play` en de tekstkaders).
+// Op een telefoon volgt het beeld je duim één op één: het eigen scrollen van de telefoon is al vloeiend, en elk tempo
+// erbovenop voelde daar zwaar of haperig.
 let yView = 0
 let yScrollLast = 0
 let jumping = 0
-// Op een telefoon voelt een beeld dat je duim niet volgt als scrollen door stroop: daar trekt het veel harder mee
-const MAX_LAG = touch ? 0.75 : 1.5 // schermhoogtes: verder dan dit loopt het beeld nooit achter
-const PULL = touch ? 5 : 1.2 // per seconde: hoe hard een achterstand het beeld meetrekt in een rustige scène
+const MAX_LAG = 1.5 // schermhoogtes: verder dan dit loopt het beeld nooit achter
+const PULL = 1.2 // per seconde: hoe hard een achterstand het beeld meetrekt in een rustige scène
 const CATCH_UP = 8 // per seconde: hoe snel een achterstand daarbuiten wordt ingehaald (95% in ~0,4 s)
 const sceneAt = (y: number) => views.find((v) => y >= v.top && y < v.top + v.height)
 /** Zwaarder scrollen in een rustige scène: hetzelfde wieltje legt minder af. */
@@ -718,7 +719,7 @@ const frame = (now: number) => {
   last = now
   lenis?.raf(now)
   const yScroll = lenis ? lenis.scroll : scrollY
-  if (jumping > 0 || yScroll <= yView) {
+  if (touch || jumping > 0 || yScroll <= yView) {
     yView = yScroll
     jumping = Math.max(0, jumping - dt)
   } else {
@@ -746,7 +747,7 @@ const frame = (now: number) => {
     if (!current && y >= v.top - vh * 0.5 && y < v.top + v.height - vh * 0.5) current = v
     update(v, p, dt)
     transition(v, views[i - 1], clamp((y - (v.top - vh)) / vh))
-    if (!reduce) v.frame.style.rotate = `x ${(-tilt * 0.3).toFixed(4)}rad`
+    if (!reduce && !touch) v.frame.style.rotate = `x ${(-tilt * 0.3).toFixed(4)}rad`
   }
   veil.style.opacity = (easeInOut(veilT) * 0.96).toFixed(3)
   cueScroll(y, dt, current)
@@ -808,7 +809,8 @@ const start = async () => {
   for (const key of Object.keys(T)) void fetch(voiceSrc(key)).catch(() => {})
   layout()
   addEventListener('resize', layout)
-  if (!reduce) {
+  // Alleen voor muis en trackpad: op een touchscherm scrolt de telefoon zelf al vloeiend
+  if (!reduce && !touch) {
     lenis = new Lenis({
       lerp: 0.08,
       smoothWheel: true,
