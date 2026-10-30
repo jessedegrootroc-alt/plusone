@@ -29,6 +29,7 @@ const voKey = (k: string) => (k === '15' ? `15-${choice}` : k)
 document.body.innerHTML = `
   <main class="film"></main>
   <div class="flash" aria-hidden="true"></div>
+  <div class="bars" aria-hidden="true"><i></i><i></i></div>
   <div class="disc" aria-hidden="true"><i></i><span></span></div>
   <button class="sound" type="button" aria-pressed="false">Geluid uit</button>
   <div class="scrollcue" aria-hidden="true">Scrol naar beneden<i></i></div>

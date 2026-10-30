@@ -16,7 +16,7 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 
 /* Scène: vastgezet podium; het beeldkader is een staande pagina (op desktop met wazige wereld eromheen) */
 .scene { position: relative; }
-.stage { position: fixed; inset: 0; height: 100svh; overflow: hidden; perspective: 1400px; background: #000; display: none; transform-origin: 50% 50%; mask-repeat: no-repeat; mask-position: 50% 50%; -webkit-mask-repeat: no-repeat; -webkit-mask-position: 50% 50%; }
+.stage { position: fixed; inset: 0; height: 100dvh; overflow: hidden; perspective: 1400px; background: #000; display: none; transform-origin: 50% 50%; mask-repeat: no-repeat; mask-position: 50% 50%; -webkit-mask-repeat: no-repeat; -webkit-mask-position: 50% 50%; }
 /* Alleen de scènes rond je scroll bestaan; de rest is helemaal weg (display: none, niet alleen onzichtbaar). WebKit, de
    techniek van iPhone-browsers, hield van elke scène die je voorbij was de beeldlagen in het geheugen, tot de iPhone
    de pagina opgaf (rond de keuze, ruim 1 GB grafisch geheugen) */
@@ -383,4 +383,10 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
   .tag.note, .postit span { filter: none; mix-blend-mode: normal; }
   .ring path { filter: drop-shadow(0 0 4px rgba(242, 242, 242, 0.5)); }
   .picked .pickit:not(.chosen) { filter: brightness(0.62); }
+  /* Safari (iOS 26) kleurt de balk bij de klok en die rond de adresbalk naar wat er aan de rand van de pagina staat (niet
+     meer naar theme-color): een haarfijn zwart randje boven en onder, dan worden die balken zwart en loopt de film
+     naadloos door, zoals een film in een zwart kader */
+  .bars i { position: fixed; left: 0; right: 0; z-index: 26; height: 6px; background: #000; pointer-events: none; }
+  .bars i:first-child { top: 0; }
+  .bars i:last-child { bottom: 0; }
 }
