@@ -348,9 +348,17 @@ const startHold = (e: PointerEvent | null) => {
   v.pull.gy = pointer.y
 }
 const endHold = () => { for (const v of views) v.holding = false; disc.classList.remove('held') }
-// Op desktop houd je de muis ergens in het beeld vast; op een telefoon de schijf zelf (zo blijft scrollen werken)
-film.addEventListener('pointerdown', (e) => { if (!touch && e.button === 0) startHold(e) })
+// Op desktop houd je de muis ergens in het beeld vast. Op een telefoon kan vasthouden (afscheuren, de visie) ook
+// ergens in het beeld, en kloppen met een tik op het beeld; slepen alleen op de schijf, anders scrolt de pagina mee.
+// Begin je toch te scrollen, dan breekt de telefoon het vasthouden zelf af (pointercancel)
+const actKind = () => activeAct?.scene.act?.kind
+film.addEventListener('pointerdown', (e) => {
+  if (!touch ? e.button === 0 : actKind() === 'pour' || actKind() === 'rise') startHold(e)
+})
+film.addEventListener('click', () => { if (touch && actKind() === 'knock') startHold(null) }) // een tik, geen veeg
 disc.addEventListener('pointerdown', (e) => { if (touch) { e.preventDefault(); disc.setPointerCapture(e.pointerId); startHold(e) } })
+// iOS: geen vergrootglas, zoom of tekstselectie op de schijf (die breken het vasthouden af)
+disc.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false })
 addEventListener('pointerup', endHold)
 addEventListener('pointercancel', endHold)
 addEventListener('keydown', (e) => { if (e.key === ' ' && activeAct && !e.repeat) { e.preventDefault(); startHold(null) } })
@@ -756,7 +764,10 @@ const frame = (now: number) => {
   document.body.classList.toggle('acting', !!act && !touch)
   if (act) {
     const chosen = act.kind === 'choose' && (activeAct as View | null)?.done
-    $<HTMLElement>('span', disc).innerText = chosen ? 'GEKOZEN\n↓' : (touch && act.touchText) || act.text
+    // Alleen als de tekst echt verandert (niet elk frame de tekst onder je vinger vervangen)
+    const text = chosen ? 'GEKOZEN\n↓' : (touch && act.touchText) || act.text
+    const span = $<HTMLElement>('span', disc)
+    if (span.textContent !== text) span.textContent = text
     disc.classList.toggle('ok', !!chosen)
     disc.classList.toggle('choose', act.kind === 'choose')
     if (!touch) disc.style.translate = `${pointer.x}px ${pointer.y}px`
