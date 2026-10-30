@@ -58,6 +58,9 @@ export class Score {
   private pad: OscillatorNode[] = []
   private choir: OscillatorNode[] = []
   private major = false
+  private ducked: boolean | null = null
+  private riserHz = 0
+  private humHz = 0
   private nextBeat = 0
   private nextBell = 0
   private bellStep = 0
@@ -87,7 +90,10 @@ export class Score {
     const gain = this.ctx.createGain()
     gain.gain.value = 0
     gain.connect(this.music)
-    const b = { gain, set: (v: number, s = 0.5) => gain.gain.setTargetAtTime(v, this.ctx.currentTime, s) }
+    // Alleen een nieuwe glijder als het doel echt verandert: update() roept dit elk frame aan, en Safari ruimt oude
+    // glijders niet op. Ze stapelden zich op (honderdduizenden na een paar minuten) tot een iPhone de pagina opgaf
+    let last = -1
+    const b = { gain, set: (v: number, s = 0.5) => { if (Math.abs(v - last) < 0.004) return; last = v; gain.gain.setTargetAtTime(v, this.ctx.currentTime, s) } }
     this.bus[name] = b
     return b
   }
@@ -223,15 +229,21 @@ export class Score {
     }
   }
   /** De muziek zakt onder de vertelstem (ducking). */
-  duck(on: boolean) { this.music.gain.setTargetAtTime(on ? 0.45 : 1, this.ctx.currentTime, 0.25) }
+  duck(on: boolean) {
+    if (on === this.ducked) return // elk frame aangeroepen: alleen bij een wissel
+    this.ducked = on
+    this.music.gain.setTargetAtTime(on ? 0.45 : 1, this.ctx.currentTime, 0.25)
+  }
 
   /** Elk frame: de mix volgt de scène waarin je bent. */
   update(scene: string, p: number, v: number) {
     const now = this.ctx.currentTime
     const m = (MIX[scene] ?? (() => ({})))(clamp(p), v)
     for (const k of ['drone', 'rain', 'wind', 'hum', 'pad', 'choir', 'riser', 'rumble', 'bells', 'glass'] as const) this.bus[k].set(m[k] ?? 0, 0.6)
-    this.riserF.frequency.setTargetAtTime(300 + (m.riser ?? 0) * 6000, now, 0.3)
-    this.hum.frequency.setTargetAtTime(98 + (m.hum ?? 0) * 60 + v * 80, now, 0.2)
+    const riserHz = 300 + (m.riser ?? 0) * 6000
+    if (Math.abs(riserHz - this.riserHz) > 5) { this.riserHz = riserHz; this.riserF.frequency.setTargetAtTime(riserHz, now, 0.3) }
+    const humHz = 98 + (m.hum ?? 0) * 60 + v * 80
+    if (Math.abs(humHz - this.humHz) > 0.5) { this.humHz = humHz; this.hum.frequency.setTargetAtTime(humHz, now, 0.2) }
     const major = !!m.major
     if (major !== this.major) {
       this.major = major

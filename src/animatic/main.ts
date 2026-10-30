@@ -727,6 +727,8 @@ const sceneAt = (y: number) => views.find((v) => y >= v.top && y < v.top + v.hei
 const heaviness = () => (sceneAt(yView)?.scene.pace ? 0.5 : 1)
 
 let lastChapter = ''
+let hudNowHtml = ''
+let hudCueHtml = ''
 // Scrol naar beneden: in het begin (de deur en de steeg) zodra het beeld even stilstaat, niet als er tekst staat
 let still = 0
 let yStill = 0
@@ -802,8 +804,11 @@ const frame = (now: number) => {
     current.time += dt
     const vo = current.scene.captions.reduce((n, c) => n + (T[voKey(c.vo)]?.duration ?? 0), 0)
     const p = (y - current.top) / (current.scene.sh * vh)
-    hudNow.innerHTML = `<b>${current.scene.name}</b> · ${fmt(total)} · hier ${fmt(current.time)}${vo ? `/${fmt(vo)}` : ''}`
-    if (!hudList.hidden) hudCue.innerHTML = `${current.scene.ref} · p ${clamp(p, -1, 2).toFixed(2)}<br/><span>${current.scene.cue}</span>`
+    // Alleen als de tekst verandert (niet elk frame nieuwe HTML maken)
+    const now = `<b>${current.scene.name}</b> · ${fmt(total)} · hier ${fmt(current.time)}${vo ? `/${fmt(vo)}` : ''}`
+    if (now !== hudNowHtml) hudNow.innerHTML = hudNowHtml = now
+    const cue = `${current.scene.ref} · p ${clamp(p, -1, 2).toFixed(2)}<br/><span>${current.scene.cue}</span>`
+    if (!hudList.hidden && cue !== hudCueHtml) hudCue.innerHTML = hudCueHtml = cue
   }
   requestAnimationFrame(frame)
 }
