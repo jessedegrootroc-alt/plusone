@@ -61,6 +61,8 @@ export interface Layer {
   reveal?: string
   /** Wordt zichtbaar naarmate de interactie vordert (een getekende eindstand, bv. de sigaret weg) */
   byAct?: boolean
+  /** Per keuze en taal een eigen beeld (`naam-rook`, `naam-rook-en`, ...; zie scripts/briefje-art.py), het kale beeld als terugval */
+  byChoice?: boolean
   /** Terugvalbeeld zolang het nieuwe nog niet gemaakt is */
   alt?: string
   /** Breedte gedeeld door hoogte van het beeld (voor pins); standaard 1 */
@@ -569,7 +571,8 @@ export const SCENES: Scene[] = [
           { src: K('stad-ochtend'), fit: 'cover', depth: 0.2, vis: [-1, 0.8] },
           { src: K('daan-deur'), fit: 'fig', x: 60, b: 2, h: 66, d: [60, 0, 84], depth: 0.6, anim: 'breathe', vis: [-1, 0.3] },
           // De prijs: zijn hand zoekt het pakje en vindt de post-it
-          { src: K('close-jaszak'), fit: 'cover', anim: 'tremble', vis: [0.3, 0.42] },
+          // Met zijn keuze erop; op een telefoon (staand) schuift het beeld naar rechts, zodat het hele briefje in beeld is
+          { src: K('close-jaszak'), fit: 'cover', pos: '70% 50%', anim: 'tremble', vis: [0.3, 0.42], byChoice: true },
           // Het beeld van de opening: nu klop jij
           { src: K('close-klop'), fit: 'cover', vis: [0.42, 0.8] },
           // Wat hij ziet als de deur opengaat: zij, op de plek van de foto

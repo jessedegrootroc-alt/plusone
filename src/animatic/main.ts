@@ -63,6 +63,8 @@ const plain = (src: string) => (src.endsWith('-kleur') ? src.slice(0, -6) : '')
 const im = (src: string, cls: string, style = '', alt = plain(src)) => `<img class="${cls}" data-src="/${src}.webp" alt="" decoding="async" data-file="${file(src)}.png"${alt ? ` data-alt="/${alt}.webp"` : ''}${style ? ` style="${style}"` : ''}/>`
 
 const label = () => CHOICES.find((c) => c.id === choice)!.label
+/** Het beeld met de keuze erop, in de taal van de pagina (het briefje in zijn jaszak) */
+const chosenSrc = (src: string) => `${src}-${choice}${lang === 'en' ? '-en' : ''}`
 const pinHtml = (pn: Pin) => {
   const at = `left:${pn.x}%;top:${pn.y}%;width:${pn.w}%;--r:${pn.r ?? 0}deg`
   if (pn.src) return `<img class="pin" data-src="/${pn.src}.webp" alt="" decoding="async"${plain(pn.src) ? ` data-alt="/${plain(pn.src)}.webp"` : ''} style="${at}${pn.clip ? `;clip-path:${pn.clip}` : ''}"/>`
@@ -96,7 +98,7 @@ const layerHtml = (l: Layer, i: number) => {
   const mv = `${l.rot ? `rotate:${l.rot}deg;` : ''}${filter}${l.op != null ? `opacity:${l.op};` : ''}animation-delay:-${((i * 0.73) % 3).toFixed(2)}s`
   const pos = l.pos ? `object-position:${l.pos}` : ''
   const tag = l.pins?.length ? `<div class="cover-box" style="--a:${l.aspect ?? 1}">${l.pins.map(pinHtml).join('')}</div>` : ''
-  return `<div class="ly f-${fit}${l.role ? ` ro-${l.role}` : ''}" style="${wrap}"><div class="mv${l.anim ? ` a-${l.anim}` : ''}${tag ? ' tagged' : ''}" style="${mv}">${im(l.src, 'base', pos, l.alt)}${l.reveal ? im(l.src, 'ov light', pos) + im(l.reveal, 'ov light next', pos) + im(l.reveal, 'ov reveal', pos) : ''}${tag}</div></div>`
+  return `<div class="ly f-${fit}${l.role ? ` ro-${l.role}` : ''}" style="${wrap}"><div class="mv${l.anim ? ` a-${l.anim}` : ''}${tag ? ' tagged' : ''}" style="${mv}">${l.byChoice ? im(chosenSrc(l.src), 'base', pos, l.src).replace('<img ', `<img data-by-choice="${l.src}" `) : im(l.src, 'base', pos, l.alt)}${l.reveal ? im(l.src, 'ov light', pos) + im(l.reveal, 'ov light next', pos) + im(l.reveal, 'ov reveal', pos) : ''}${tag}</div></div>`
 }
 
 const fxHtml = (f: Fx) => ({
@@ -386,6 +388,10 @@ for (const b of document.querySelectorAll<HTMLElement>('.pickit')) {
     for (const o of document.querySelectorAll('.pickit')) o.classList.toggle('chosen', o === b)
     b.closest('.panel')!.classList.add('picked')
     for (const t of document.querySelectorAll('.chosen-label')) t.textContent = label()
+    for (const img of document.querySelectorAll<HTMLImageElement>('img[data-by-choice]')) {
+      img.dataset.src = `/${chosenSrc(img.dataset.byChoice!)}.webp`
+      if (img.hasAttribute('src')) img.src = img.dataset.src
+    }
     const v = views.find((w) => w.scene.act?.kind === 'choose')
     if (v) { v.done = true; impact(v.cam, 0.35) }
     score?.rustle()
