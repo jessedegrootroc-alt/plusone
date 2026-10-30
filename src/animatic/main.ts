@@ -124,13 +124,12 @@ const panelHtml = (pn: Panel) => {
     : ''
   const need = pn.note ? `<div class="need"><p>${pn.note}</p><small></small></div>` : ''
   return `<div class="${cls}" style="${vars}">
-    ${need}<div class="pi">${(pn.layers ?? []).map(layerHtml).join('')}${glow}${(pn.fx ?? []).map(fxHtml).join('')}${lids}${postits}${pick}</div>
-    <i class="edge"></i></div>`
+    ${need}<div class="pi">${(pn.layers ?? []).map(layerHtml).join('')}${glow}${(pn.fx ?? []).map(fxHtml).join('')}${lids}${postits}${pick}</div></div>`
 }
 
 interface CapState { el: HTMLElement; words: HTMLElement[]; key: string; played: boolean; vis: number }
 interface LayerView { l: Layer; el: HTMLElement; shown: boolean }
-interface PanelView { p: Panel; el: HTMLElement; pi: HTMLElement; layers: LayerView[]; seen: boolean }
+interface PanelView { p: Panel; el: HTMLElement; pi: HTMLElement; layers: LayerView[]; seen: boolean; full: boolean }
 interface View {
   scene: Scene
   section: HTMLElement
@@ -192,7 +191,7 @@ const views: View[] = SCENES.map((scene) => {
     panels: scene.panels.map((p, i) => {
       const el = panelEls[i]
       const lyEls = [...el.querySelectorAll<HTMLElement>('.ly')]
-      return { p, el, pi: $<HTMLElement>('.pi', el), layers: (p.layers ?? []).map((l, k) => ({ l, el: lyEls[k], shown: false })), seen: false }
+      return { p, el, pi: $<HTMLElement>('.pi', el), layers: (p.layers ?? []).map((l, k) => ({ l, el: lyEls[k], shown: false })), seen: false, full: false }
     }),
     caps: scene.captions.map((_, i) => ({ el: section.querySelectorAll<HTMLElement>('.cap')[i], words: [], key: '', played: false, vis: 0 })),
     top: 0, height: 0, time: 0, holding: false, value: 0, t: 0, done: false, fired: new Set(), walk: 0,
@@ -260,6 +259,8 @@ const layout = () => {
     for (const pv of v.panels) {
       const [x, y, w, h] = wide && pv.p.d ? pv.p.d : [pv.p.x, pv.p.y, pv.p.w, pv.p.h]
       Object.assign(pv.el.style, { left: `${x}%`, top: `${y}%`, width: `${w}%`, height: `${h}%` })
+      // Een paneel dat het hele scherm vult, drijft niet mee: anders zie je aan de rand een streep zwart
+      pv.full = x <= 0 && y <= 0 && x + w >= 100 && y + h >= 100
       // Figuren kunnen op een breed scherm een eigen plek en maat hebben
       for (const { l, el } of pv.layers) {
         if (l.fit !== 'fig') continue
@@ -432,7 +433,7 @@ const update = (v: View, p: number, dt: number) => {
     const d = pn.depth ?? 1
     const off = 1 - enter
     let tx = 0
-    let ty = (0.5 - p) * d * 4
+    let ty = pv.full ? 0 : (0.5 - p) * d * 4
     const cut = (off * 100).toFixed(1)
     let clip = 'none'
     if (pn.in != null && off > 0.001) {

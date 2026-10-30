@@ -20,6 +20,9 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 .stage.on { visibility: visible; }
 .stage::before { content: ''; position: absolute; inset: -60px; background: var(--bd, none) center / cover; filter: blur(34px) brightness(0.32) grayscale(1); transform: scale(1.1); }
 .frame { position: relative; height: 100%; width: min(100vw, 66svh); margin: 0 auto; background: var(--paper); transform-origin: 50% 50%; overflow: hidden; }
+/* Met muis of trackpad helt het beeld mee met je scrollsnelheid; iets groter dan het scherm, zodat de rand dan nooit
+   loskomt en er geen zwarte streep aan de onder- of bovenkant verschijnt */
+@media (pointer: fine) { .frame { scale: 1.03; } }
 .w-licht { --paper: #E3DED2; --edge: var(--ink); }
 /* De spiegel staat als smalle zuil midden in het beeld: eromheen het wazige, donkere spiegelbeeld in plaats van licht papier */
 .wide [data-id='spiegel'] .frame, .wide [data-id='keuze'] .frame { background: transparent; }
@@ -34,12 +37,9 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 .w-licht .panel.k-inset, .w-licht .panel.k-eyes { box-shadow: 0 16px 40px rgba(13, 12, 11, 0.35); }
 .panel.k-main { z-index: 1; }
 .panel.k-round { border-radius: 50%; height: auto !important; aspect-ratio: 1; }
-.panel.k-round .pi, .panel.k-round .edge { border-radius: 50%; }
+.panel.k-round .pi { border-radius: 50%; }
 .pi { position: absolute; inset: 0; overflow: hidden; }
-.edge { position: absolute; inset: 0; border: 1px solid rgba(0, 0, 0, 0.9); box-shadow: inset 0 0 0 1px rgba(232, 227, 216, 0.08); pointer-events: none; z-index: 6; }
-.w-licht .edge { border: 1.5px solid var(--ink); box-shadow: none; }
 .r-debris { background: repeating-linear-gradient(135deg, #3a3834 0 2px, #6b675f 2px 6px); clip-path: polygon(10% 0, 92% 14%, 100% 70%, 60% 100%, 0 80%); z-index: 3; }
-.r-debris .edge { display: none; }
 
 /* Lagen: wrapper = plaats + parallax, .mv = de eigen beweging (adem, wiegen, flakkeren) */
 .ly { position: absolute; pointer-events: none; }
