@@ -56,12 +56,12 @@ const chapters = $<HTMLElement>('.chapters')
 const file = (src: string) => src.split('/').pop()
 /** De zwart-witversie als terugval voor een kleurbeeld dat nog niet gemaakt is (`naam-kleur` → `naam`) */
 const plain = (src: string) => (src.endsWith('-kleur') ? src.slice(0, -6) : '')
-const im = (src: string, cls: string, style = '', alt = plain(src)) => `<img class="${cls}" src="/${src}.webp" alt="" decoding="async" data-file="${file(src)}.png"${alt ? ` data-alt="/${alt}.webp"` : ''}${style ? ` style="${style}"` : ''}/>`
+const im = (src: string, cls: string, style = '', alt = plain(src)) => `<img class="${cls}" data-src="/${src}.webp" alt="" decoding="async" data-file="${file(src)}.png"${alt ? ` data-alt="/${alt}.webp"` : ''}${style ? ` style="${style}"` : ''}/>`
 
 const label = () => CHOICES.find((c) => c.id === choice)!.label
 const pinHtml = (pn: Pin) => {
   const at = `left:${pn.x}%;top:${pn.y}%;width:${pn.w}%;--r:${pn.r ?? 0}deg`
-  if (pn.src) return `<img class="pin" src="/${pn.src}.webp" alt="" decoding="async"${plain(pn.src) ? ` data-alt="/${plain(pn.src)}.webp"` : ''} style="${at}${pn.clip ? `;clip-path:${pn.clip}` : ''}"/>`
+  if (pn.src) return `<img class="pin" data-src="/${pn.src}.webp" alt="" decoding="async"${plain(pn.src) ? ` data-alt="/${plain(pn.src)}.webp"` : ''} style="${at}${pn.clip ? `;clip-path:${pn.clip}` : ''}"/>`
   return `<b class="tag ${pn.kind ?? 'note'}${pn.text ? '' : ' chosen-label'}" style="${at}">${pn.text ?? label()}</b>`
 }
 
@@ -204,7 +204,7 @@ const views: View[] = SCENES.map((scene) => {
 for (const img of document.querySelectorAll<HTMLImageElement>('.panel img')) {
   img.addEventListener('error', () => {
     // Is er een terugvalbeeld (de vorige reeks), toon dat zolang het nieuwe er niet is
-    if (img.dataset.alt) { img.src = img.dataset.alt; delete img.dataset.alt; return }
+    if (img.dataset.alt) { img.dataset.src = img.src = img.dataset.alt; delete img.dataset.alt; return }
     const panel = img.closest<HTMLElement>('.panel')!
     img.closest<HTMLElement>('.ly')!.classList.add('missing')
     panel.classList.add('needs')
@@ -213,15 +213,23 @@ for (const img of document.querySelectorAll<HTMLImageElement>('.panel img')) {
   })
 }
 
-// De beelden van deze en de volgende twee scènes alvast uitpakken. Anders gebeurt dat pas als ze in beeld komen,
-// allemaal tegelijk, en hapert het beeld (op een telefoon een paar honderd ms)
-const decoded = new Set<View>()
-const decodeAhead = (v: View) => {
-  for (const w of views.slice(views.indexOf(v), views.indexOf(v) + 3)) {
-    if (decoded.has(w)) continue
-    decoded.add(w)
-    for (const img of w.section.querySelectorAll('img')) void img.decode().catch(() => {})
-  }
+// Alleen de beelden rond waar je bent staan in het geheugen: de vorige scène, deze en de volgende twee (die worden
+// alvast uitgepakt, anders gebeurt dat pas als ze in beeld komen, allemaal tegelijk, en hapert het beeld). Verder weg
+// gaan ze eruit: alle beelden van de hele film tegelijk uitgepakt is te veel voor een iPhone, die laadt de pagina dan
+// opnieuw. Komen ze weer dichtbij, dan komen ze uit de cache terug
+const loaded = new Set<View>()
+const keepAround = (v: View) => {
+  const i = views.indexOf(v)
+  views.forEach((w, k) => {
+    const near = k >= i - 1 && k <= i + 2
+    if (near === loaded.has(w)) return
+    for (const img of w.section.querySelectorAll<HTMLImageElement>('img[data-src]')) {
+      if (near) { img.src = img.dataset.src!; void img.decode().catch(() => {}) }
+      else img.removeAttribute('src') // geeft het geheugen vrij (zonder foutmelding, zie het terugvalbeeld hierboven)
+    }
+    if (near) loaded.add(w)
+    else loaded.delete(w)
+  })
 }
 
 chapters.innerHTML = views.filter((v) => v.scene.panels.length).map((v) => `<a data-id="${v.scene.id}">${v.scene.name}</a>`).join('')
@@ -783,7 +791,7 @@ const frame = (now: number) => {
     score?.duck(!!playing && !playing.el.paused)
     if (current.scene.id !== lastChapter) {
       lastChapter = current.scene.id
-      decodeAhead(current)
+      keepAround(current)
       chapters.querySelectorAll('a').forEach((a) => a.classList.toggle('on', a.dataset.id === lastChapter))
     }
   }
