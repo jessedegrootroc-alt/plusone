@@ -178,6 +178,7 @@ const views: View[] = SCENES.map((scene) => {
           ${scene.html ?? ''}
         </div>
         ${scene.captions.map((c) => `<div class="cap${c.who ? ` ${c.who}` : ''}"><p></p></div>`).join('')}
+        ${scene.act?.kind === 'knock' ? '<div class="dread" aria-hidden="true"></div>' : ''}
         ${scene.act?.kind === 'rise' ? `<div class="verdict" aria-hidden="true"><div class="card"><i></i><b>DAG ÉÉN</b><i></i><small class="chosen-label">${label()}</small></div></div>` : ''}
       </div>
     </div>`
@@ -496,7 +497,9 @@ const update = (v: View, p: number, dt: number) => {
         op *= smooth(0.4, 0.5, p) * (1 - smooth(0.8, 0.88, p))
       }
       // Een getekende eindstand die verschijnt naarmate jij de interactie doet (of scrolt)
-      if (l.byAct) op *= v.shown
+      // Een deur gaat open: een spleet warm licht die breder wordt, met wat erachter is (niet door elkaar heen)
+      if (l.byAct && l.role === 'door') { op *= v.shown > 0.001 ? 1 : 0; el.style.setProperty('--door', v.shown.toFixed(3)) }
+      else if (l.byAct) op *= v.shown
       el.style.translate = `${lx.toFixed(1)}px calc(${ly.toFixed(1)}px + ${((0.5 - p) * ld * 4).toFixed(2)}vh)`
       el.style.transform = `${l.fit === 'fig' ? 'translateX(-50%)' : ''}${extra}`
       el.style.opacity = op.toFixed(3)
@@ -617,9 +620,24 @@ const update = (v: View, p: number, dt: number) => {
     disc.style.setProperty('--v', v.value.toFixed(3))
   }
   if (act.kind === 'knock') {
-    if (p < act.from) { v.done = false; v.value = 0 }
-    v.shown = Math.max(smooth(0.54, 0.6, p), v.value >= 1 ? 1 : 0)
-    if (v.value >= 1 && !v.done) { v.done = true; setTimeout(() => score?.swish(), 500) }
+    // Na de derde klop gaat de deur niet meteen open: eerst wachten. De muziek valt weg, zijn hart gaat sneller, het beeld
+    // kruipt naar zijn vuist en de randen worden donker; voetstappen achter de deur, het slot, en dan gaat hij langzaam
+    // open in warm licht. Scrol je door, dan gaat hij gewoon open (nooit vast)
+    if (p < act.from) { v.done = false; v.value = 0; v.t = 0; for (const k of ['step1', 'step2', 'latch', 'creak']) v.fired.delete(k) }
+    if (v.value >= 1 && !v.done) { v.done = true; v.t = 0 }
+    if (v.done) v.t += dt
+    const since = v.done ? v.t : -1
+    const door = since >= 0 ? easeInOut(clamp((since - 2.6) / 1.4)) : 0
+    v.shown = Math.max(smooth(0.54, 0.6, p), door)
+    const dread = since >= 0 ? smooth(0, 2.4, since) * (1 - smooth(2.6, 3.6, since)) : 0
+    v.cam.style.scale = dread ? (1 + 0.06 * dread).toFixed(4) : ''
+    v.frame.style.setProperty('--dread', dread.toFixed(3))
+    veilT = Math.max(veilT, 0.22 * Math.sin(Math.PI * door)) // het licht van binnen valt naar buiten
+    const cue = (key: string, at: number, sound: () => void) => { if (since >= at && !v.fired.has(key)) { v.fired.add(key); sound() } }
+    cue('step1', 1.1, () => score?.step())
+    cue('step2', 1.8, () => score?.step())
+    cue('latch', 2.4, () => score?.latch())
+    cue('creak', 2.6, () => score?.creak())
     disc.style.setProperty('--v', v.value.toFixed(3))
   }
   if (act.kind === 'move') {
@@ -794,7 +812,7 @@ const frame = (now: number) => {
   }
   if (current) {
     const p = clamp((y - current.top) / (current.scene.sh * vh))
-    score?.update(current.scene.id, p, (activeAct as View | null)?.value ?? 0)
+    score?.update(current.scene.id, p, (activeAct as View | null)?.value ?? 0, current.scene.act?.kind === 'knock' && current.done ? current.t : -1)
     score?.duck(!!playing && !playing.el.paused)
     if (current.scene.id !== lastChapter) {
       lastChapter = current.scene.id

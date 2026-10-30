@@ -98,7 +98,10 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 .ro-split-l .mv { clip-path: inset(0 50% 0 0); }
 .ro-split-r .mv { clip-path: inset(0 0 0 50%); }
 .ro-thumb { z-index: 3; mask: radial-gradient(closest-side, #000 62%, transparent); } /* zachte randen: de hand komt uit het donker */
-.ro-riser { z-index: 2; } /* hij zweeft vóór de lichtzuil: het licht staat achter hem, niet over hem heen */
+.ro-riser { z-index: 2; }
+/* De deur van Noor gaat open: vanaf de rand van de deur een zachte spleet die breder wordt, met een streep warm licht */
+.ro-door .mv { -webkit-mask-image: linear-gradient(to left, #000 calc(var(--door, 0) * 112%), transparent calc(var(--door, 0) * 112% + 14%)); mask-image: linear-gradient(to left, #000 calc(var(--door, 0) * 112%), transparent calc(var(--door, 0) * 112% + 14%)); }
+.ro-door::after { content: ''; position: absolute; top: 0; bottom: 0; right: calc(var(--door, 0) * 112% - 4%); width: 16%; background: linear-gradient(to right, transparent, rgba(255, 236, 200, 0.85), transparent); mix-blend-mode: screen; opacity: calc(1 - var(--door, 0)); pointer-events: none; } /* hij zweeft vóór de lichtzuil: het licht staat achter hem, niet over hem heen */
 
 /* Pose naar pose: een nieuwe pose springt erin met een kleine overshoot (Darkest Dungeon) */
 .ly.snap .mv { animation: snap 0.28s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
@@ -201,6 +204,9 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 /* De drang: dezelfde stem, maar fluisterend. Een smaller kader, schuin, zonder rand, dichter op het beeld */
 .cap.drang p { max-width: 340px; padding: 10px 16px; background: rgba(0, 0, 0, 0.55); box-shadow: none; font-style: italic; letter-spacing: 0.01em; }
 .cap.drang span.said, .cap.drang span.on { color: var(--app-ink-2); }
+
+/* Het wachten na het kloppen: de randen van het beeld worden donker, alleen zijn vuist op de deur blijft in het licht */
+.dread { position: absolute; inset: 0; z-index: 8; pointer-events: none; background: radial-gradient(ellipse 62% 58% at 50% 48%, transparent 28%, rgba(0, 0, 0, 0.86)); opacity: var(--dread, 0); will-change: opacity; }
 
 /* Het oordeel (Darkest Dungeon): het beeld zakt weg in het donker, en in het midden verschijnt rustig de titelkaart.
    De letters schuiven van wijd en wazig naar strak, twee dunne lijnen trekken naar buiten, eronder wat hij vandaag

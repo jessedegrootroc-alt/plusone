@@ -62,7 +62,7 @@ export interface Layer {
   aspect?: number
   /** Dingen die óp dit beeld vastzitten, hoe het ook wordt bijgesneden (alleen bij cover) */
   pins?: Pin[]
-  role?: 'walker' | 'riser' | 'split-l' | 'split-r' | 'faller'
+  role?: 'walker' | 'riser' | 'split-l' | 'split-r' | 'faller' | 'door'
 }
 
 /** Iets op een vaste plek in een beeld: x/y in % van het beeld, w in % van de beeldbreedte.
@@ -568,7 +568,7 @@ export const SCENES: Scene[] = [
           // Het beeld van de opening: nu klop jij
           { src: K('close-klop'), fit: 'cover', vis: [0.42, 0.8] },
           // Wat hij ziet als de deur opengaat: zij, op de plek van de foto
-          { src: K('deur-open'), fit: 'cover', pos: '50% 15%', depth: 0.3, byAct: true, vis: [0.42, 0.8] },
+          { src: K('deur-open'), fit: 'cover', pos: '50% 15%', depth: 0.3, byAct: true, vis: [0.42, 0.8], role: 'door' },
           { src: K('daan-noor'), fit: 'cover', pos: '42% 50%', depth: 0.3, vis: [0.8, 2], anim: 'breathe' },
         ],
       },

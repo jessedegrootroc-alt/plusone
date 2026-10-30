@@ -12,7 +12,8 @@ const smooth = (a: number, b: number, v: number) => { const t = clamp((v - a) / 
 type Mix = Partial<Record<'drone' | 'rain' | 'wind' | 'hum' | 'pad' | 'choir' | 'riser' | 'rumble' | 'bells' | 'glass', number>> & { heart?: number; major?: boolean }
 
 /** Wat er per scène klinkt, als functie van de voortgang p (0–1) en de interactie v (0–1). */
-const MIX: Record<string, (p: number, v: number) => Mix> = {
+// since: seconden sinds het kloppen op de deur (-1 als er nog niet geklopt is)
+const MIX: Record<string, (p: number, v: number, since: number) => Mix> = {
   titel: () => ({ drone: 0.25, rain: 0.1, wind: 0.05 }),
   steeg: () => ({ drone: 0.5, rain: 0.26, wind: 0.08, hum: 0.04 }),
   gezicht: () => ({ drone: 0.35, rain: 0.14 }),
@@ -35,7 +36,12 @@ const MIX: Record<string, (p: number, v: number) => Mix> = {
   stilte: () => ({ wind: 0.05, pad: 0.16, major: true }),
   deur: () => ({ wind: 0.03, heart: 84 }),
   // Noor: stilte voor de deur (alleen zijn hart), na het kloppen het thema, zacht
-  noor: (p, v) => { const k = Math.max(v >= 1 ? 1 : 0, smooth(0.54, 0.6, p)); return { wind: 0.04, heart: k < 1 ? 78 + p * 20 : undefined, pad: 0.06 + smooth(0.78, 0.9, p) * 0.45, choir: smooth(0.8, 0.95, p) * 0.3, bells: smooth(0.86, 1, p) * 0.2, major: true } },
+  // Na het kloppen valt de muziek weg en gaat zijn hart sneller; als de deur opengaat: stilte, dan haar melodie
+  noor: (p, _v, since) => {
+    const open = Math.max(since >= 0 ? smooth(2.6, 3.4, since) : 0, smooth(0.54, 0.6, p))
+    const waiting = since >= 0 && open < 1
+    return { wind: waiting ? 0.015 : 0.04, heart: open < 1 ? (waiting ? 100 + since * 9 : 78 + p * 20) : undefined, pad: (waiting ? 0 : 0.06) + smooth(0.78, 0.9, p) * 0.45, choir: smooth(0.8, 0.95, p) * 0.3, bells: smooth(0.86, 1, p) * 0.2, major: true }
+  },
   titeldrop: () => ({ pad: 0.65, choir: 0.45, bells: 0.3, drone: 0.18, major: true }),
   ritueel: () => ({ pad: 0.32, bells: 0.18, major: true }),
   jouwspiegel: () => ({ pad: 0.3, bells: 0.15, major: true }),
@@ -236,9 +242,9 @@ export class Score {
   }
 
   /** Elk frame: de mix volgt de scène waarin je bent. */
-  update(scene: string, p: number, v: number) {
+  update(scene: string, p: number, v: number, since = -1) {
     const now = this.ctx.currentTime
-    const m = (MIX[scene] ?? (() => ({})))(clamp(p), v)
+    const m = (MIX[scene] ?? (() => ({})))(clamp(p), v, since)
     for (const k of ['drone', 'rain', 'wind', 'hum', 'pad', 'choir', 'riser', 'rumble', 'bells', 'glass'] as const) this.bus[k].set(m[k] ?? 0, 0.6)
     const riserHz = 300 + (m.riser ?? 0) * 6000
     if (Math.abs(riserHz - this.riserHz) > 5) { this.riserHz = riserHz; this.riserF.frequency.setTargetAtTime(riserHz, now, 0.3) }
@@ -319,6 +325,10 @@ export class Score {
   swish() { this.burst('bandpass', 1800, 0.06, 0.22) }
   /** Een voetstap op steen. */
   step() { this.burst('lowpass', 500, 0.18, 0.09) }
+  /** Het slot van een deur: een droge dubbele klik. */
+  latch() { this.burst('highpass', 3000, 0.22, 0.03); setTimeout(() => this.burst('bandpass', 1400, 0.2, 0.05), 70) }
+  /** Een deur die langzaam opengaat: een lage, lange zucht van hout en lucht. */
+  creak() { this.burst('bandpass', 620, 0.07, 1.1) }
   /** Een zegel dat rinkelt. */
   ping() { this.bell(880, 0.9); this.bell(1318.5, 0.5) }
   /** Het wieltje van de aansteker: een droge klik en een sissende vonk. */
