@@ -93,7 +93,7 @@ const layerHtml = (l: Layer, i: number) => {
   const mv = `${l.rot ? `rotate:${l.rot}deg;` : ''}${filter}${l.op != null ? `opacity:${l.op};` : ''}animation-delay:-${((i * 0.73) % 3).toFixed(2)}s`
   const pos = l.pos ? `object-position:${l.pos}` : ''
   const tag = l.pins?.length ? `<div class="cover-box" style="--a:${l.aspect ?? 1}">${l.pins.map(pinHtml).join('')}</div>` : ''
-  return `<div class="ly f-${fit}${l.role ? ` ro-${l.role}` : ''}" style="${wrap}"><div class="mv${l.anim ? ` a-${l.anim}` : ''}${tag ? ' tagged' : ''}" style="${mv}">${im(l.src, 'base', pos, l.alt)}${l.reveal ? im(l.reveal, 'ov reveal', pos) : ''}${tag}</div></div>`
+  return `<div class="ly f-${fit}${l.role ? ` ro-${l.role}` : ''}" style="${wrap}"><div class="mv${l.anim ? ` a-${l.anim}` : ''}${tag ? ' tagged' : ''}" style="${mv}">${im(l.src, 'base', pos, l.alt)}${l.reveal ? im(l.src, 'ov light', pos) + im(l.reveal, 'ov light next', pos) + im(l.reveal, 'ov reveal', pos) : ''}${tag}</div></div>`
 }
 
 const fxHtml = (f: Fx) => ({
@@ -599,6 +599,8 @@ const update = (v: View, p: number, dt: number) => {
     v.frame.style.setProperty('--rv', shown.toFixed(3))
     v.cam.style.scale = (1 + 0.04 * shown).toFixed(4)
     v.cam.style.setProperty('--beam', shown.toFixed(3))
+    // Op het felste moment van de verandering trekt er een sluier van licht over het beeld: de wissel zie je nooit
+    veilT = Math.max(veilT, 0.42 * Math.max(0, 1 - Math.abs(shown - 0.55) / 0.16))
     if (shown >= 0.98 && !v.done) {
       // Het moment van de waarheid (Darkest Dungeon): een trom, het licht bloeit zacht op, het beeld zakt weg in het
       // donker en in het midden verschijnt rustig "DAG ÉÉN" met wat hij vandaag doet; daarna trekt het weer op

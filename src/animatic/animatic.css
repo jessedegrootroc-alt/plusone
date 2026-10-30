@@ -71,7 +71,14 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 .lid { position: absolute; left: 0; right: 0; height: 51%; z-index: 5; background: #000; transition: none; }
 .lid.top { top: 0; transform-origin: top; transform: scaleY(calc(1 - var(--open, 0))); border-bottom: 2px solid #222; }
 .lid.bot { bottom: 0; transform-origin: bottom; transform: scaleY(calc(1 - var(--open, 0))); }
-.ov.reveal { opacity: 1; clip-path: inset(calc((1 - var(--rv, 0)) * 100%) 0 0 0); filter: drop-shadow(0 -3px 0 #fff); }
+/* De verandering in de visie: geen veeg maar een verheerlijking in licht. De oude Daan wordt een gloeiend wit silhouet, op
+   het felste moment wordt dat silhouet de nieuwe Daan, en die komt in kleur uit het licht; zo zie je nooit twee
+   tekeningen tegelijk. Alleen opacity (elk beeld een eigen laag), zodat de gloed maar één keer getekend wordt */
+.mv:has(> .reveal) > .base { opacity: clamp(0, (0.56 - var(--rv, 0)) / 0.09, 1); will-change: opacity; }
+.ov.light { filter: brightness(0) invert(1) blur(0.25cqh) drop-shadow(0 0 2cqh rgba(255, 236, 200, 0.9)); will-change: opacity;
+  opacity: clamp(0, min((var(--rv, 0) - 0.08) / 0.37 * 0.85, (0.6 - var(--rv, 0)) / 0.15 * 0.85), 0.85); } /* nooit helemaal wit: zijn lijnen schemeren erdoor */
+.ov.light.next { opacity: clamp(0, min((var(--rv, 0) - 0.45) / 0.1 * 0.85, (0.95 - var(--rv, 0)) / 0.4 * 0.85), 0.85); }
+.ov.reveal { opacity: clamp(0, (var(--rv, 0) - 0.5) / 0.12, 1); will-change: opacity; }
 .a-breathe { animation: breathe 3.4s ease-in-out infinite; }
 @keyframes breathe { 50% { transform: scale(1.012, 1.022); } }
 .a-sway { animation: sway 4.6s ease-in-out infinite; }
