@@ -1,6 +1,7 @@
 import compassIco from '../icons/compass.svg?raw'
 import mirrorIco from '../icons/mirror.svg?raw'
 import mountainIco from '../icons/mountain.svg?raw'
+import { t } from './lang'
 
 // Het regieboek (docs/BRIEF-VERHAAL.md §5) als data: elke scène met haar scrolllengte, panelen, lagen, zinnen en cues.
 // De beelden komen uit docs/ILLUSTRATIES-VERHAAL.md (public/verhaal/art/…). Ontbreekt er een, dan toont het paneel
@@ -10,13 +11,17 @@ import mountainIco from '../icons/mountain.svg?raw'
 /** Wat hij vandaag aanpakt: hij kiest één post-it van de spiegel (zoals de smaak bij Santioni); het verandert de vertelling */
 export type Choice = 'rook' | 'porno' | 'buurt'
 export const CHOICES: { id: Choice; label: string }[] = [
-  { id: 'rook', label: 'Vandaag niet roken' },
-  { id: 'porno', label: 'Vandaag geen porno' },
-  { id: 'buurt', label: 'Vandaag iets doen voor een ander' },
+  { id: 'rook', label: t('Vandaag niet roken', 'No smoking today') },
+  { id: 'porno', label: t('Vandaag geen porno', 'No porn today') },
+  { id: 'buurt', label: t('Vandaag iets doen voor een ander', 'Do something for someone else today') },
 ]
 /** Wat de spiegel op zijn glas schrijft: de waarheden die hij al jaren niet hardop zegt (Goggins: accountability mirror).
  *  Eén per keuze, in dezelfde volgorde: wat hij vandaag aanpakt, kiest hij uit wat hij net over zichzelf las. */
-export const TRUTHS = ['Ik rook dertig per dag.', 'Ik kijk elke nacht porno tot ik niets meer voel.', 'Ik doe al jaren niets voor een ander.']
+export const TRUTHS = [
+  t('Ik rook dertig per dag.', 'I smoke thirty a day.'),
+  t('Ik kijk elke nacht porno tot ik niets meer voel.', 'I watch porn every night until I feel nothing.'),
+  t('Ik doe al jaren niets voor een ander.', "I haven't done a thing for anyone in years."),
+]
 /** Waar de drie post-its op het glas zitten (spiegel én keuze, zodat ze blijven waar ze waren): plek %, draaiing, welk getekend blaadje */
 export const SPOTS = [
   { x: 30, y: 23, r: -4, s: 2 },
@@ -112,7 +117,7 @@ export interface Caption {
   to: number
   y: number
   /** De tweede stem: de drang, fluisterend (een eigen tekstkader) */
-  who?: 'drang'
+  who?: 'drang' | 'noor'
 }
 
 /** Noors melodie (speeldoos, vals, piano, neuriën), een klik, de melding (twee noten) of even helemaal niets */
@@ -175,9 +180,9 @@ const BERG_VOOR: Layer = { src: K('berg-voorgrond'), fit: 'cover', depth: 1.1 }
 export const SCENES: Scene[] = [
   {
     // Cold open: het einde vooraf. Zijn knokkels voor een deur in de ochtendzon; het beeld bevriest, de titel
-    id: 'deur', name: 'De deur', ref: 'Intro', sh: 1.4, world: 'licht', pace: 3,
+    id: 'deur', name: t('De deur', 'The door'), ref: 'Intro', sh: 1.4, world: 'licht', pace: 3,
     cue: '♪ vogels ver weg · één druppel · zachte hartslag · twee noten speeldoos, afgekapt door de titel',
-    title: { big: 'PLUSONE', sub: 'HET VERHAAL VAN DAAN', at: 0.6 },
+    title: { big: 'PLUSONE', sub: t('HET VERHAAL VAN DAAN', 'THE STORY OF DAAN'), at: 0.6 },
     sounds: [{ at: 0.1, play: 'melody', n: 2 }],
     panels: [
       {
@@ -191,7 +196,7 @@ export const SCENES: Scene[] = [
     captions: [{ vo: 'deur', at: 0.08, to: 0.56, y: 88 }],
   },
   {
-    id: 'steeg', name: '0 · De steeg', ref: 'Wander', sh: 3.8, world: 'nacht',
+    id: 'steeg', name: t('0 · De steeg', '0 · The alley'), ref: 'Wander', sh: 3.8, world: 'nacht',
     cue: '♪ regen in twee lagen · lantaarn zoemt · cello · de montage: klik na klik, steeds sneller · één valse noot bij het cadeautje',
     sounds: [{ at: 0.84, play: 'melody', n: 1, mode: 'vals' }],
     panels: [
@@ -260,7 +265,7 @@ export const SCENES: Scene[] = [
     ],
   },
   {
-    id: 'gezicht', name: '1 · Het gezicht', ref: 'Profile', sh: 2.6, world: 'nacht', pace: 2.4,
+    id: 'gezicht', name: t('1 · Het gezicht', '1 · The face'), ref: 'Profile', sh: 2.6, world: 'nacht', pace: 2.4,
     // Haar melodie, helder, tot het pakje dichtklapt
     sounds: [{ at: 0.2, play: 'melody', n: 4 }, { at: 0.62, play: 'click' }],
     cue: '♪ regen dempt · één pianotoon bij de foto',
@@ -285,7 +290,7 @@ export const SCENES: Scene[] = [
     ],
   },
   {
-    id: 'drang', name: '2 · De drang', ref: 'Approach', sh: 3.6, world: 'nacht', pace: 3,
+    id: 'drang', name: t('2 · De drang', '2 · The urge'), ref: 'Approach', sh: 3.6, world: 'nacht', pace: 3,
     cue: '♪ alles valt weg tot een hartslag die versnelt · de langste adem',
     panels: [
       {
@@ -315,7 +320,7 @@ export const SCENES: Scene[] = [
     ],
   },
   {
-    id: 'aansteker', name: '3 · De aansteker', ref: 'Near', sh: 2.4, world: 'nacht', shake: true,
+    id: 'aansteker', name: t('3 · De aansteker', '3 · The lighter'), ref: 'Near', sh: 2.4, world: 'nacht', shake: true,
     sounds: [{ at: 0.42, play: 'motif' }],
     cue: '♪ klik van het wieltje bij elke vonk · hartslag · dan een zoem in zijn jas',
     panels: [
@@ -332,15 +337,15 @@ export const SCENES: Scene[] = [
         dshots: [[0.36, 1, 50, 50], [0.62, 1.7, 44, 37]],
         note: 'Close-up: zijn telefoon steekt uit zijn jaszak, het scherm licht op (klein, niet de hoofdzaak)',
         // De melding zelf staat op het scherm, zoals een echte melding van de app; niemand hoeft hem voor te lezen
-        layers: [{ src: V('close-melding'), fit: 'cover', anim: 'tremble', pins: [{ x: 44.5, y: 38.5, w: 23, r: -13, kind: 'screen', text: '<span class="n-head"><img src="/icons/icon-192.png" alt="" /><span>PlusOne</span><span>nu</span></span><span class="n-title">+1</span><span class="n-body">Dag één. Als je wilt.</span>' }] }],
+        layers: [{ src: V('close-melding'), fit: 'cover', anim: 'tremble', pins: [{ x: 44.5, y: 38.5, w: 23, r: -13, kind: 'screen', text: '<span class="n-head"><img src="/icons/icon-192.png" alt="" /><span>PlusOne</span><span>' + t('nu', 'now') + '</span></span><span class="n-title">+1</span><span class="n-body">' + t('Dag één. Als je wilt.', 'Day one. If you want.') + '</span>' }] }],
       },
     ],
     captions: [],
   },
   {
-    id: 'vlam', name: '4 · De vlam', ref: 'Hand', sh: 3.4, world: 'nacht', pace: 2.6,
+    id: 'vlam', name: t('4 · De vlam', '4 · The flame'), ref: 'Hand', sh: 3.4, world: 'nacht', pace: 2.6,
     cue: '♪ de vlam ruist · hartslag · toon stijgt terwijl je trekt',
-    act: { kind: 'move', text: 'HOUD VAST\n& TREK WEG', touchText: 'HOUD VAST\n& SLEEP', from: 0.14, to: 0.92 },
+    act: { kind: 'move', text: t('HOUD VAST\n& TREK WEG', 'HOLD\n& PULL AWAY'), touchText: t('HOUD VAST\n& SLEEP', 'HOLD\n& DRAG'), from: 0.14, to: 0.92 },
     panels: [
       {
         x: 0, y: 0, w: 100, h: 100, d: [0, 0, 100, 100], kind: 'main', depth: 0.2, bg: '#000', fx: ['embers', 'vig'],
@@ -360,7 +365,7 @@ export const SCENES: Scene[] = [
     ],
   },
   {
-    id: 'breken', name: '5 · Het breken', ref: 'Target', sh: 2.2, world: 'nacht', impact: 0.64,
+    id: 'breken', name: t('5 · Het breken', '5 · The break'), ref: 'Target', sh: 2.2, world: 'nacht', impact: 0.64,
     cue: '♪ één droge klap op “breekt” · dan stilte',
     panels: [
       {
@@ -384,7 +389,7 @@ export const SCENES: Scene[] = [
     captions: [],
   },
   {
-    id: 'val', name: '6 · De val', ref: 'Transition', sh: 4, world: 'zwart', pace: 3.5, fall: true,
+    id: 'val', name: t('6 · De val', '6 · The fall'), ref: 'Transition', sh: 4, world: 'zwart', pace: 3.5, fall: true,
     cue: '♪ de rook zuigt alles weg: riser → sub drop → stilte → licht',
     panels: [
       {
@@ -403,7 +408,7 @@ export const SCENES: Scene[] = [
     captions: [],
   },
   {
-    id: 'ontwaken', name: '7 · Ontwaken', ref: 'Cathedral', sh: 4, world: 'licht', pace: 2.4,
+    id: 'ontwaken', name: t('7 · Ontwaken', '7 · Awakening'), ref: 'Cathedral', sh: 4, world: 'licht', pace: 2.4,
     cue: '♪ stilte, dan strijkers en een zacht koor · voetstappen op steen',
     panels: [
       {
@@ -425,7 +430,7 @@ export const SCENES: Scene[] = [
     captions: [],
   },
   {
-    id: 'spiegel', name: '8 · De spiegel', ref: 'Eyes Open', sh: 4.2, world: 'licht', pace: 3.2, impact: 0.48,
+    id: 'spiegel', name: t('8 · De spiegel', '8 · The mirror'), ref: 'Eyes Open', sh: 4.2, world: 'licht', pace: 3.2, impact: 0.48,
     cue: '♪ de muziek valt helemaal weg · wind en zijn adem · een klap als hij terugkijkt · bij elke post-it plakband',
     panels: [
       {
@@ -454,9 +459,9 @@ export const SCENES: Scene[] = [
     ],
   },
   {
-    id: 'keuze', name: '9 · De keuze', ref: 'Drink Selection', sh: 2.6, world: 'licht',
+    id: 'keuze', name: t('9 · De keuze', '9 · The choice'), ref: 'Drink Selection', sh: 2.6, world: 'licht',
     cue: '♪ één lange toon · papier bij aanraken',
-    act: { kind: 'choose', text: 'KIES\nÉÉN', from: 0.15, to: 0.98 },
+    act: { kind: 'choose', text: t('KIES\nÉÉN', 'CHOOSE\nONE'), from: 0.15, to: 0.98 },
     panels: [
       {
         x: 0, y: 0, w: 100, h: 100, d: [22, 0, 56, 100], kind: 'main', depth: 0.3, bg: '#151413', fx: ['dust', 'vig'],
@@ -472,9 +477,9 @@ export const SCENES: Scene[] = [
     ],
   },
   {
-    id: 'scheur', name: '10 · Afscheuren', ref: 'Drink Pour', sh: 3, world: 'licht',
+    id: 'scheur', name: t('10 · Afscheuren', '10 · Tearing off'), ref: 'Drink Pour', sh: 3, world: 'licht',
     cue: '♪ papier rekt · bij het scheuren een klap en stilte',
-    act: { kind: 'pour', text: 'HOUD VAST\n& SCHEUR AF', from: 0.1, to: 0.95 },
+    act: { kind: 'pour', text: t('HOUD VAST\n& SCHEUR AF', 'HOLD\n& TEAR OFF'), from: 0.1, to: 0.95 },
     panels: [
       {
         // Zoals in de app: een post-it haal je eraf door hem vast te houden
@@ -490,9 +495,9 @@ export const SCENES: Scene[] = [
     captions: [],
   },
   {
-    id: 'visie', name: '11 · De visie', ref: 'Anti-Gravity', sh: 3.8, world: 'licht',
+    id: 'visie', name: t('11 · De visie', '11 · The vision'), ref: 'Anti-Gravity', sh: 3.8, world: 'licht',
     cue: '♪ lichtbundel zwelt · trom = moment van de waarheid · koor in majeur',
-    act: { kind: 'rise', text: 'HOUD VAST', from: 0.18, to: 0.92 },
+    act: { kind: 'rise', text: t('HOUD VAST', 'HOLD'), from: 0.18, to: 0.92 },
     panels: [
       {
         x: 0, y: 0, w: 100, h: 100, d: [0, 0, 100, 100], kind: 'main', depth: 0.2, bg: '#000', fx: ['rays', 'beam', 'dust'],
@@ -514,7 +519,7 @@ export const SCENES: Scene[] = [
     ],
   },
   {
-    id: 'muren', name: '12 · De muren breken', ref: 'Pillar Crumble', sh: 2.6, world: 'licht', impact: 0.12,
+    id: 'muren', name: t('12 · De muren breken', '12 · The walls break'), ref: 'Pillar Crumble', sh: 2.6, world: 'licht', impact: 0.12,
     cue: '♪ steen breekt · puin vliegt weg · thema bouwt op',
     panels: [
       {
@@ -532,7 +537,7 @@ export const SCENES: Scene[] = [
     captions: [],
   },
   {
-    id: 'stilte', name: '13 · Stilte', ref: 'Colosseum', sh: 3.4, world: 'licht', pace: 4,
+    id: 'stilte', name: t('13 · Stilte', '13 · Silence'), ref: 'Colosseum', sh: 3.4, world: 'licht', pace: 4,
     cue: '♪ bijna niets: wind, één lang aangehouden akkoord, zijn adem',
     panels: [
       {
@@ -551,9 +556,9 @@ export const SCENES: Scene[] = [
   },
   {
     // Hij is goed genoeg om haar weer te zien. Bij de deur komt de drang nog één keer terug (de prijs); dan klopt hij
-    id: 'noor', name: '14 · Noor', ref: 'Reunion', sh: 5, world: 'licht', pace: 2.8,
+    id: 'noor', name: t('14 · Noor', '14 · Noor'), ref: 'Reunion', sh: 5, world: 'licht', pace: 2.8,
     cue: '♪ ochtend: druppels, één vogel · zijn hart · drie kloppen · stilte als de deur opengaat · zij neuriet de melodie, de laatste noot valt',
-    act: { kind: 'knock', text: 'KLOP\nAAN', touchText: 'TIK\nDRIE KEER', from: 0.42, to: 0.58 },
+    act: { kind: 'knock', text: t('KLOP\nAAN', 'KNOCK'), touchText: t('TIK\nDRIE KEER', 'TAP\nTHREE TIMES'), from: 0.42, to: 0.58 },
     sounds: [{ at: 0.72, play: 'melody', mode: 'hum' }],
     panels: [
       {
@@ -585,13 +590,14 @@ export const SCENES: Scene[] = [
     ],
     captions: [
       { vo: 'drang-18', at: 0.3, to: 0.42, y: 88, who: 'drang' },
-      { vo: '18', at: 0.64, to: 0.8, y: 88 },
+      // Niet hij maar zij: "Papa?", vragend en vol hoop
+      { vo: 'noor-18', at: 0.64, to: 0.8, y: 88, who: 'noor' },
     ],
   },
   {
-    id: 'titeldrop', name: '15 · Titel-drop', ref: 'Colosseum', sh: 2.2, world: 'licht',
+    id: 'titeldrop', name: t('15 · Titel-drop', '15 · Title drop'), ref: 'Colosseum', sh: 2.2, world: 'licht',
     cue: '♪ hoofdthema, vol orkest',
-    title: { big: 'PLUSONE', sub: 'Wat je morgen bent, kies je vandaag', at: 0.05 },
+    title: { big: 'PLUSONE', sub: t('Wat je morgen bent, kies je vandaag', 'Who you are tomorrow, you choose today'), at: 0.05 },
     panels: [
       {
         // De omgekeerde opening: 's nachts één klein figuur van boven, nu twee, in het licht
@@ -605,7 +611,7 @@ export const SCENES: Scene[] = [
   },
   // ── Het merkdeel: dezelfde bouwstenen als de app (kaarten, de spiegel met post-its, de tabbalk, de witte knop) ──
   {
-    id: 'ritueel', name: '16 · Zo werkt het', ref: 'Taste', sh: 1.6, world: 'zwart', panels: [], captions: [],
+    id: 'ritueel', name: t('16 · Zo werkt het', '16 · How it works'), ref: 'Taste', sh: 1.6, world: 'zwart', panels: [], captions: [],
     cue: '♪ thema zacht in een lus',
     html: `<div class="brand"><div class="b-col b-wide">
       <div class="b-head"><p class="b-eyebrow">Zo werkt PlusOne</p><h2 class="b-display">Wees eerlijk nu.<br/>Word wie je bent.</h2></div>
@@ -617,7 +623,7 @@ export const SCENES: Scene[] = [
     </div></div>`,
   },
   {
-    id: 'jouwspiegel', name: '17 · Jouw spiegel', ref: 'Collection', sh: 1.6, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
+    id: 'jouwspiegel', name: t('17 · Jouw spiegel', '17 · Your mirror'), ref: 'Collection', sh: 1.6, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
     // Precies het blok uit de app: kop, het prikbord met twee post-its (waarheid, stap, ladder, termijn, vinkje)
     html: `<div class="brand"><div class="b-col">
       <div class="b-section-head"><h2 class="b-h2">De spiegel</h2><span class="b-small">telt elke dag mee</span></div>
@@ -629,7 +635,7 @@ export const SCENES: Scene[] = [
     </div></div>`,
   },
   {
-    id: 'app', name: '18 · De app', ref: 'Products', sh: 1.4, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
+    id: 'app', name: t('18 · De app', '18 · The app'), ref: 'Products', sh: 1.4, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
     html: `<div class="brand"><div class="b-col b-center">
       <img class="b-appicon" src="/icons/icon-512.png" alt="" />
       <div class="b-head b-center"><p class="b-eyebrow">De app</p><h2 class="b-display">PlusOne</h2><p class="b-lead">Elke dag één stap beter. In zwart-wit, zonder afleiding.</p></div>
@@ -641,7 +647,7 @@ export const SCENES: Scene[] = [
     </div></div>`,
   },
   {
-    id: 'installeer', name: '19 · Installeren', ref: 'Retail', sh: 1.4, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
+    id: 'installeer', name: t('19 · Installeren', '19 · Install'), ref: 'Retail', sh: 1.4, world: 'zwart', panels: [], captions: [], cue: '♪ thema',
     html: `<div class="brand"><div class="b-col">
       <div class="b-head"><p class="b-eyebrow">Begin vandaag</p><h2 class="b-display">Zet PlusOne op je beginscherm.</h2><p class="b-lead">Het werkt als een app, zonder app store.</p></div>
       <ol class="b-steps">
@@ -653,7 +659,7 @@ export const SCENES: Scene[] = [
     </div></div>`,
   },
   {
-    id: 'footer', name: '20 · Slot', ref: 'Footer', sh: 1, world: 'zwart', panels: [], captions: [], cue: '',
+    id: 'footer', name: t('20 · Slot', '20 · Ending'), ref: 'Footer', sh: 1, world: 'zwart', panels: [], captions: [], cue: '',
     html: `<div class="brand"><div class="b-col b-center"><img class="b-laurel" src="/art/item-lauwerkrans.webp" alt="" /><p class="b-end">Wat je morgen bent,<br/>kies je vandaag.</p><p class="b-eyebrow">PlusOne</p></div></div>`,
   },
 ]

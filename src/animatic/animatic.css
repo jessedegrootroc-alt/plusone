@@ -204,6 +204,9 @@ body::after { content: ''; position: fixed; inset: -50%; z-index: 22; pointer-ev
 /* De drang: dezelfde stem, maar fluisterend. Een smaller kader, schuin, zonder rand, dichter op het beeld */
 .cap.drang p { max-width: 340px; padding: 10px 16px; background: rgba(0, 0, 0, 0.55); box-shadow: none; font-style: italic; letter-spacing: 0.01em; }
 .cap.drang span.said, .cap.drang span.on { color: var(--app-ink-2); }
+/* Noor: een kinderstem, kort en warm (haar woorden in warm wit) */
+.cap.noor p { max-width: 240px; padding: 10px 18px; }
+.cap.noor span.said, .cap.noor span.on { color: #F6E7CF; }
 
 /* Het wachten na het kloppen: de randen van het beeld worden donker, alleen zijn vuist op de deur blijft in het licht */
 .dread { position: absolute; inset: 0; z-index: 8; pointer-events: none; background: radial-gradient(ellipse 62% 58% at 50% 48%, transparent 28%, rgba(0, 0, 0, 0.86)); opacity: var(--dread, 0); will-change: opacity; }

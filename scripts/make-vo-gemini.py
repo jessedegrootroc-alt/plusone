@@ -74,12 +74,30 @@ Accent: native Netherlands Dutch.
 
 #### TRANSCRIPT
 """
+# De derde stem: Noor, zijn dochter van zeven, als ze de deur opendoet (regels met een sleutel die begint met "noor-")
+NOOR = """# AUDIO PROFILE: Noor
+A little Dutch girl of about seven, Daan's daughter. A small, sweet, light child's voice, soft and a little breathy.
+
+## THE SCENE
+Early morning. She opens the front door and her father is standing there, after two years. She can hardly believe it.
+
+### DIRECTOR'S NOTES
+Style: tender and unsure, a quiet question full of hope, as if she is afraid it is not real. Never cute on purpose, never loud.
+Pace: slow, a tiny breath before the word; the word rises at the end, like a question.
+Accent: native Netherlands Dutch.
+
+#### TRANSCRIPT
+"""
 # Per stem: de regie en het tempo (Daan iets trager dan het model hem uit zichzelf zegt; de toonhoogte blijft gelijk)
-ROLES = {"daan": (DIRECTION, 0.93), "drang": (DRANG, 1.0)}
+ROLES = {"daan": (DIRECTION, 0.93), "drang": (DRANG, 1.0), "noor": (NOOR, 1.0)}
+# Een eigen stem en toonhoogte per rol (de rest gebruikt de stem van --stem): Noor is een jonge stem, iets hoger gezet
+# (+2,4 halve tonen, ook de klankkleur), zodat er een kind praat in plaats van een jonge vrouw
+VOICE = {"noor": "Leda"}
+PITCH = {"noor": 1.15}
 
 
 def role(key: str) -> str:
-    return "drang" if key.startswith("drang-") else "daan"
+    return "drang" if key.startswith("drang-") else "noor" if key.startswith("noor-") else "daan"
 
 
 BATCH = 1  # regels per verzoek: één regel per opname (knippen op stiltes bleek onbetrouwbaar; de pauzes van het model wisselen te veel)
@@ -256,7 +274,7 @@ def tail_noise(path: Path):
     return (gap + 3) * w / 44100 if hiss and as_loud else None
 
 
-def finish(src: Path, a: float, b: float, out: Path, text: str, tempo: float = 1.0):
+def finish(src: Path, a: float, b: float, out: Path, text: str, tempo: float = 1.0, pitch: float = 1.0):
     """Knip één regel uit, haal stilte (en een ruisstoot) aan de randen weg, mix hem als filmstem en schat de woorden."""
     with tempfile.TemporaryDirectory() as tmp:
         cut = Path(tmp) / "cut.wav"
@@ -268,13 +286,15 @@ def finish(src: Path, a: float, b: float, out: Path, text: str, tempo: float = 1
             ff("-i", cut, "-af", f"atrim=end={noise:.3f},{TAIL}", clean)
             cut = clean
         spoken = seconds(cut) / tempo
-        ff("-i", cut, "-af", f"atempo={tempo},adelay={int(LEAD * 1000)},{FILM}", "-c:a", "aac", "-b:a", "96k", out)
+        shift = f"asetrate={44100 * pitch:.0f},aresample=44100,atempo={1 / pitch:.4f}," if pitch != 1 else ""
+        ff("-i", cut, "-af", f"{shift}atempo={tempo},adelay={int(LEAD * 1000)},{FILM}", "-c:a", "aac", "-b:a", "96k", out)
     return {"duration": round(seconds(out), 3), "words": words_with_times(text, spoken)}
 
 
 def record(voice: str, items: list[tuple[str, str]], outs: dict[str, Path], who: str = "daan"):
     """Regels in groepjes opnemen en losknippen. Lukt het knippen niet, dan die regels één voor één."""
     direction, tempo = ROLES[who]
+    pitch = PITCH.get(who, 1.0)
     timings = {}
     with tempfile.TemporaryDirectory() as tmp:
         for i in range(0, len(items), BATCH):
@@ -290,7 +310,7 @@ def record(voice: str, items: list[tuple[str, str]], outs: dict[str, Path], who:
                     print(f"  {k}: past niet bij zijn stuk, apart opnieuw…")
                     one = Path(tmp) / f"{k}.wav"
                     tts(voice, [t], one, direction)
-                    timings[k] = finish(one, 0.0, seconds(one), outs[k], t, tempo)
+                    timings[k] = finish(one, 0.0, seconds(one), outs[k], t, tempo, pitch)
                     print(f"{k:>16}  {timings[k]['duration']:5.1f}s  {t[:60]}")
                 group = [g for x, g in enumerate(group) if x not in wrong]
                 parts = [pt for x, pt in enumerate(parts) if x not in wrong]
@@ -299,11 +319,11 @@ def record(voice: str, items: list[tuple[str, str]], outs: dict[str, Path], who:
                 for k, t in group:
                     one = Path(tmp) / f"{k}.wav"
                     tts(voice, [t], one, direction)
-                    timings[k] = finish(one, 0.0, seconds(one), outs[k], t, tempo)
+                    timings[k] = finish(one, 0.0, seconds(one), outs[k], t, tempo, pitch)
                     print(f"{k:>16}  {timings[k]['duration']:5.1f}s  {t[:60]}")
                 continue
             for (k, t), (a, b) in zip(group, parts):
-                timings[k] = finish(wav, a, b, outs[k], t, tempo)
+                timings[k] = finish(wav, a, b, outs[k], t, tempo, pitch)
                 print(f"{k:>16}  {timings[k]['duration']:5.1f}s  {t[:60]}")
     return timings
 
@@ -357,7 +377,7 @@ def stem(voice, only=None):
     cache = json.loads(cache_file.read_text()) if cache_file.exists() else {}
     timings_file = STAGE / "timings.json"
     timings = json.loads(timings_file.read_text()) if timings_file.exists() else {}
-    sig = lambda k, t, m=MODEL: hashlib.sha1(f"{voice}|{m}|{ROLES[role(k)]}|{FILM}|{t}".encode()).hexdigest()
+    sig = lambda k, t, m=MODEL: hashlib.sha1(f"{VOICE.get(role(k), voice)}|{m}|{ROLES[role(k)]}|{FILM}|{t}".encode()).hexdigest()
     # Een regel is klaar als hij met deze stem en tekst is opgenomen, met welk van de spraakmodellen ook
     done = lambda k, t: cache.get(k) in {sig(k, t, m) for m in MODELS} and (STAGE / f"{k}.m4a").exists() and k in timings
     todo = [(k, t) for k, t in lines.items() if not done(k, t) and (only is None or role(k) == only)]
@@ -369,7 +389,7 @@ def stem(voice, only=None):
     # Regel voor regel, en na elke regel opslaan: de gratis daglimiet is klein, morgen gaat het verder waar het stopte
     for k, t in todo:
         try:
-            timings.update(record(voice, [(k, t)], {k: STAGE / f"{k}.m4a"}, role(k)))
+            timings.update(record(VOICE.get(role(k), voice), [(k, t)], {k: STAGE / f"{k}.m4a"}, role(k)))
         except SystemExit as e:
             save()
             sys.exit(f"Gestopt bij {k}: {e}. Wat klaar is, is bewaard; draai het script later opnieuw.")

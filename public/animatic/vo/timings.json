@@ -714,18 +714,13 @@
    }
   ]
  },
- "18": {
-  "duration": 1.094,
+ "noor-18": {
+  "duration": 0.801,
   "words": [
    {
-    "text": "Hoi,",
+    "text": "Papa?",
     "start": 0.12,
-    "end": 0.369
-   },
-   {
-    "text": "Noor.",
-    "start": 0.816,
-    "end": 1.114
+    "end": 0.819
    }
   ]
  }
