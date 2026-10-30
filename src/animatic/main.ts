@@ -270,7 +270,11 @@ const layout = () => {
 }
 
 // ── Geluid: vertelstem per zin (met tijdcodes per woord) en de muziek ──
-const audio = new Map<string, HTMLAudioElement>()
+// Eén audio-element voor de hele vertelstem, dat per zin een ander bestand krijgt: zo klinken er nooit twee zinnen
+// tegelijk, en hoeft iOS maar één element vrij te geven (met een element per zin liepen ze op een telefoon door elkaar)
+const voice = new Audio()
+voice.preload = 'auto'
+const voiceSrc = (key: string) => `/animatic/vo/${key}.m4a`
 let score: Score | null = null
 let soundOn = false
 let playing: { key: string; el: HTMLAudioElement } | null = null
@@ -278,12 +282,12 @@ let playing: { key: string; el: HTMLAudioElement } | null = null
 let queued: string | null = null
 const speaking = () => !!playing && !playing.el.paused && !playing.el.ended
 const speak = (key: string) => {
-  const el = audio.get(key)
-  if (!el) return
-  if (playing) playing.el.pause()
-  el.currentTime = 0
-  void el.play().catch(() => {})
-  playing = { key, el }
+  if (!T[key]) return
+  voice.pause()
+  voice.muted = false
+  voice.src = voiceSrc(key) // begint vanzelf weer vooraan
+  void voice.play().catch(() => {})
+  playing = { key, el: voice }
 }
 // Het beeld wacht nooit op de stem: ben je al bij de volgende zin terwijl de vorige nog klinkt, dan komt die erna
 const play = (key: string) => {
@@ -297,12 +301,14 @@ const playQueued = () => {
   // Alleen als die zin nog bij wat je ziet hoort (niet na een sprong naar een heel andere scène)
   if (key && soundOn && views.some((v) => v.stage.classList.contains('on') && v.caps.some((c) => c.key === key))) speak(key)
 }
-/** iOS geeft geluid pas vrij binnen een tik: elk bestand één keer stil starten en weer stoppen. */
+voice.addEventListener('ended', playQueued)
+/** iOS geeft geluid pas vrij binnen een tik: het stem-element één keer stil starten en weer stoppen. */
 const unlock = () => {
-  for (const el of audio.values()) {
-    el.muted = true
-    void el.play().then(() => { el.pause(); el.currentTime = 0; el.muted = false }).catch(() => { el.muted = false })
-  }
+  if (playing) return
+  voice.muted = true
+  voice.src = voiceSrc(Object.keys(T)[0])
+  // Begon er intussen al een zin, dan die niet stoppen
+  void voice.play().then(() => { if (!playing) voice.pause(); voice.muted = false }).catch(() => { voice.muted = false })
 }
 const setSound = async (on: boolean) => {
   soundOn = on
@@ -798,12 +804,8 @@ const start = async () => {
   history.scrollRestoration = 'manual'
   startMotion()
   T = await fetch('/animatic/vo/timings.json').then((r) => r.json())
-  for (const key of Object.keys(T)) {
-    const el = new Audio(`/animatic/vo/${key}.m4a`)
-    el.preload = 'auto'
-    el.addEventListener('ended', playQueued)
-    audio.set(key, el)
-  }
+  // De zinnen alvast binnenhalen, zodat een zin meteen begint als hij aan de beurt is
+  for (const key of Object.keys(T)) void fetch(voiceSrc(key)).catch(() => {})
   layout()
   addEventListener('resize', layout)
   if (!reduce) {
