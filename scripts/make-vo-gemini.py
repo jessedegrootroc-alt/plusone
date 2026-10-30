@@ -11,6 +11,7 @@ Gebruik:
     python3 scripts/make-vo-gemini.py --schoon                         # ruisstoot aan het eind weghalen, zonder opnieuw op te nemen
     python3 scripts/make-vo-gemini.py --taal en --stem Algenib         # de Engelse versie (vo.en.json, naar public/animatic/vo/en/)
     python3 scripts/make-vo-gemini.py --taal en --pauzes 0.8           # te lange stiltes midden in een zin inkorten
+    python3 scripts/make-vo-gemini.py --taal en --sneller 13 14        # deze regels iets sneller (standaard 1,15×)
 
 Het gratis gebruik heeft een kleine daglimiet (10 verzoeken per dag voor dit model). Elke regel is één verzoek; na elke
 regel wordt opgeslagen, dus stopt het bij de limiet, dan gaat het de volgende dag verder. Wat niet veranderd is, wordt
@@ -472,6 +473,26 @@ def pauzes(maximum: float):
     publish(lines, timings)
 
 
+def sneller(keys, factor: float):
+    """Regels iets sneller laten spreken, zonder opnieuw op te nemen (atempo: zelfde toonhoogte), en de woorden
+    opnieuw over de regel verdelen."""
+    lines = json.loads(SRC.read_text())
+    timings_file = STAGE / "timings.json"
+    timings = json.loads(timings_file.read_text())
+    for k in keys:
+        m4a = STAGE / f"{k}.m4a"
+        was = seconds(m4a)
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / m4a.name
+            ff("-i", m4a, "-af", f"atempo={factor}", "-c:a", "aac", "-b:a", "96k", out)
+            now = seconds(out)
+            shutil.move(out, m4a)
+        timings[k] = {"duration": round(now, 3), "words": words_with_times(lines[k], now - LEAD)}
+        print(f"{k:10} sneller: {was:.1f}s → {now:.1f}s")
+    timings_file.write_text(json.dumps({k: timings[k] for k in lines if k in timings}, ensure_ascii=False, indent=1))
+    publish(lines, timings)
+
+
 def main():
     global MODEL
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -482,6 +503,8 @@ def main():
     ap.add_argument("--schoon", action="store_true", help="ruisstoot achter de laatste zin weghalen uit wat al is opgenomen")
     ap.add_argument("--taal", choices=["nl", "en"], default="nl", help="nl (standaard) of en: de Engelse versie")
     ap.add_argument("--pauzes", type=float, metavar="S", help="stiltes midden in een regel inkorten tot S seconden (zonder opnieuw op te nemen)")
+    ap.add_argument("--sneller", nargs="+", metavar="REGEL", help="deze regels iets sneller laten spreken (zonder opnieuw op te nemen)")
+    ap.add_argument("--factor", type=float, default=1.15, help="hoeveel sneller bij --sneller (standaard 1.15)")
     a = ap.parse_args()
     if a.taal == "en":
         english()
@@ -491,6 +514,8 @@ def main():
         schoon()
     elif a.pauzes:
         pauzes(a.pauzes)
+    elif a.sneller:
+        sneller(a.sneller, a.factor)
     elif a.proef:
         proef(a.proef)
     elif a.stem:

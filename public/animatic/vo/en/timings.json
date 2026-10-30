@@ -315,32 +315,32 @@
   ]
  },
  "13": {
-  "duration": 4.701,
+  "duration": 4.105,
   "words": [
    {
     "text": "No",
     "start": 0.12,
-    "end": 0.368
+    "end": 0.335
    },
    {
     "text": "monster.",
-    "start": 0.368,
-    "end": 0.925
+    "start": 0.335,
+    "end": 0.82
    },
    {
     "text": "Worse.",
-    "start": 2.287,
-    "end": 2.72
+    "start": 2.005,
+    "end": 2.382
    },
    {
     "text": "Just",
-    "start": 4.082,
-    "end": 4.453
+    "start": 3.566,
+    "end": 3.89
    },
    {
     "text": "me.",
-    "start": 4.453,
-    "end": 4.701
+    "start": 3.89,
+    "end": 4.105
    }
   ]
  },
@@ -375,42 +375,42 @@
   ]
  },
  "14": {
-  "duration": 6.018,
+  "duration": 5.248,
   "words": [
    {
     "text": "Not",
     "start": 0.12,
-    "end": 0.448
+    "end": 0.405
    },
    {
     "text": "everything",
-    "start": 0.448,
-    "end": 1.234
+    "start": 0.405,
+    "end": 1.089
    },
    {
     "text": "at",
-    "start": 1.234,
-    "end": 1.496
+    "start": 1.089,
+    "end": 1.317
    },
    {
     "text": "once.",
-    "start": 1.496,
-    "end": 1.889
+    "start": 1.317,
+    "end": 1.658
    },
    {
     "text": "One",
-    "start": 3.331,
-    "end": 3.659
+    "start": 2.912,
+    "end": 3.197
    },
    {
     "text": "thing.",
-    "start": 3.659,
-    "end": 4.118
+    "start": 3.197,
+    "end": 3.596
    },
    {
     "text": "Today.",
-    "start": 5.559,
-    "end": 6.018
+    "start": 4.849,
+    "end": 5.248
    }
   ]
  },
