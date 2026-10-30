@@ -689,8 +689,9 @@ const transition = (v: View, prev: View | undefined, t: number) => {
 let yView = 0
 let yScrollLast = 0
 let jumping = 0
-const MAX_LAG = 1.5 // schermhoogtes: verder dan dit loopt het beeld nooit achter
-const PULL = 1.2 // per seconde: hoe hard een achterstand het beeld meetrekt in een rustige scène
+// Op een telefoon voelt een beeld dat je duim niet volgt als scrollen door stroop: daar trekt het veel harder mee
+const MAX_LAG = touch ? 0.75 : 1.5 // schermhoogtes: verder dan dit loopt het beeld nooit achter
+const PULL = touch ? 5 : 1.2 // per seconde: hoe hard een achterstand het beeld meetrekt in een rustige scène
 const CATCH_UP = 8 // per seconde: hoe snel een achterstand daarbuiten wordt ingehaald (95% in ~0,4 s)
 const sceneAt = (y: number) => views.find((v) => y >= v.top && y < v.top + v.height)
 /** Zwaarder scrollen in een rustige scène: hetzelfde wieltje legt minder af. */
