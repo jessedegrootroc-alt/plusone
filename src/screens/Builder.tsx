@@ -17,7 +17,7 @@ export default function Builder({ value, onChange }: { value: AvatarConfig; onCh
 
   return (
     <div className="stack gap-24">
-      <Plate src={IMG.oath} alt="Gustave Doré: een ridder draagt zijn zwaard op" ratio="4 / 5" />
+      <Plate src={IMG.oath} ratio="4 / 5" />
       <div className="stack gap-8">
         <div className="h2">Wat ga je verdienen?</div>
         <p className="small">Elk kenmerk krijgt een concreet doel. Je ziet het pas als je ernaartoe leeft.</p>

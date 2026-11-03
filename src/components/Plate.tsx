@@ -1,11 +1,11 @@
 import type { CSSProperties } from 'react'
-import { STAGES, stageFor } from '../data/sins'
+import { STAGES, doreAlt, stageFor } from '../data/sins'
 
 /** Een Doré-prent, randloos tot in de hoeken. */
-export default function Plate({ src, alt = '', ratio = '3 / 4', className = '', style }: { src: string; alt?: string; ratio?: string; className?: string; style?: CSSProperties }) {
+export default function Plate({ src, alt, ratio = '3 / 4', className = '', style }: { src: string; alt?: string; ratio?: string; className?: string; style?: CSSProperties }) {
   return (
     <div className={`plate ${className}`} style={style}>
-      <img src={src} alt={alt} loading="lazy" style={{ aspectRatio: ratio }} />
+      <img src={src} alt={alt ?? doreAlt(src)} loading="lazy" style={{ aspectRatio: ratio }} />
     </div>
   )
 }
@@ -14,7 +14,7 @@ export default function Plate({ src, alt = '', ratio = '3 / 4', className = '', 
 export function StagePlate({ balance, ratio = '3 / 4', className = '', style }: { balance: number; ratio?: string; className?: string; style?: CSSProperties }) {
   const current = stageFor(balance)
   return (
-    <div className={`plate ${className}`} style={style} role="img" aria-label={`${current.name}, ${current.place}`}>
+    <div className={`plate ${className}`} style={style} role="img" aria-label={`${current.name}, ${current.place}. ${doreAlt(current.img)}`}>
       <div style={{ position: 'relative', aspectRatio: ratio, overflow: 'hidden' }}>
         {STAGES.map((s) => (
           <img

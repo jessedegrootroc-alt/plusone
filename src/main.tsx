@@ -5,6 +5,7 @@ import App from './App'
 import { rearmMotion, startMotion } from './lib/motion'
 import { startSmoothScroll } from './lib/scroll'
 import { startSync } from './lib/sync'
+import { schedule } from './lib/notify'
 
 // Alleen in productie: in dev zou de cache hot reload in de weg zitten.
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
@@ -31,6 +32,8 @@ rearmMotion()
 startSmoothScroll()
 // Je reis in de cloud, als Supabase is ingesteld (.env.local)
 startSync()
+// Meldingen (opstaan, afsluiten, naar boven) plannen als je ze aanzette
+schedule()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

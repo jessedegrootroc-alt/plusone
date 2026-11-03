@@ -39,6 +39,9 @@ export default function App() {
     scrollToTop()
   }, [tab])
 
+  // Kompas uitgezet terwijl je erop stond: terug naar Vandaag
+  useEffect(() => { if (tab === 'compass' && !s.settings?.showCompass) setTab('today') }, [tab, s.settings?.showCompass])
+
   // Losse doelen van vroeger worden post-its op de spiegel, met hun embleem
   useEffect(() => { migrateGoals(s) }, [s])
 
@@ -68,12 +71,13 @@ export default function App() {
 
   return (
     <div className="app">
-      {tab === 'today' && <Today openMirror={setMirror} openUrge={() => setUrge(true)} openCompass={() => go('compass')} openShadow={(habitId) => setShadow({ habitId })} />}
+      {tab === 'today' && <Today openMirror={setMirror} openUrge={() => setUrge(true)} openShadow={(habitId) => setShadow({ habitId })} />}
       {tab === 'compass' && <Compass openShadow={(sin) => setShadow({ sin })} />}
       {tab === 'self' && <Self openShadow={() => setShadow({})} />}
 
       <nav className="tabbar" aria-label="Hoofdmenu">
-        {([['today', 'Spiegel', Icon.mirror], ['compass', 'Kompas', Icon.compass], ['self', 'Reis', Icon.mountain]] as const).map(([k, l, ic]) => (
+        {/* Twee tabs: Vandaag en Reis. Het kompas staat verborgen achter een instelling op Reis. */}
+        {([['today', 'Vandaag', Icon.mirror], ...(s.settings?.showCompass ? [['compass', 'Kompas', Icon.compass] as const] : []), ['self', 'Reis', Icon.mountain]] as const).map(([k, l, ic]) => (
           <button key={k} className={`tab ${tab === k ? 'on' : ''}`} onClick={() => go(k)} aria-current={tab === k ? 'page' : undefined}>
             <span className="tab-ico">{ic()}</span>
             <span>{l}</span>

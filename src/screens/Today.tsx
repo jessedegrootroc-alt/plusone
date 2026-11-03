@@ -1,17 +1,16 @@
 import { useCallback, useMemo, useState } from 'react'
-import BalanceMeter from '../components/BalanceMeter'
 import Scene from '../components/Scene'
-import MotionPrompt from '../components/MotionPrompt'
-import { GrensRow, TankStrip } from '../components/Grens'
-import MirrorNotes from '../components/MirrorNotes'
-import { RockIcon } from '../components/Jar'
+import CookieProof from '../components/CookieProof'
+import Offers from '../components/Offers'
+import { NoteSheet } from '../components/MirrorNotes'
 import { HabitRow, Icon, Sheet, Toast, useTween } from '../components/ui'
-import { ROCK_SHORT } from '../data/catalog'
 import { pullingObjects, strongestVirtueObject } from '../data/objects'
-import { SINS, stageFor } from '../data/sins'
+import { SINS } from '../data/sins'
+import { bigTasksOn, dayResult, lostYesterday, otherTasksOn, scheduleLabel, wonStats } from '../lib/days'
 import { earnedFeatures } from '../lib/emblems'
-import { byRock, computeSeries, habitsFor, isDone, isNote, mirrorStreak, shadowCharge } from '../lib/score'
-import { addDays, buzz, setValue, todayISO, uid, update, useStore, type Habit } from '../lib/store'
+import { countdownLabel, goalTitle, mainGoal } from '../lib/goal'
+import { computeSeries, isDone } from '../lib/score'
+import { addDays, buzz, setValue, todayISO, update, useStore, type Habit } from '../lib/store'
 
 const SLIP_LINES = [
   'Genoteerd. Eén val is data, geen identiteit.',
@@ -25,76 +24,46 @@ const greet = (name: string) => {
   return name ? `${g}, ${name}` : g
 }
 
-export default function Today({ openMirror, openUrge, openCompass, openShadow }: { openMirror: (date: string) => void; openUrge: () => void; openCompass: () => void; openShadow: (habitId?: string) => void }) {
+export default function Today({ openMirror, openUrge, openShadow }: { openMirror: (date: string) => void; openUrge: () => void; openShadow: (habitId?: string) => void }) {
   const s = useStore()
   const today = todayISO()
   const [date, setDate] = useState(today)
   const [toast, setToast] = useState<string | null>(null)
   const [slipId, setSlipId] = useState<string | null>(null)
   const clearToast = useCallback(() => setToast(null), [])
+  const [timeFor, setTimeFor] = useState<Habit | null>(null)
+  const [goalSheet, setGoalSheet] = useState(false)
+  const [showVices, setShowVices] = useState(false)
 
   const series = useMemo(() => computeSeries(s), [s])
-  const point = series.points.find((p) => p.date === date)
-  const yesterdayPoint = series.points.find((p) => p.date === addDays(date, -1))
-  const balance = series.balance
-  const shown = useTween(balance)
-  const stage = stageFor(balance)
-  const dayDelta = (point?.balance ?? 0) - (yesterdayPoint?.balance ?? 0)
-  const streak = mirrorStreak(s)
-  const charge = useMemo(() => shadowCharge(s).charge, [s])
-  // De voorwerpen van je verleidingen, die het hardst trekken eerst
+  const stats = useMemo(() => wonStats(s, today), [s, today])
+  // De figuur klimt mee met je gewonnen dagen: hoe groter het deel, hoe hoger op de berg. Geen punten erbij.
+  const climb = stats.counted ? -100 + 200 * (stats.won / stats.counted) : 0
+  const shown = useTween(climb)
   const pulling = useMemo(() => pullingObjects(s), [s])
   const goodObject = useMemo(() => strongestVirtueObject(s), [s])
-  // Je twee zwakste terrassen: die staan als zondetafereel in Inferno en het woud
-  const weakest = useMemo(() => SINS.filter((x) => s.habits.some((h) => h.sin === x.id)).sort((a, b) => series.perSin[a.id] - series.perSin[b.id]).slice(0, 2).map((x) => x.id), [s, series])
-  // Je twee sterkste deugden: die staan als tafereel op de terrassen
-  const strongest = useMemo(() => SINS.filter((x) => s.habits.some((h) => h.sin === x.id)).sort((a, b) => series.perSin[b.id] - series.perSin[a.id]).slice(0, 2).map((x) => x.id), [s, series])
+  const bySin = (dir: 1 | -1) => SINS.filter((x) => s.habits.some((h) => h.sin === x.id)).sort((a, b) => dir * (series.perSin[a.id] - series.perSin[b.id])).slice(0, 2).map((x) => x.id)
 
   const log = s.logs[date]
-  const [addRock, setAddRock] = useState(false)
-  const virtues = byRock(habitsFor(s, date).filter((h) => h.kind === 'virtue' && !isNote(h)))
-  const vices = s.habits.filter((h) => h.kind === 'vice')
   const sealed = !!log?.sealed
+  const big = bigTasksOn(s, date).sort((a, b) => (a.at ?? '99').localeCompare(b.at ?? '99'))
+  const other = otherTasksOn(s, date)
+  const vices = s.habits.filter((h) => h.kind === 'vice')
   const dayRockIds = new Set((log?.rocks ?? []).map((r) => r.id))
-  const done = (h: Habit) => isDone(h, log?.v[h.id] ?? 0) && (h.type !== 'limit' || sealed || (!!log && h.id in log.v))
+  const done = (h: Habit) => isDone(h, log?.v[h.id] ?? 0) && (log?.v[h.id] ?? 0) > 0
   const slips = vices.filter((h) => !isDone(h, log?.v[h.id] ?? 0))
-  const [showRest, setShowRest] = useState(false)
-  const [showVices, setShowVices] = useState(false)
-  const [timeFor, setTimeFor] = useState<Habit | null>(null)
-  const [suck, setSuck] = useState(false)
-  const suckIds = new Set((log?.rocks ?? []).filter((r) => r.suck).map((r) => r.id))
-  const big = virtues.filter((h) => h.weight === 3).sort((a, b) => (a.at ?? '99').localeCompare(b.at ?? '99'))
-  const rest = virtues.filter((h) => h.weight < 3)
   const bigDone = big.filter(done).length
   const nowHM = new Date().toTimeString().slice(0, 5)
-  // Vanaf 19:00, of bij een eerdere dag, is afsluiten de belangrijkste stap: dan staat hij bovenaan.
-  const closeTime = date !== today || nowHM >= '19:00'
-  // Eerlijk bewijs: hoeveel niet-onderhandelbare dingen je de afgelopen 7 dagen echt deed
-  const week7 = useMemo(() => {
-    let total = 0
-    let n = 0
-    for (let i = 0; i < 7; i++) {
-      const d = addDays(today, -i)
-      if (d < s.createdAt) break
-      const l = s.logs[d]
-      const hs = habitsFor(s, d).filter((h) => h.kind === 'virtue' && h.weight === 3 && !isNote(h))
-      total += hs.length
-      n += hs.filter((h) => isDone(h, l?.v[h.id] ?? 0) && (h.type !== 'limit' || !!l?.sealed)).length
-    }
-    return { done: n, total }
-  }, [s, today])
   const plan = s.logs[addDays(date, -1)]?.aar?.plan
+  const lost = date === today && lostYesterday(s, today)
+  const goal = mainGoal(s)
+  const week = Array.from({ length: 7 }).map((_, i) => addDays(today, i - 6))
   const removeRock = (id: string) => update((d) => {
     const l = d.logs[date]
     if (!l) return
     l.rocks = (l.rocks ?? []).filter((r) => r.id !== id)
     delete l.v[id]
   })
-  const yesterday = addDays(today, -1)
-  const needsYesterday = date === today && s.createdAt <= yesterday && !s.logs[yesterday]?.sealed
-
-  const week = Array.from({ length: 7 }).map((_, i) => addDays(today, i - 6))
-
   const change = (id: string, v: number, wasSlip: boolean, isVice: boolean) => {
     setValue(date, id, v)
     if (isVice && !wasSlip && v >= 1) {
@@ -102,14 +71,14 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
       setToast(SLIP_LINES[Math.floor(Math.random() * SLIP_LINES.length)])
     }
   }
-
-  const shortDate = new Date(date + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })
+  const shortDate = new Date(date + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
     <div className="screen">
+      {/* 1 · Datum en begroeting */}
       <div className="page-head">
         <div>
-          <div className="eyebrow one-line">{shortDate}{streak > 0 ? ` · ${streak} gespiegeld` : ''}</div>
+          <div className="eyebrow one-line">{shortDate}</div>
           <h1 className="h1 one-line">{date === today ? greet(s.name) : 'Terugkijken'}</h1>
         </div>
         {date === today && vices.length > 0 && (
@@ -119,231 +88,116 @@ export default function Today({ openMirror, openUrge, openCompass, openShadow }:
         )}
       </div>
 
-      {/* Eén keer: mogen de scènes meebewegen met je telefoon? */}
-      <MotionPrompt />
+      {/* 2 · Nooit twee keer missen */}
+      {lost && <div className="miss-bar" role="alert">Gisteren verloren. Vandaag niet nog een keer.</div>}
 
-      {/* De spiegel: in één oogopslag waar je staat. Deze kaart vult precies het scherm. */}
-      <div className="card hero-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div className="hero-scene">
-          <Scene balance={shown} onTap={() => openMirror(date)} shadow={charge} strong={strongest} features={earnedFeatures(s)} objects={pulling} virtueObject={goodObject} weak={weakest} />
-        </div>
-        <div style={{ padding: '24px 24px 16px' }}>
-          <div className="hstack between" style={{ alignItems: 'flex-end', gap: 16 }}>
-            <div>
-              <div className="eyebrow">{stage.plate} · {stage.place}</div>
-              <div className="h2">{stage.name}</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div className="num">{balance >= 0.5 ? '+' : balance <= -0.5 ? '−' : ''}{Math.abs(Math.round(balance))}</div>
-              <div className="small">{dayDelta >= 0.05 ? '+' : dayDelta <= -0.05 ? '−' : '±'}{Math.abs(dayDelta).toFixed(1).replace('.', ',')} {date === today ? 'vandaag' : 'die dag'}</div>
-            </div>
-          </div>
-          <div className="mt-16">
-            <BalanceMeter balance={shown} onTap={openCompass} />
-          </div>
-          {plan && (
-            <div className="hstack" style={{ gap: 8, marginTop: 8, padding: '8px 12px', borderRadius: 12, background: 'var(--paper-2)' }}>
-              <span className="eyebrow" style={{ flex: 'none' }}>Plan van gisteren</span>
-              <span className="one-line" style={{ fontSize: 13, lineHeight: '20px', fontWeight: 600 }}>{plan}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="week mt-16" role="tablist" aria-label="Kies een dag">
-        {week.map((d) => {
-          const p = series.points.find((x) => x.date === d)
-          const before = d < s.createdAt
-          const isSel = d === date
-          const n = p?.dayNorm ?? 0
-          const sealedD = s.logs[d]?.sealed
-          return (
-            <button key={d} role="tab" aria-selected={isSel} className={`day ${isSel ? 'sel' : ''}`} disabled={before} onClick={() => setDate(d)} style={{ opacity: before ? 0.3 : 1 }}>
-              <span className="dn">{new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short' }).slice(0, 2)}</span>
-              <span
-                className="dot"
-                style={{
-                  background: sealedD && n > 0.15 ? 'var(--ink)' : sealedD && n < -0.15 ? 'var(--hatch)' : 'transparent',
-                  color: sealedD && n > 0.15 ? 'var(--paper)' : 'var(--ink)',
-                  borderColor: sealedD ? 'var(--ink)' : 'var(--line)',
-                  borderStyle: !sealedD && d !== today && !before ? 'dashed' : 'solid',
-                }}
-              >
-                {Number(d.slice(8))}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* De spiegel van Goggins: het eerste wat je na je plaat aankijkt */}
-      {date === today && <MirrorNotes date={date} />}
-
-      {needsYesterday && (
-        <button className="card mt-24 hstack between" style={{ width: '100%', textAlign: 'left', gap: 16 }} onClick={() => openMirror(yesterday)}>
-          <div>
-            <div style={{ fontWeight: 600 }}>Gisteren nog niet gespiegeld</div>
-            <div className="small">Een paar tikken. Eerlijk is genoeg.</div>
-          </div>
-          <span className="pill" style={{ borderColor: 'var(--ink)', color: 'var(--ink)' }}>Spiegel</span>
+      {/* 3 · Het doel, met aftelling */}
+      {date === today && (goal ? (
+        <button className="goal-hero" onClick={() => setGoalSheet(true)}>
+          <span className="goal-title">{goalTitle(goal)}</span>
+          <span className="goal-count">{goal.due ? countdownLabel(goal.due, today) : 'Zet er een datum bij'}</span>
         </button>
-      )}
+      ) : (
+        <button className="goal-hero empty" onClick={() => setGoalSheet(true)}>
+          <span className="goal-title">Kies je doel</span>
+          <span className="goal-count">Met een datum. Dan telt de app af.</span>
+        </button>
+      ))}
 
-      <section className="section">
-        <div className="section-head"><h2 className="h2">{date === today ? 'Je dag' : 'Die dag'}</h2><span className="small">{bigDone} van {big.length} gedaan · week {week7.done}/{week7.total}</span></div>
-        {/* Eén kaart, van boven naar beneden zoals je dag loopt: tank, wat moet, je grens, afsluiten. Alles in één tik. */}
-        <div className="card day-card">
-          {date === today && <TankStrip />}
+      {/* 4 · Je waarom, elke ochtend */}
+      {date === today && s.why && <p className="why-line">{s.why}</p>}
+      {plan && date === today && <p className="plan-line"><b>Plan van gisteren:</b> {plan}</p>}
 
-          <div className="list flat">
-            {big.map((h) => {
-              const late = date === today && !!h.at && h.at < nowHM && !done(h)
-              return (
-                <HabitRow
-                  key={h.id}
-                  compact
-                  tight
-                  h={h}
-                  lead={<TimeLead at={h.at} late={late} onClick={() => setTimeFor(h)} />}
-                  value={log?.v[h.id] ?? 0}
-                  answered={!!log && h.id in log.v}
-                  onChange={(v) => change(h.id, v, false, false)}
-                  meta={suckIds.has(h.id) ? 'het ongemak van vandaag' : undefined}
-                  onRemove={dayRockIds.has(h.id) ? () => removeRock(h.id) : undefined}
-                />
-              )
-            })}
-            {date === today && <GrensRow />}
-          </div>
-          {!big.length && <p className="small" style={{ margin: '8px 0' }}>Nog niets. Maak een goede gewoonte groot onder Reis, of tik op +.</p>}
-
-          {/* Toevoegen in één regel: een steen voor vandaag, of het ding dat zuigt */}
-          <div className="day-add">
-            <button className="chip add" onClick={() => setAddRock(true)}>{Icon.plus()} Moet af</button>
-            {date === today && !suckIds.size && <button className="chip add" onClick={() => setSuck(true)}>{Icon.plus()} Iets wat zuigt</button>}
-          </div>
-
-          {rest.length > 0 && (
-            <>
-              <button className="fold" onClick={() => setShowRest((x) => !x)} aria-expanded={showRest}>
-                <span>De rest · {rest.filter(done).length} van {rest.length}</span>
-                <span className={`chev ${showRest ? 'open' : ''}`}>{Icon.next()}</span>
-              </button>
-              <div className={`collapse ${showRest ? 'open' : ''}`} aria-hidden={!showRest} inert={!showRest}>
-                <div className="list flat">
-                  {[...rest.filter((h) => !done(h)), ...rest.filter(done)].map((h) => (
-                    <HabitRow
-                      key={h.id}
-                      compact
-                      tight
-                      h={h}
-                      lead={<RockIcon size={h.weight} px={16} />}
-                      value={log?.v[h.id] ?? 0}
-                      answered={!!log && h.id in log.v}
-                      onChange={(v) => change(h.id, v, false, false)}
-                      onRemove={dayRockIds.has(h.id) ? () => removeRock(h.id) : undefined}
-                    />
-                  ))}
-                </div>
-              </div>
-            </>
+      {/* 5 · De grote taken: één tik om af te vinken */}
+      <section className="section tasks">
+        <div className="section-head"><h2 className="h2">{date === today ? 'Vandaag' : 'Die dag'}</h2><span className="small">{bigDone} van {big.length} gedaan</span></div>
+        <div className="card">
+          {big.length ? (
+            <div className="list flat big-tasks">
+              {big.map((h) => {
+                const on = done(h)
+                const late = date === today && !!h.at && h.at < nowHM && !on
+                return (
+                  <button key={h.id} className={`big-task ${on ? 'done' : ''}`} aria-pressed={on} onClick={() => { buzz(on ? 6 : 14); setValue(date, h.id, on ? 0 : h.type === 'target' ? h.amount ?? 1 : 1) }}>
+                    <span className={`check big ${on ? 'on' : ''}`}>{on && Icon.check('#0B0B0B')}</span>
+                    <span className="grow">
+                      <span className="bt-name">{h.name}</span>
+                      {h.at && <span className={`bt-time ${late ? 'late' : ''}`} role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); setTimeFor(h) }}>{h.at}{late ? ' · te laat' : ''}</span>}
+                    </span>
+                    {dayRockIds.has(h.id) && <span role="button" tabIndex={0} aria-label="Weghalen" className="iconbtn bt-x" onClick={(e) => { e.stopPropagation(); removeRock(h.id) }}>{Icon.close()}</span>}
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="lead" style={{ margin: 0 }}>Geen grote taken voor deze dag. Maak een gewoonte groot onder Reis.</p>
           )}
-
-          {vices.length > 0 && (
-            <>
-              <button className="fold" onClick={() => setShowVices((x) => !x)} aria-expanded={showVices}>
-                <span>Verleidingen · {slips.length ? `${slips.length} toegegeven` : 'alles vrij'}</span>
-                <span className="hstack" style={{ gap: 8 }}>
-                  {showVices && <span className="small">tik als je toegaf</span>}
-                  <span className={`chev ${showVices ? 'open' : ''}`}>{Icon.next()}</span>
-                </span>
-              </button>
-              {(showVices ? vices : slips).length > 0 && (
-                <div className="list flat">
-                  {(showVices ? vices : slips).map((h) => {
-                    const v = log?.v[h.id] ?? 0
-                    return <HabitRow key={h.id} compact tight h={h} value={v} answered={sealed || (!!log && h.id in log.v)} onChange={(nv) => change(h.id, nv, !isDone(h, v), true)} />
-                  })}
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Afsluiten: twee minuten eerlijk terugkijken */}
-          <div className="day-close">
-            {sealed ? (
-              <div className="hstack" style={{ gap: 12 }}>{Icon.check()}<span className="small" style={{ color: 'var(--ink)' }}>{date === today ? 'Vandaag' : 'Deze dag'} is gespiegeld</span></div>
-            ) : closeTime ? (
-              <div className="hstack" style={{ gap: 8 }}>
-                <button className="btn sm" style={{ flex: 1 }} onClick={() => openMirror(date)}>{Icon.mirror()} Dag afsluiten</button>
-                <button className="btn ghost sm" style={{ flex: 1 }} onClick={() => update((d) => { (d.logs[date] ??= { v: {} }).sealed = true })}>Alles klopt zo</button>
-              </div>
-            ) : (
-              <button className="hstack between" style={{ width: '100%', gap: 12 }} onClick={() => openMirror(date)}>
-                <span className="hstack" style={{ gap: 12 }}>{Icon.mirror()}<span className="small" style={{ color: 'var(--ink-2)' }}>Dag afsluiten, vanaf 19:00</span></span>
-                <span style={{ color: 'var(--ink-3)', display: 'grid' }}>{Icon.next()}</span>
-              </button>
-            )}
+          <div className="won-row">
+            <div className="won-dots" aria-label={`${stats.won} van de ${stats.counted} dagen gewonnen`}>
+              {week.map((d) => {
+                const r = dayResult(s, d)
+                return <button key={d} className={`won-dot ${r === true ? 'won' : r === false ? 'lost' : ''} ${d === date ? 'sel' : ''}`} disabled={d < s.createdAt} onClick={() => setDate(d)} aria-label={new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' })}>{new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short' }).slice(0, 2)}</button>
+              })}
+            </div>
+            <div className="small">{stats.won} van de {stats.counted} dagen gewonnen · {s.jar.length} {s.jar.length === 1 ? 'overwinning' : 'overwinningen'}</div>
           </div>
         </div>
       </section>
 
-      {timeFor && <TimeSheet h={timeFor} date={date} onClose={() => setTimeFor(null)} />}
-      {suck && <SuckSheet date={date} onClose={() => setSuck(false)} />}
-      {toast && <Toast text={toast} onDone={clearToast} action={slipId ? 'Vraag je schaduw' : undefined} onAction={() => slipId && openShadow(slipId)} />}
-      {addRock && <AddRockSheet date={date} onClose={() => setAddRock(false)} bigCount={virtues.filter((h) => h.weight === 3 && dayRockIds.has(h.id)).length} />}
-    </div>
-  )
-}
+      {/* Eén keer: het nieuwe schema, of taak 4 */}
+      {date === today && <section className="section"><Offers /></section>}
 
-function AddRockSheet({ date, onClose, bigCount }: { date: string; onClose: () => void; bigCount: number }) {
-  const [text, setText] = useState('')
-  const [size, setSize] = useState<1 | 2 | 3>(bigCount >= 3 ? 2 : 3)
-  const save = () => {
-    if (!text.trim()) return
-    buzz(12)
-    update((d) => {
-      const l = (d.logs[date] ??= { v: {} })
-      ;(l.rocks ??= []).push({ id: 'rock-' + uid(), text: text.trim(), size })
-    })
-    onClose()
-  }
-  return (
-    <Sheet onClose={onClose}>
-      <div className="stack gap-16">
-        <div className="stack gap-4">
-          <h2 className="h2">Wat moet vandaag af, hoe dan ook?</h2>
-          <p className="small" style={{ margin: 0 }}>Doe eerst wat je dag maakt of breekt. De kleine dingen passen er daarna wel tussen; andersom lukt dat zelden.</p>
-        </div>
-        <input className="input" autoFocus value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} placeholder="Bijv. offerte afmaken, moeder bellen" />
-        <div className="seg">
-          {([3, 2, 1] as const).map((sz) => (
-            <button key={sz} className={size === sz ? 'on' : ''} onClick={() => setSize(sz)}>
-              <span className="hstack" style={{ gap: 8, justifyContent: 'center' }}><RockIcon size={sz} px={16} /> {ROCK_SHORT[sz]}</span>
-            </button>
-          ))}
-        </div>
-        {size === 3 && bigCount >= 3 && <div className="small red">Je hebt er al {bigCount}. Zijn ze allemaal groot, dan is er eigenlijk geen enkele groot.</div>}
-        <button className="btn" disabled={!text.trim()} onClick={save}>Zet op vandaag</button>
+      {/* 6 · Wat er vandaag nog meer staat */}
+      {(other.length > 0 || vices.length > 0) && (
+        <section className="section">
+          <div className="section-head"><h2 className="h2">Nog meer</h2>{other.length > 0 && <span className="small">{other.filter(done).length} van {other.length}</span>}</div>
+          <div className="card day-card">
+            <div className="list flat">
+              {other.map((h) => (
+                <HabitRow key={h.id} compact tight h={h} meta={scheduleLabel(h)} value={log?.v[h.id] ?? 0} answered={!!log && h.id in log.v} onChange={(v) => change(h.id, v, false, false)} onRemove={dayRockIds.has(h.id) ? () => removeRock(h.id) : undefined} />
+              ))}
+            </div>
+            {vices.length > 0 && (
+              <>
+                <button className="fold" onClick={() => setShowVices((x) => !x)} aria-expanded={showVices}>
+                  <span>Verleidingen · {slips.length ? `${slips.length} toegegeven` : 'alles vrij'}</span>
+                  <span className={`chev ${showVices ? 'open' : ''}`}>{Icon.next()}</span>
+                </button>
+                {(showVices ? vices : slips).length > 0 && (
+                  <div className="list flat">
+                    {(showVices ? vices : slips).map((h) => {
+                      const v = log?.v[h.id] ?? 0
+                      return <HabitRow key={h.id} compact tight h={h} value={v} answered={sealed || (!!log && h.id in log.v)} onChange={(nv) => change(h.id, nv, !isDone(h, v), true)} />
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Bewijs uit je koektrommel: je deed al zwaarder */}
+      {date === today && <CookieProof />}
+
+      {/* 7 · Het beeld: de figuur klimt mee met je gewonnen dagen */}
+      <div className="card scene-small" style={{ padding: 0, overflow: 'hidden' }}>
+        <Scene balance={shown} onTap={() => openMirror(date)} strong={bySin(-1)} features={earnedFeatures(s)} objects={pulling} virtueObject={goodObject} weak={bySin(1)} />
       </div>
-    </Sheet>
-  )
-}
 
-/** De tijd links van een niet-onderhandelbaar ding. Tik om hem te zetten. */
-function TimeLead({ at, late, onClick }: { at?: string; late: boolean; onClick: () => void }) {
-  return (
-    <span
-      role="button"
-      tabIndex={0}
-      className="time-lead"
-      aria-label={at ? `Tijd ${at}, wijzigen` : 'Tijd kiezen'}
-      style={{ color: late ? 'var(--ink)' : at ? 'var(--ink-2)' : 'var(--ink-3)', textDecoration: late ? 'underline' : undefined }}
-      onClick={(e) => { e.stopPropagation(); onClick() }}
-      onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onClick() } }}
-    >
-      {at ?? 'tijd'}
-    </span>
+      {/* 8 · Dag afsluiten */}
+      <div className="mt-24">
+        {sealed ? (
+          <div className="hstack center-row" style={{ gap: 12 }}>{Icon.check()}<span className="lead" style={{ color: 'var(--ink)' }}>{date === today ? 'Vandaag' : 'Deze dag'} is afgesloten</span></div>
+        ) : (
+          <button className="btn" onClick={() => openMirror(date)}>Dag afsluiten</button>
+        )}
+      </div>
+
+      {timeFor && <TimeSheet h={timeFor} date={date} onClose={() => setTimeFor(null)} />}
+      {goalSheet && <NoteSheet note={goal} onClose={() => setGoalSheet(false)} />}
+      {toast && <Toast text={toast} onDone={clearToast} action={slipId ? 'Vraag je schaduw' : undefined} onAction={() => slipId && openShadow(slipId)} />}
+    </div>
   )
 }
 
@@ -381,33 +235,3 @@ function TimeSheet({ h, date, onClose }: { h: Habit; date: string; onClose: () =
   )
 }
 
-const SUCKS = ['Koude douche van 3 minuten', '5 km hardlopen, ook als het regent', 'Het gesprek dat je uitstelt', 'Een uur zonder telefoon', '100 burpees', 'Het vervelendste klusje eerst']
-
-/** Goggins: doe elke dag iets wat je niet wilt. Het telt als grote steen. */
-function SuckSheet({ date, onClose }: { date: string; onClose: () => void }) {
-  const [text, setText] = useState('')
-  const save = () => {
-    if (!text.trim()) return
-    buzz(12)
-    update((d) => {
-      const l = (d.logs[date] ??= { v: {} })
-      ;(l.rocks ??= []).push({ id: 'rock-' + uid(), text: text.trim(), size: 3, suck: true })
-    })
-    onClose()
-  }
-  return (
-    <Sheet onClose={onClose}>
-      <div className="stack gap-16">
-        <div className="stack gap-4">
-          <h2 className="h2">Wat ga je vandaag doen dat je niet wilt?</h2>
-          <p className="small" style={{ margin: 0 }}>Niet het zwaarste dat je kunt bedenken, wel iets wat je liever overslaat. Elke keer dat je het toch doet, wordt je geest wat harder.</p>
-        </div>
-        <div className="chips">
-          {SUCKS.map((x) => <button key={x} className={`chip ${text === x ? 'on' : ''}`} onClick={() => setText(x)}>{x}</button>)}
-        </div>
-        <input className="input" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} placeholder="Of schrijf je eigen" />
-        <button className="btn" disabled={!text.trim()} onClick={save}>Ik doe het vandaag</button>
-      </div>
-    </Sheet>
-  )
-}

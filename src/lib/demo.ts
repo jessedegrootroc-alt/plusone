@@ -1,26 +1,25 @@
-import { VICES, VIRTUES } from '../data/catalog'
 import { planFor } from '../data/ladders'
-import { addDays, fromTemplate, todayISO, update } from './store'
+import { addDays, todayISO, update } from './store'
+import { defaultHabits } from './schema'
 
 /**
  * Vult de app met 21 dagen voorbeelddata om de transformatie te zien.
  * Open met ?demo=good (richting ideale zelf), ?demo=bad (richting de schim) of ?demo=mixed.
  */
 export const seedDemo = (mode: string) => {
-  const pickV = ['early', 'workout', 'wimhof', 'sauna', 'sugar', 'fruit', 'water', 'meditate', 'read', 'journal']
-  const pickX = ['porn', 'smoke', 'gamble', 'doomscroll', 'snooze', 'compare']
-  const habits = [
-    ...VIRTUES.filter((t) => pickV.includes(t.key)).map(fromTemplate),
-    ...VICES.filter((t) => pickX.includes(t.key)).map(fromTemplate),
-  ]
+  // Het standaardschema: drie grote taken, taken op vaste dagen, roken en alcohol om bij te houden
+  const habits = defaultHabits()
   const p = mode === 'good' ? 0.88 : mode === 'bad' ? 0.15 : 0.55
   const start = addDays(todayISO(), -21)
   update((d) => {
     d.onboarded = true
     d.name = d.name || 'Alex'
     d.why = d.why || 'Ik ben het zat om de versie van mezelf te zijn die het opgeeft. Ik wil over een jaar terugkijken en trots zijn.'
-    d.habits = habits.map((h) => (h.id.startsWith('workout-') ? { ...h, at: '06:30' } : h.id.startsWith('early-') ? { ...h, weight: 3, at: '06:00' } : h))
+    d.habits = habits
+    d.mainGoalId = 'n0'
+    d.asked = { ...d.asked, schema: true }
     d.notes = [
+      { id: 'n0', feature: 'medal', text: 'Je hebt nog nooit langer dan twee uur gelopen.', goal: '12-uursloop', sin: 'sloth', domain: 'fysiek', due: '2027-06-12', steps: [], createdAt: start },
       { id: 'n1', feature: 'abs', text: 'Je bent 12 kilo te zwaar en je weet het.', goal: '12 kilo eraf, elke ochtend om 6:30 trainen', sin: 'gluttony', domain: 'fysiek', steps: planFor('fysiek', '12 kilo eraf, elke ochtend om 6:30 trainen').map((p, i) => ({ ...p, doneAt: i < 2 ? start : undefined, startedAt: i === 2 ? addDays(todayISO(), -4) : undefined })), createdAt: start },
       { id: 'n2', text: 'Je zegt dat je een bedrijf wilt, maar je hebt nog niemand gebeld.', goal: '10 klanten benaderen', sin: 'sloth', domain: 'financieel', steps: planFor('financieel', '10 klanten benaderen').map((p, i) => ({ ...p, doneAt: i < 1 ? start : undefined, startedAt: i === 1 ? addDays(todayISO(), -9) : undefined })), createdAt: start },
       { id: 'n3', feature: 'halo', text: 'Je zit elke avond met je hoofd in je telefoon. Je bent rusteloos en leeg.', sin: 'lust', domain: 'spiritueel', steps: planFor('spiritueel', '', 'stilte').map((p, i) => ({ ...p, startedAt: i === 0 ? todayISO() : undefined })), createdAt: start },

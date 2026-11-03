@@ -2,6 +2,7 @@ import { useState, type CSSProperties } from 'react'
 import { DOMAINS, DOMAIN_BY_ID, guessDomain, guessSin, planFor, termLabel, type Domain } from '../data/ladders'
 import { SINS, SIN_BY_ID, type SinId } from '../data/sins'
 import { paperFor } from '../lib/paper'
+import { countdownLabel, domainForFeature, mainGoal, needsDate } from '../lib/goal'
 import { FEATURES, FEATURE_ART, type FeatureId } from '../data/catalog'
 import { BoardCols } from './Pinboard'
 import { noteHabitId, stepHabitId, stepWeight } from '../lib/score'
@@ -98,7 +99,7 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
                     {st.total > 0 && <Ladder n={n} />}
                   </button>
                   <div className="mnote-foot">
-                    <span className={`jar-date ${st.step && st.left < 0 ? 'late' : ''}`}>{st.step ? leftLabel(st.left) : 'alles gezet'}</span>
+                    <span className="jar-date">{n.due ? countdownLabel(n.due) : ''}</span>
                     {n.sin && (
                       <button className={`mnote-check ${on ? 'on' : ''}`} aria-pressed={on} aria-label={on ? 'Vandaag gedaan' : 'Vandaag gedaan?'} onClick={() => { buzz(); setValue(date, noteHabitId(n), on ? 0 : 1) }}>
                         {Icon.check(on ? '#F2F2F2' : '#0B0B0B')}
@@ -219,27 +220,34 @@ export function NoteSheet({ note, preset, presetSin, presetGoal, onClose }: { no
   const [text, setText] = useState(note?.text ?? '')
   const [goal, setGoal] = useState(note?.goal ?? presetGoal ?? '')
   const [feature, setFeature] = useState<FeatureId | undefined>(note?.feature)
+  const [due, setDue] = useState(note?.due ?? '')
+  const [isMain, setIsMain] = useState(() => !!note && mainGoal(s)?.id === note.id)
   const [domain, setDomain] = useState<Domain | undefined>(note?.domain ?? preset)
   const [domTouched, setDomTouched] = useState(!!(note?.domain ?? preset))
   const [sin, setSin] = useState<SinId | undefined>(note?.sin ?? presetSin)
   const [sinTouched, setSinTouched] = useState(!!(note?.sin ?? presetSin))
   const [sinOpen, setSinOpen] = useState(false)
   const words = `${goal} ${text}`
-  const dom = domTouched ? domain : guessDomain(words)
+  // Een Medaille (race of prestatie) en andere lichamelijke kenmerken horen bij Fysiek
+  const dom = domTouched ? domain : domainForFeature(feature) ?? guessDomain(words)
   const shownSin = sinTouched ? sin : guessSin(words, dom)
   const steps = dom && (text.trim() || goal.trim()) ? planFor(dom, goal, text) : []
   const fresh = (today: string) => steps.map((p, i) => ({ text: p.text, days: p.days, startedAt: i === 0 ? today : undefined }))
   const full = !note && dom ? (s.notes ?? []).filter((n) => !n.doneAt && n.domain === dom).length >= MAX_PER : false
 
+  const dateNeeded = needsDate(feature, `${goal} ${text}`)
   const save = () => {
     buzz(12)
+    const id = note?.id ?? uid()
     update((d) => {
       d.notes ??= []
+      if (isMain) d.mainGoalId = id
+      else if (d.mainGoalId === id) d.mainGoalId = undefined
       if (note) {
         const x = d.notes.find((y) => y.id === note.id)!
         const reset = x.domain !== dom || (x.goal ?? '') !== goal.trim() || !x.steps?.length
-        Object.assign(x, { text: text.trim(), goal: goal.trim() || undefined, feature, sin: shownSin, domain: dom, steps: reset ? fresh(todayISO()) : x.steps })
-      } else d.notes.push({ id: uid(), text: text.trim(), goal: goal.trim() || undefined, feature, sin: shownSin, domain: dom, steps: fresh(todayISO()), createdAt: todayISO() })
+        Object.assign(x, { text: text.trim(), goal: goal.trim() || undefined, due: due || undefined, feature, sin: shownSin, domain: dom, steps: reset ? fresh(todayISO()) : x.steps })
+      } else d.notes.push({ id, text: text.trim(), goal: goal.trim() || undefined, due: due || undefined, feature, sin: shownSin, domain: dom, steps: fresh(todayISO()), createdAt: todayISO() })
     })
     onClose()
   }
@@ -319,7 +327,18 @@ export function NoteSheet({ note, preset, presetSin, presetGoal, onClose }: { no
           {feature && <div className="small">Haal je hem, dan staat {FEATURES.find((f) => f.id === feature)!.name.toLowerCase()} bij je ideale zelf in Paradiso.</div>}
         </div>
 
-        <button className={note ? 'btn soft' : 'btn'} disabled={!text.trim() || !dom || !shownSin || full} onClick={save}>{note ? 'Opslaan' : 'Plak hem op de spiegel'}</button>
+        {/* De datum: verplicht bij een race of prestatie. Zonder datum is het een wens. */}
+        <div className="field">
+          <label htmlFor="due">Wanneer gehaald? {dateNeeded ? '' : <span style={{ fontWeight: 400, color: 'var(--ink-3)' }}>(mag ook leeg)</span>}</label>
+          <input id="due" className="input" type="date" min={todayISO()} value={due} onChange={(e) => setDue(e.target.value)} />
+          {dateNeeded && !due && <div className="small" style={{ color: 'var(--ink)' }}>Een race of prestatie heeft een datum nodig. Dan telt de app af.</div>}
+        </div>
+        <button className="row" role="switch" aria-checked={isMain} onClick={() => setIsMain((x) => !x)} style={{ borderTop: 0, padding: 0 }}>
+          <div className="grow"><div className="name">Dit is mijn hoofddoel</div><div className="meta">Staat bovenaan Vandaag, met de aftelling</div></div>
+          <span className={`switch ${isMain ? 'on' : ''}`} aria-hidden="true"><i /></span>
+        </button>
+
+        <button className={note ? 'btn soft' : 'btn'} disabled={!text.trim() || !dom || !shownSin || full || (dateNeeded && !due)} onClick={save}>{note ? 'Opslaan' : 'Plak hem op de spiegel'}</button>
         {note && (
           <>
             <HoldButton label="Bereikt: haal hem eraf" onDone={done} />

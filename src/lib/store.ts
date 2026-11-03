@@ -17,7 +17,12 @@ export interface Habit {
   cue?: string
   /** Vaste tijd ("06:30"): Goggins plant in blokken, niet in lijstjes. */
   at?: string
+  /** Wanneer hij geldt. Zonder: elke dag. */
+  schedule?: Schedule
 }
+
+/** Elke dag, op vaste dagen (0 = zondag … 6 = zaterdag), of een aantal keer per week of per maand. */
+export type Schedule = { kind: 'daily' } | { kind: 'days'; days: number[] } | { kind: 'week'; times: number } | { kind: 'month'; times: number }
 
 export interface AvatarConfig {
   frame: 'v' | 'hourglass' | 'straight'
@@ -90,6 +95,8 @@ export interface MirrorNote {
   goal?: string
   /** Het embleem dat je ideale zelf krijgt als je hem haalt (Medaille, Lauwerkrans, ...). */
   feature?: FeatureId
+  /** De datum waarop het doel gehaald moet zijn (verplicht bij een race of prestatie). */
+  due?: string
   /** De ladder naar het doel: elke stap een eigen post-it met een termijn, steeds iets ongemakkelijker. */
   steps?: { text: string; days?: number; startedAt?: string; doneAt?: string }[]
   createdAt: string
@@ -142,6 +149,18 @@ export interface State {
   shadowLog: ShadowEvent[]
   growth: Challenge[]
   notes: MirrorNote[]
+  /** Het hoofddoel dat bovenaan Vandaag staat, met aftelling (een post-it). */
+  mainGoalId?: string
+  settings?: Settings
+  /** Dingen die de app één keer vraagt, zodat hij het niet blijft vragen. */
+  asked?: { schema?: boolean; task4?: boolean; notify?: boolean }
+}
+
+export interface Settings {
+  /** Het kompas (mandala, terrassen) staat voorlopig verborgen. */
+  showCompass?: boolean
+  /** Meldingen: aan of uit, en de tijden. */
+  notify?: { on: boolean; wake: string; close: string; bed: string }
 }
 
 const KEY = 'plusone.v1'

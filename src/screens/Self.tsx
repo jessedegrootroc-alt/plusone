@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react'
-import Plate, { StagePlate } from '../components/Plate'
-import { Icon, Sheet, useTween } from '../components/ui'
-import { ROCK } from '../data/catalog'
+import Plate from '../components/Plate'
+import { Icon, Sheet } from '../components/ui'
 import HabitPicker from '../components/HabitPicker'
 import Pinboard from '../components/Pinboard'
 import LivingScene from '../components/LivingScene'
 import { pullingObjects, strongestVirtueObject } from '../data/objects'
 import Trophies from '../components/Trophies'
+import MirrorNotes from '../components/MirrorNotes'
+import { scheduleLabel, wonStats } from '../lib/days'
 import Account from '../components/Account'
 import { enableMotion, motionOn, needsPermission } from '../lib/motion'
+import { DEFAULT_TIMES, disableNotify, enableNotify, notifySupported, schedule } from '../lib/notify'
 import { aimedFeatures, earnedFeatures } from '../lib/emblems'
-import { IMG, SINS, SIN_BY_ID, STAGES, stageFor, type SinId } from '../data/sins'
+import { IMG, SINS, stageFor, type SinId } from '../data/sins'
 import { computeSeries } from '../lib/score'
 import { fromTemplate, resetAll, update, useStore, type AvatarConfig, type Habit } from '../lib/store'
 import Builder from './Builder'
@@ -18,7 +20,7 @@ import HabitEditor from './HabitEditor'
 import { NEED_BY_ID, VOICES, type NeedId } from '../data/urge'
 import { SHADOW } from '../data/shadow'
 
-type Panel = null | { t: 'builder' } | { t: 'habit'; h?: Habit; kind: 'vice' | 'virtue' } | { t: 'catalog'; kind: 'vice' | 'virtue' } | { t: 'preview' } | { t: 'why' } | { t: 'reset' }
+type Panel = null | { t: 'builder' } | { t: 'habit'; h?: Habit; kind: 'vice' | 'virtue' } | { t: 'catalog'; kind: 'vice' | 'virtue' } | { t: 'why' } | { t: 'reset' }
 
 export default function Self({ openShadow }: { openShadow: () => void }) {
   const s = useStore()
@@ -39,7 +41,9 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
 
   const virtues = s.habits.filter((h) => h.kind === 'virtue')
   const vices = s.habits.filter((h) => h.kind === 'vice')
-  const gap = 100 - series.balance
+  // De figuur klimt mee met je gewonnen dagen, net als op Vandaag
+  const st = wonStats(s)
+  const climb = st.counted ? -100 + 200 * (st.won / st.counted) : 0
 
   return (
     <div className="screen">
@@ -56,10 +60,10 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           {/* Dezelfde levende scènes als op Vandaag: waar je nu staat, en Paradiso als je ideale zelf */}
           <div className="stack gap-8">
-            <div className="mini-scene" role="img" aria-label={`Nu: ${stageFor(series.balance).name}`}>
-              <LivingScene scene={stageFor(series.balance).scene} balance={series.balance} strong={strongest} features={earned} objects={pulling} virtueObject={goodObject} weak={weakest} />
+            <div className="mini-scene" role="img" aria-label="Waar je nu staat op de berg">
+              <LivingScene scene={stageFor(climb).scene} balance={climb} strong={strongest} features={earned} objects={pulling} virtueObject={goodObject} weak={weakest} />
             </div>
-            <div className="caption">Nu · {stageFor(series.balance).name}</div>
+            <div className="caption">Nu</div>
           </div>
           <div className="stack gap-8">
             <div className="mini-scene" role="img" aria-label="Je ideale zelf: Paradiso">
@@ -68,20 +72,12 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
             <div className="caption">Je ideale zelf</div>
           </div>
         </div>
-        <p className="small center mt-16" style={{ margin: '16px 0 0' }}>
-          Nog {gap.toFixed(0)} punten tot je ideale zelf. Bij een goede dag kruip je er zo’n {(gap * 0.15).toFixed(1).replace('.', ',')} dichterbij.
-        </p>
-        {/* iOS: de scènes bewegen pas mee met je telefoon na toestemming. Normaal gebeurt dat bij je eerste tik; dit is de tweede kans. */}
-        {askMotion && (
-          <button className="link center" style={{ display: 'block', margin: '12px auto 0' }} onClick={async () => { if (await enableMotion()) setAskMotion(false) }}>
-            Beweging met je telefoon inschakelen
-          </button>
-        )}
-        <div className="hstack gap-8 mt-16" style={{ gap: 8 }}>
-          <button className="btn soft sm" onClick={() => { setDraftAvatar(s.avatar); setPanel({ t: 'builder' }) }}>Aanpassen</button>
-          <button className="btn soft sm" onClick={() => setPanel({ t: 'preview' })}>Bekijk de reis</button>
-        </div>
+        <p className="small center mt-16" style={{ margin: '16px 0 0' }}>{st.won} van de {st.counted} dagen gewonnen. Elke gewonnen dag klim je hoger.</p>
+        <button className="btn soft sm mt-16" onClick={() => { setDraftAvatar(s.avatar); setPanel({ t: 'builder' }) }}>Je ideale zelf aanpassen</button>
       </div>
+
+      {/* Je doelen, als post-its op de spiegel */}
+      <MirrorNotes />
 
       <div className="group-title"><h2 className="h2">Waarom</h2><button className="link" onClick={() => setPanel({ t: 'why' })}>Wijzig</button></div>
       <div className="card" style={{ padding: '16px 16px' }}>
@@ -99,6 +95,22 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
       <HabitList list={vices} onEdit={(h) => setPanel({ t: 'habit', h, kind: 'vice' })} />
 
       <Account />
+
+      {/* Instellingen */}
+      <div className="group-title"><h2 className="h2">Instellingen</h2></div>
+      <div className="list">
+        {askMotion && (
+          <button className="row" onClick={async () => { if (await enableMotion()) setAskMotion(false) }}>
+            <div className="grow"><div className="name">Laat je scène meebewegen</div><div className="meta">Kantel je telefoon en het beeld kantelt mee</div></div>
+            <span className="pill">Aanzetten</span>
+          </button>
+        )}
+        <button className="row" role="switch" aria-checked={!!s.settings?.showCompass} onClick={() => update((d) => { d.settings = { ...d.settings, showCompass: !d.settings?.showCompass } })}>
+          <div className="grow"><div className="name">Toon kompas</div><div className="meta">De zeven zonden en deugden, als extra tab</div></div>
+          <span className={`switch ${s.settings?.showCompass ? 'on' : ''}`} aria-hidden="true"><i /></span>
+        </button>
+        {notifySupported() && <NotifyRows />}
+      </div>
 
       <div className="divider" />
       <p className="small center">Illustraties: Gustave Doré (1832–1883) voor Dantes <i>Divina Commedia</i>. Publiek domein, via Wikimedia Commons. Je gegevens blijven op dit apparaat.</p>
@@ -144,7 +156,6 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
         </Sheet>
       )}
 
-      {panel?.t === 'preview' && <JourneySheet onClose={close} />}
 
       {panel?.t === 'why' && <WhySheet initial={s.why} onClose={close} />}
 
@@ -175,7 +186,7 @@ function ShadowCard({ onOpen }: { onOpen: () => void }) {
   return (
     <button className="card mt-24" onClick={onOpen} style={{ display: 'grid', gridTemplateColumns: '76px 1fr', gap: 16, alignItems: 'center', padding: 16, width: '100%', textAlign: 'left' }}>
       <div style={{ position: 'relative' }}>
-        <Plate src={IMG.shadow} alt="" />
+        <Plate src={IMG.shadow} />
       </div>
       <div className="stack gap-4">
         <div className="eyebrow">Je schaduw</div>
@@ -230,45 +241,18 @@ function HabitList({ list, onEdit }: { list: Habit[]; onEdit: (h: Habit) => void
   return (
     <div className="list">
       {[...list].sort((a, b) => (a.kind === 'virtue' ? b.weight - a.weight : 0)).map((h) => {
-        const sin = SIN_BY_ID[h.sin]
-        const detail = h.type === 'target' ? `min. ${h.amount} ${h.unit}` : h.type === 'limit' ? `max. ${h.amount} ${h.unit}` : h.type === 'avoid' ? 'vermijden' : 'dagelijks'
+        const detail = h.type === 'target' ? `min. ${h.amount} ${h.unit}` : h.type === 'limit' ? `max. ${h.amount} ${h.unit}` : h.type === 'avoid' ? 'vermijden' : scheduleLabel(h)
         return (
           <button key={h.id} className="row" onClick={() => onEdit(h)} style={{ minHeight: 56 }}>
             <div className="grow">
               <div className="name">{h.name}</div>
-              <div className="meta">{h.kind === 'vice' ? `${sin.sin} · ${detail} · ${['licht', 'middel', 'zwaar'][h.weight - 1]}` : `${ROCK[h.weight]} · ${sin.virtue} · ${detail}`}</div>
+              <div className="meta">{h.kind === 'vice' ? `Verleiding · ${detail}` : `${h.weight === 3 ? 'Grote taak' : 'Taak'} · ${detail}`}</div>
             </div>
             <span style={{ color: 'var(--ink-3)', display: 'grid' }}>{Icon.next()}</span>
           </button>
         )
       })}
     </div>
-  )
-}
-
-function JourneySheet({ onClose }: { onClose: () => void }) {
-  const [b, setB] = useState(0)
-  const tb = useTween(b, 500)
-  const st = stageFor(b)
-  return (
-    <Sheet onClose={onClose}>
-      <div className="stack gap-16">
-        <div className="center stack gap-4">
-          <div className="eyebrow">De vijf platen</div>
-          <h2 className="h2">Waar je heen kunt, beide kanten op.</h2>
-        </div>
-        <StagePlate balance={tb} style={{ width: '72%', margin: '0 auto' }} />
-        <div className="caption">Plaat {st.plate} · {st.name} · {st.place}</div>
-        <p className="italic center" style={{ margin: 0, fontSize: 16, lineHeight: '24px'}}>{st.line}</p>
-        <input type="range" min={-100} max={100} value={b} onChange={(e) => setB(Number(e.target.value))} style={{ width: '100%', accentColor: '#F2F2F2' }} aria-label="Balans" />
-        <div className="hstack between" style={{ gap: 4 }}>
-          {STAGES.map((x, i) => {
-            const v = i === 0 ? -100 : i === STAGES.length - 1 ? 100 : Math.round((x.min + (STAGES[i + 1]?.min ?? 100)) / 2)
-            return <button key={x.plate} className={`chip ${st.plate === x.plate ? 'on' : ''}`} style={{ padding: '8px 8px', minHeight: 34, fontSize: 13, lineHeight: '20px'}} onClick={() => setB(v)}>{x.plate}</button>
-          })}
-        </div>
-      </div>
-    </Sheet>
   )
 }
 
@@ -285,3 +269,35 @@ function WhySheet({ initial, onClose }: { initial: string; onClose: () => void }
   )
 }
 
+
+const NOTIFY_ROWS = [
+  ['wake', 'Opstaan', 'Je weet waarom.'],
+  ['close', 'Dag afsluiten', 'Tijd om je dag af te sluiten.'],
+  ['bed', 'Naar boven', 'Telefoon beneden.'],
+] as const
+
+/** Herinneringen aan of uit, en de drie tijden. */
+function NotifyRows() {
+  const s = useStore()
+  const n = s.settings?.notify
+  const on = !!n?.on
+  const setTime = (k: 'wake' | 'close' | 'bed', v: string) => {
+    if (!v) return
+    update((d) => { d.settings = { ...d.settings, notify: { ...DEFAULT_TIMES, on, ...d.settings?.notify, [k]: v } } })
+    schedule()
+  }
+  return (
+    <>
+      <button className="row" role="switch" aria-checked={on} onClick={async () => { if (on) disableNotify(); else await enableNotify(); schedule() }}>
+        <div className="grow"><div className="name">Herinneringen</div><div className="meta">{on ? 'Werkt als de app open of op de achtergrond staat' : 'Opstaan, dag afsluiten, naar boven'}</div></div>
+        <span className={`switch ${on ? 'on' : ''}`} aria-hidden="true"><i /></span>
+      </button>
+      {on && NOTIFY_ROWS.map(([k, name, meta]) => (
+        <label key={k} className="row">
+          <div className="grow"><div className="name">{name}</div><div className="meta">{meta}</div></div>
+          <input className="time-input" type="time" value={n?.[k] ?? DEFAULT_TIMES[k]} onChange={(e) => setTime(k, e.target.value)} aria-label={`Tijd voor ${name.toLowerCase()}`} />
+        </label>
+      ))}
+    </>
+  )
+}

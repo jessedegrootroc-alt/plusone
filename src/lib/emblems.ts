@@ -2,6 +2,7 @@
 // Haal je hem, dan verdien je het embleem en staat het in Paradiso. (Vroeger stonden doelen los op Reis.)
 import type { FeatureId } from '../data/catalog'
 import { guessDomain, guessSin, planFor } from '../data/ladders'
+import { domainForFeature } from './goal'
 import { todayISO, uid, update, type Goal, type MirrorNote, type State } from './store'
 
 const unique = <T,>(xs: T[]) => [...new Set(xs)]
@@ -15,7 +16,7 @@ export const earnedFeatures = (s: State): FeatureId[] => unique((s.notes ?? []).
 /** Een los doel wordt een post-it met een ladder, en het embleem gaat mee. */
 export const noteFromGoal = (g: Pick<Goal, 'text' | 'feature' | 'done'>, today = todayISO()): MirrorNote => {
   // Zonder herkenbaar onderdeel: mentaal, want een doel halen is eerst een kwestie van je hoofd
-  const domain = guessDomain(g.text) ?? 'mentaal'
+  const domain = domainForFeature(g.feature) ?? guessDomain(g.text) ?? 'mentaal'
   return {
     id: uid(),
     text: g.text,
@@ -30,6 +31,10 @@ export const noteFromGoal = (g: Pick<Goal, 'text' | 'feature' | 'done'>, today =
 
 /** Eenmalig: oude doelen naar de spiegel. Daarna is de lijst leeg en gebeurt er niets meer. */
 export const migrateGoals = (s: State) => {
+  // Een Medaille (race of prestatie) stond soms onder Mentaal: die hoort bij Fysiek
+  if ((s.notes ?? []).some((n) => domainForFeature(n.feature) && n.domain !== domainForFeature(n.feature))) {
+    update((d) => { for (const n of d.notes ?? []) { const f = domainForFeature(n.feature); if (f) n.domain = f } })
+  }
   if (!s.goals?.length) return
   update((d) => {
     d.notes ??= []

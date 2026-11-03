@@ -1,21 +1,12 @@
 import { Children, useState, type CSSProperties, type ReactNode } from 'react'
 import { paperFor } from '../lib/paper'
+import { readJar } from '../lib/jar'
 import { todayISO, uid, update, useStore, type JarItem } from '../lib/store'
 import { HoldButton, Icon, Sheet } from './ui'
 
 /** Hoeveel briefjes er op het bord passen; de rest zit in de trommel en zie je via "alles". */
 const ON_BOARD = 7
 
-// Waar een overwinning vandaan komt, af te lezen aan hoe de app hem opschrijft
-const KINDS: { re: RegExp; label: string; big?: boolean; tape?: boolean }[] = [
-  { re: /^Van de spiegel: /, label: 'Van de spiegel', big: true, tape: true },
-  { re: /^Grens verlegd: /, label: 'Grens verlegd', big: true },
-  { re: /^(?=Drang naar )/, label: 'Golf uitgezeten' },
-]
-const read = (j: JarItem) => {
-  const k = KINDS.find((x) => x.re.test(j.text))
-  return { label: k?.label ?? 'Overwinning', text: k ? j.text.replace(k.re, '') : j.text, big: !!k?.big, tape: !!k?.tape }
-}
 const fmtDate = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
 
 /**
@@ -78,7 +69,7 @@ export function BoardCols({ children }: { children: ReactNode }) {
 
 function Note({ j, i, onOpen }: { j: JarItem; i: number; onOpen: () => void }) {
   const p = paperFor(j.id, 4)
-  const r = read(j)
+  const r = readJar(j)
   const style = { '--rot': `${p.rot}deg`, '--dx': `${p.dx}px`, '--tint': p.tint, '--pin': `${p.pin}%`, '--tape': `${p.tape}deg`, animationDelay: `${Math.min(i, 8) * 70}ms` } as CSSProperties
   return (
     <button className={`jar-note ${r.big ? 'big' : ''}`} style={style} onClick={onOpen}>
@@ -122,7 +113,7 @@ function AddSheet({ onClose }: { onClose: () => void }) {
 }
 
 function NoteSheet({ j, onClose }: { j: JarItem; onClose: () => void }) {
-  const r = read(j)
+  const r = readJar(j)
   const p = paperFor(j.id)
   return (
     <Sheet onClose={onClose}>

@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { ROCK_SHORT } from '../data/catalog'
-import { SINS } from '../data/sins'
-import type { Habit } from '../lib/store'
+import { DAY_SHORT } from '../lib/days'
+import type { Habit, Schedule } from '../lib/store'
 import { uid } from '../lib/store'
+
+const SCHEDULES: [Schedule['kind'], string][] = [['daily', 'Elke dag'], ['days', 'Vaste dagen'], ['week', 'Per week'], ['month', 'Per maand']]
 
 interface Props {
   initial?: Habit
@@ -25,6 +26,7 @@ export default function HabitEditor({ initial, kind, onSave, onDelete, onCancel 
     },
   )
   const set = (patch: Partial<Habit>) => setH((x) => ({ ...x, ...patch }))
+  const sc: Schedule = h.schedule ?? { kind: 'daily' }
   const counted = h.type === 'target' || h.type === 'limit'
   const types: [Habit['type'], string][] = h.kind === 'vice'
     ? [['avoid', 'Helemaal niet'], ['limit', 'Maximaal …']]
@@ -70,28 +72,52 @@ export default function HabitEditor({ initial, kind, onSave, onDelete, onCancel 
         </div>
       )}
 
-      <div className="field">
-        <label>{h.kind === 'vice' ? 'Welke zonde voedt dit?' : 'Welke deugd bouwt dit?'}</label>
-        <div className="chips">
-          {SINS.map((s) => (
-            <button key={s.id} className={`chip ${h.sin === s.id ? 'on' : ''}`} onClick={() => set({ sin: s.id })}>
-              {h.kind === 'vice' ? s.sin : s.virtue}
-            </button>
-          ))}
-        </div>
-      </div>
+      {h.kind === 'virtue' ? (
+        <>
+          <div className="field">
+            <label>Hoe belangrijk?</label>
+            <div className="seg">
+              <button className={h.weight === 3 ? 'on' : ''} onClick={() => set({ weight: 3 })}>Grote taak</button>
+              <button className={h.weight < 3 ? 'on' : ''} onClick={() => set({ weight: 2 })}>Gewone taak</button>
+            </div>
+            <div className="small">Alleen grote taken tellen voor een gewonnen dag.</div>
+          </div>
 
-      <div className="field">
-        <label>{h.kind === 'virtue' ? 'Hoe groot is deze steen?' : 'Hoe zwaar weegt het?'}</label>
-        <div className="seg">
-          {(h.kind === 'virtue' ? ([3, 2, 1] as const) : ([1, 2, 3] as const)).map((w) => (
-            <button key={w} className={h.weight === w ? 'on' : ''} onClick={() => set({ weight: w })}>
-              {h.kind === 'virtue' ? ROCK_SHORT[w] : ['Licht', 'Middel', 'Zwaar'][w - 1]}
-            </button>
-          ))}
+          {/* Wanneer: elke dag, op vaste dagen, of een aantal keer per week of maand */}
+          <div className="field">
+            <label>Wanneer?</label>
+            <div className="seg">
+              {SCHEDULES.map(([k, l]) => (
+                <button key={k} className={(sc.kind) === k ? 'on' : ''} onClick={() => set({ schedule: k === 'daily' ? undefined : k === 'days' ? { kind: 'days', days: [1, 3] } : { kind: k, times: 1 } })}>{l}</button>
+              ))}
+            </div>
+            {sc.kind === 'days' && (
+              <div className="day-pick" role="group" aria-label="Kies dagen">
+                {[1, 2, 3, 4, 5, 6, 0].map((d) => {
+                  const on = sc.days.includes(d)
+                  return <button key={d} className={`chip ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => set({ schedule: { kind: 'days', days: on ? sc.days.filter((x) => x !== d) : [...sc.days, d] } })}>{DAY_SHORT[d]}</button>
+                })}
+              </div>
+            )}
+            {(sc.kind === 'week' || sc.kind === 'month') && (
+              <div className="stepper-row">
+                <button className="iconbtn step-btn" aria-label="Minder" onClick={() => set({ schedule: { kind: sc.kind, times: Math.max(1, sc.times - 1) } })}>−</button>
+                <span className="lead" style={{ color: 'var(--ink)' }}>{sc.times} keer per {sc.kind === 'week' ? 'week' : 'maand'}</span>
+                <button className="iconbtn step-btn" aria-label="Meer" onClick={() => set({ schedule: { kind: sc.kind, times: Math.min(sc.kind === 'week' ? 7 : 31, sc.times + 1) } })}>+</button>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="field">
+          <label>Hoe zwaar weegt het?</label>
+          <div className="seg">
+            {([1, 2, 3] as const).map((w) => (
+              <button key={w} className={h.weight === w ? 'on' : ''} onClick={() => set({ weight: w })}>{['Licht', 'Middel', 'Zwaar'][w - 1]}</button>
+            ))}
+          </div>
         </div>
-        {h.kind === 'virtue' && <div className="small">Grote stenen maken of breken je dag en wegen het zwaarst in je balans.</div>}
-      </div>
+      )}
 
       <div className="field">
         <label htmlFor="hcue">Als-dan-plan <span style={{ fontWeight: 400, color: 'var(--ink-3)' }}>(optioneel)</span></label>

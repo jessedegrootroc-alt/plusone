@@ -153,6 +153,42 @@ export const IMG = {
   blessing: dore('benediction'),
 }
 
+/** Bron van elke prent, voor de alt-tekst: titel en Canto (zie scripts/fetch-dore.sh). */
+const DORE_SOURCE: Record<string, string> = {
+  forest: 'Dante in het donkere woud (Inferno, Canto I)',
+  virgil: 'Dante ontmoet Vergilius (Inferno, Canto I)',
+  lust: 'De storm van de hel (Inferno, Canto V)',
+  greed: 'De vrekken en de verkwisters (Inferno, Canto VII)',
+  wrath: 'De woedenden vechten in de Styx (Inferno, Canto VIII)',
+  lucifer: 'Lucifer (Inferno, Canto XXXIV)',
+  shore: 'De kust van de berg (Purgatorio, Canto I)',
+  boat: 'De boot met zielen (Purgatorio, Canto II)',
+  gate: 'De poort van de berg (Purgatorio, Canto IX)',
+  pride: 'De last van de hoogmoed (Purgatorio, Canto X)',
+  envy: 'De jaloerse zielen (Purgatorio, Canto XIII)',
+  gluttony: 'De zielen van de vraatzuchtigen (Purgatorio, Canto XXIII)',
+  temperance: 'De maan (Paradiso, Canto III)',
+  charity: 'Het kruis van Mars (Paradiso, Canto XIV)',
+  kindness: 'De hemel van Jupiter (Paradiso, Canto XVIII)',
+  patience: 'De adelaar (Paradiso, Canto XIX)',
+  ladder: 'De gouden ladder (Paradiso, Canto XXI)',
+  humility: 'Het lied van de hemel (Paradiso, Canto XXVII)',
+  ninth: 'De negende hemel (Paradiso, Canto XXVIII)',
+  rose: 'De hemelse roos (Paradiso, Canto XXXI)',
+  foulque: 'Foulque Nerra, achtervolgd door de schimmen van zijn slachtoffers (Histoire des croisades)',
+  taurus: 'De kruisvaarders trekken over de Taurus (Histoire des croisades)',
+  george: 'Sint-Joris verschijnt op de Olijfberg (Histoire des croisades)',
+  oath: 'Voor de verdediging van Christus (Histoire des croisades)',
+  benediction: 'De zegen (Histoire des croisades)',
+  satan: 'Satan (Paradise Lost, Milton)',
+}
+
+/** "Gustave Doré: <titel> (<boek, Canto>)" voor een prent uit /dore. */
+export const doreAlt = (src: string) => {
+  const slug = src.split('/').pop()?.replace(/\.jpg$/, '') ?? ''
+  return DORE_SOURCE[slug] ? `Gustave Doré: ${DORE_SOURCE[slug]}` : 'Gustave Doré, gravure'
+}
+
 export type SceneId = 'inferno' | 'woud' | 'kust' | 'terrassen' | 'paradiso'
 
 export interface Stage {

@@ -207,7 +207,7 @@ export function HabitRow({ h, value, answered, onChange, meta: metaOverride, onR
             tabIndex={0}
             aria-label={`${h.name} verwijderen`}
             className="iconbtn"
-            style={{ width: 32, height: 32, color: 'var(--ink-3)' }}
+            style={{ width: 44, height: 44, color: 'var(--ink-3)' }}
             onClick={(e) => { e.stopPropagation(); onRemove() }}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onRemove() } }}
           >

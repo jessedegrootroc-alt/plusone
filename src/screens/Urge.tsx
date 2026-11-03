@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Plate, { StagePlate } from '../components/Plate'
 import { Icon } from '../components/ui'
 import { AFTER_GAVE_IN, AFTER_RESISTED, HELP_KEYS, NEEDS, NEED_BY_ID, SURF_LINES, VOICES, type NeedId } from '../data/urge'
-import { IMG, SIN_BY_ID } from '../data/sins'
+import { IMG, SIN_BY_ID, doreAlt } from '../data/sins'
 import { ALPHA, habitsFor } from '../lib/score'
 import { buzz, setValue, todayISO, uid, update, useStore, type UrgeEvent } from '../lib/store'
 
@@ -164,7 +164,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
         {step === 'voice' && (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: '84px 1fr', gap: 16, alignItems: 'center', textAlign: 'left' }}>
-              <Plate src={IMG.shadow} alt="Je schaduw" />
+              <Plate src={IMG.shadow} alt={`Je schaduw. ${doreAlt(IMG.shadow)}`} />
               <div>
                 <div className="big">Wat fluistert De Schim?</div>
                 <div style={{ color: 'var(--ink-2)', fontSize: 13, lineHeight: '20px', marginTop: 4 }}>Het is een gedachte, geen bevel. Welke hoor je?</div>
