@@ -161,7 +161,7 @@ export function Toast({ text, onDone, action, onAction }: { text: string; onDone
     <div className="toast hstack between" role="status" style={{ gap: 12 }}>
       <span>{text}</span>
       {action && (
-        <button onClick={() => { onAction?.(); onDone() }} style={{ fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap', color: 'inherit' }}>
+        <button onClick={() => { onAction?.(); onDone() }} style={{ flex: 'none', minHeight: 44, fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap', color: 'inherit' }}>
           {action}
         </button>
       )}

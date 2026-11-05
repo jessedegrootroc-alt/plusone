@@ -691,3 +691,35 @@ button.card:active { transform: scale(0.985); }
 
 /* Tijd kiezen in de instellingen */
 .time-input { min-height: 44px; min-width: 92px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: 600 17px/1 var(--sans, inherit); font-variant-numeric: tabular-nums; color-scheme: dark; }
+
+/* Vandaag: de taken als briefjes op het prikbord. Afscheuren, en ze vliegen in de koektrommel. */
+.task-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s4); margin: 0 0 var(--s2); }
+.trommel { flex: none; width: 76px; height: 66px; margin: 0 -2px -8px 0; position: relative; z-index: 1; }
+.trommel svg { display: block; transform-origin: 50% 90%; transition: filter 0.6s ease; }
+.trommel.bump svg { animation: trBump 0.45s var(--ease); }
+.trommel.won svg { filter: drop-shadow(0 0 14px rgba(242, 242, 242, 0.3)); }
+@keyframes trBump { 35% { transform: translateY(3px) scale(1.07, 0.93); } 70% { transform: translateY(-2px) scale(0.98, 1.03); } }
+.task-board { padding-top: var(--s5); }
+.task-slot { position: relative; margin: 0 0 var(--s4); }
+.task-slot > .tape { z-index: 2; }
+.task-slot.flying { z-index: 20; }
+.task-note { margin: 0; min-height: 104px; padding-top: var(--s5); touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: grab; animation: pinIn 0.55s var(--ease) backwards; }
+.task-note .jar-text { font-size: 18px; line-height: 24px; }
+.task-note.minor { min-height: 92px; padding: var(--s4) var(--s3) var(--s3); }
+.task-note.minor .jar-text { font-size: 16px; line-height: 22px; }
+.task-note.pulling { transition: none; cursor: grabbing; z-index: 5; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 18px 28px -8px rgba(0, 0, 0, 0.9); }
+.task-note.torn { clip-path: polygon(0 6px, 6% 0, 12% 7px, 19% 2px, 26% 8px, 33% 1px, 41% 7px, 48% 0, 56% 6px, 63% 2px, 71% 8px, 78% 1px, 86% 7px, 93% 2px, 100% 6px, 100% 100%, 0 100%); }
+.tn-main { position: absolute; inset: 0; z-index: 1; border-radius: inherit; -webkit-tap-highlight-color: transparent; }
+.tn-time { position: relative; z-index: 2; align-self: flex-start; min-height: 44px; margin: auto 0 -12px -6px; padding: 0 6px; font: var(--sm); font-weight: 600; color: #3D3D3D; text-decoration: underline; text-underline-offset: 3px; }
+.tn-time.late { color: #A3150B; }
+.tn-x { position: absolute; z-index: 2; top: 0; right: 0; width: 44px; height: 44px; display: grid; place-items: center; color: #595959; }
+.tn-x svg { width: 16px; height: 16px; }
+/* Wat er achterblijft: het plakband en een afgescheurd randje */
+.stub-paper { display: block; height: 14px; margin: 0 4px; background: var(--tint, #F2F2F2); transform: rotate(var(--rot, 0deg)); clip-path: polygon(0 0, 100% 0, 100% 62%, 97% 78%, 94% 58%, 90% 88%, 86% 70%, 81% 96%, 77% 64%, 73% 80%, 68% 55%, 64% 86%, 59% 72%, 55% 100%, 51% 66%, 46% 82%, 42% 58%, 37% 90%, 33% 68%, 28% 84%, 24% 52%, 20% 92%, 15% 70%, 11% 86%, 7% 60%, 3% 80%, 0 66%); }
+.stub-paper.left { position: absolute; top: 0; left: 0; right: 0; }
+.task-stub { display: flex; flex-direction: column; gap: 6px; width: 100%; min-height: 72px; padding: 0 0 var(--s2); text-align: left; animation: fadeUp 0.4s var(--ease) both; }
+.stub-name { margin: 2px 6px 0; font: var(--sm); color: var(--ink-3); text-decoration: line-through; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stub-back { margin: 0 6px; font: var(--sm); font-weight: 600; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
+.board-hint { margin: 0; text-align: center; font: var(--sm); color: var(--ink-3); }
+.tasks .won-row { margin-top: var(--s4); padding-top: 0; border-top: 0; }
+@media (prefers-reduced-motion: reduce) { .trommel.bump svg, .task-stub { animation: none; } }

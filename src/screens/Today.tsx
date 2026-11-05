@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import Scene from '../components/Scene'
 import CookieProof from '../components/CookieProof'
 import Offers from '../components/Offers'
+import TaskNotes from '../components/TaskNotes'
 import { NoteSheet } from '../components/MirrorNotes'
 import { HabitRow, Icon, Sheet, Toast, useTween } from '../components/ui'
 import { pullingObjects, strongestVirtueObject } from '../data/objects'
@@ -10,7 +11,7 @@ import { bigTasksOn, dayResult, lostYesterday, otherTasksOn, scheduleLabel, wonS
 import { earnedFeatures } from '../lib/emblems'
 import { countdownLabel, goalTitle, mainGoal } from '../lib/goal'
 import { computeSeries, isDone } from '../lib/score'
-import { addDays, buzz, setValue, todayISO, update, useStore, type Habit } from '../lib/store'
+import { addDays, buzz, setValue, todayISO, uid, update, useStore, type Habit } from '../lib/store'
 
 const SLIP_LINES = [
   'Genoteerd. Eén val is data, geen identiteit.',
@@ -34,6 +35,10 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
   const [timeFor, setTimeFor] = useState<Habit | null>(null)
   const [goalSheet, setGoalSheet] = useState(false)
   const [showVices, setShowVices] = useState(false)
+  // Na het afscheuren: was het zwaar? Dan wordt het een koekje. Anders is het gewoon gedaan.
+  const [torn, setTorn] = useState<{ h: Habit; n: number } | null>(null)
+  const [hardFor, setHardFor] = useState<Habit | null>(null)
+  const clearTorn = useCallback(() => setTorn(null), [])
 
   const series = useMemo(() => computeSeries(s), [s])
   const stats = useMemo(() => wonStats(s, today), [s, today])
@@ -108,70 +113,50 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
       {date === today && s.why && <p className="why-line">{s.why}</p>}
       {plan && date === today && <p className="plan-line"><b>Plan van gisteren:</b> {plan}</p>}
 
-      {/* 5 · De grote taken: één tik om af te vinken */}
+      {/* 5 en 6 · De taken van vandaag als briefjes: scheur eraf wat gedaan is, het gaat in de koektrommel */}
       <section className="section tasks">
-        <div className="section-head"><h2 className="h2">{date === today ? 'Vandaag' : 'Die dag'}</h2><span className="small">{bigDone} van {big.length} gedaan</span></div>
-        <div className="card">
-          {big.length ? (
-            <div className="list flat big-tasks">
-              {big.map((h) => {
-                const on = done(h)
-                const late = date === today && !!h.at && h.at < nowHM && !on
-                return (
-                  <button key={h.id} className={`big-task ${on ? 'done' : ''}`} aria-pressed={on} onClick={() => { buzz(on ? 6 : 14); setValue(date, h.id, on ? 0 : h.type === 'target' ? h.amount ?? 1 : 1) }}>
-                    <span className={`check big ${on ? 'on' : ''}`}>{on && Icon.check('#0B0B0B')}</span>
-                    <span className="grow">
-                      <span className="bt-name">{h.name}</span>
-                      {h.at && <span className={`bt-time ${late ? 'late' : ''}`} role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); setTimeFor(h) }}>{h.at}{late ? ' · te laat' : ''}</span>}
-                    </span>
-                    {dayRockIds.has(h.id) && <span role="button" tabIndex={0} aria-label="Weghalen" className="iconbtn bt-x" onClick={(e) => { e.stopPropagation(); removeRock(h.id) }}>{Icon.close()}</span>}
-                  </button>
-                )
-              })}
-            </div>
-          ) : (
-            <p className="lead" style={{ margin: 0 }}>Geen grote taken voor deze dag. Maak een gewoonte groot onder Reis.</p>
-          )}
-          <div className="won-row">
-            <div className="won-dots" aria-label={`${stats.won} van de ${stats.counted} dagen gewonnen`}>
-              {week.map((d) => {
-                const r = dayResult(s, d)
-                return <button key={d} className={`won-dot ${r === true ? 'won' : r === false ? 'lost' : ''} ${d === date ? 'sel' : ''}`} disabled={d < s.createdAt} onClick={() => setDate(d)} aria-label={new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' })}>{new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short' }).slice(0, 2)}</button>
-              })}
-            </div>
-            <div className="small">{stats.won} van de {stats.counted} dagen gewonnen · {s.jar.length} {s.jar.length === 1 ? 'overwinning' : 'overwinningen'}</div>
+        <TaskNotes
+          title={date === today ? 'Vandaag' : 'Die dag'}
+          bigDone={bigDone}
+          bigTotal={big.length}
+          items={[
+            ...big.map((h) => ({ h, big: true, done: done(h), late: date === today && !!h.at && h.at < nowHM && !done(h), removable: dayRockIds.has(h.id) })),
+            ...other.map((h) => ({ h, big: false, done: done(h), late: false, meta: scheduleLabel(h), removable: dayRockIds.has(h.id) })),
+          ]}
+          onTear={(h) => { setValue(date, h.id, h.type === 'target' ? h.amount ?? 1 : 1); setTorn((t) => ({ h, n: (t?.n ?? 0) + 1 })) }}
+          onBack={(h) => { setValue(date, h.id, 0); setTorn(null) }}
+          onTime={setTimeFor}
+          onRemove={(h) => removeRock(h.id)}
+        />
+        <div className="won-row">
+          <div className="won-dots" aria-label={`${stats.won} van de ${stats.counted} dagen gewonnen`}>
+            {week.map((d) => {
+              const r = dayResult(s, d)
+              return <button key={d} className={`won-dot ${r === true ? 'won' : r === false ? 'lost' : ''} ${d === date ? 'sel' : ''}`} disabled={d < s.createdAt} onClick={() => setDate(d)} aria-label={new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' })}>{new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short' }).slice(0, 2)}</button>
+            })}
           </div>
+          <div className="small">{stats.won} van de {stats.counted} dagen gewonnen · {s.jar.length} {s.jar.length === 1 ? 'overwinning' : 'overwinningen'}</div>
         </div>
       </section>
 
       {/* Eén keer: het nieuwe schema, of taak 4 */}
       {date === today && <section className="section"><Offers /></section>}
 
-      {/* 6 · Wat er vandaag nog meer staat */}
-      {(other.length > 0 || vices.length > 0) && (
+      {/* Verleidingen: bijhouden, telt niet mee */}
+      {vices.length > 0 && (
         <section className="section">
-          <div className="section-head"><h2 className="h2">Nog meer</h2>{other.length > 0 && <span className="small">{other.filter(done).length} van {other.length}</span>}</div>
           <div className="card day-card">
-            <div className="list flat">
-              {other.map((h) => (
-                <HabitRow key={h.id} compact tight h={h} meta={scheduleLabel(h)} value={log?.v[h.id] ?? 0} answered={!!log && h.id in log.v} onChange={(v) => change(h.id, v, false, false)} onRemove={dayRockIds.has(h.id) ? () => removeRock(h.id) : undefined} />
-              ))}
-            </div>
-            {vices.length > 0 && (
-              <>
-                <button className="fold" onClick={() => setShowVices((x) => !x)} aria-expanded={showVices}>
-                  <span>Verleidingen · {slips.length ? `${slips.length} toegegeven` : 'alles vrij'}</span>
-                  <span className={`chev ${showVices ? 'open' : ''}`}>{Icon.next()}</span>
-                </button>
-                {(showVices ? vices : slips).length > 0 && (
-                  <div className="list flat">
-                    {(showVices ? vices : slips).map((h) => {
-                      const v = log?.v[h.id] ?? 0
-                      return <HabitRow key={h.id} compact tight h={h} value={v} answered={sealed || (!!log && h.id in log.v)} onChange={(nv) => change(h.id, nv, !isDone(h, v), true)} />
-                    })}
-                  </div>
-                )}
-              </>
+            <button className="fold" onClick={() => setShowVices((x) => !x)} aria-expanded={showVices}>
+              <span>Verleidingen · {slips.length ? `${slips.length} toegegeven` : 'alles vrij'}</span>
+              <span className={`chev ${showVices ? 'open' : ''}`}>{Icon.next()}</span>
+            </button>
+            {(showVices ? vices : slips).length > 0 && (
+              <div className="list flat">
+                {(showVices ? vices : slips).map((h) => {
+                  const v = log?.v[h.id] ?? 0
+                  return <HabitRow key={h.id} compact tight h={h} value={v} answered={sealed || (!!log && h.id in log.v)} onChange={(nv) => change(h.id, nv, !isDone(h, v), true)} />
+                })}
+              </div>
             )}
           </div>
         </section>
@@ -196,8 +181,36 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
 
       {timeFor && <TimeSheet h={timeFor} date={date} onClose={() => setTimeFor(null)} />}
       {goalSheet && <NoteSheet note={goal} onClose={() => setGoalSheet(false)} />}
+      {torn && !toast && <Toast key={torn.n} text="Gedaan. Was het zwaar?" action="In de koektrommel" onDone={clearTorn} onAction={() => setHardFor(torn.h)} />}
+      {hardFor && <HardSheet h={hardFor} date={date} onClose={() => setHardFor(null)} />}
       {toast && <Toast text={toast} onDone={clearToast} action={slipId ? 'Vraag je schaduw' : undefined} onAction={() => slipId && openShadow(slipId)} />}
     </div>
+  )
+}
+
+/**
+ * Een taak die zwaar was, wordt een koekje. Niet de taak zelf telt, maar wat je overwon:
+ * "6:30 op" wordt "Om 6:30 op, na vier uur slaap".
+ */
+function HardSheet({ h, date, onClose }: { h: Habit; date: string; onClose: () => void }) {
+  const [text, setText] = useState(h.name)
+  const save = () => {
+    if (!text.trim()) return
+    buzz(14)
+    update((d) => { d.jar.unshift({ id: uid(), text: text.trim(), date }) })
+    onClose()
+  }
+  return (
+    <Sheet onClose={onClose}>
+      <div className="stack gap-16">
+        <div className="stack gap-4">
+          <h2 className="h2">Wat maakte het zwaar?</h2>
+          <p className="small" style={{ margin: 0 }}>Schrijf op wat je overwon. Dat lees je terug op een zware dag.</p>
+        </div>
+        <textarea className="input" rows={3} autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder="Bijv. toch gaan lopen in de regen" onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save() } }} />
+        <button className="btn" disabled={!text.trim()} onClick={save}>In de koektrommel</button>
+      </div>
+    </Sheet>
   )
 }
 
