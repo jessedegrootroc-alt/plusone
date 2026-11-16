@@ -64,8 +64,9 @@ export function Mirror({ date, onClose }: { date: string; onClose: () => void })
       <section className="dc-q">
         <h2 className="dc-title"><span className="dc-n">1</span> Heb ik gedaan wat ik zei?</h2>
         <div className={`dc-result ${result === true ? 'won' : result === false ? 'lost' : ''}`}>
-          {result === true ? 'Gewonnen' : result === false ? 'Verloren' : 'Geen grote taken vandaag'}
+          {result === true ? 'Gewonnen' : result === false ? 'Gemist' : 'Geen grote taken vandaag'}
         </div>
+        {result === false && <p className="small" style={{ margin: 0 }}>Eén dag zegt niets, twee wel. Schrijf op wat morgen anders moet, en laat deze dag hier.</p>}
         {big.length > 0 && (
           <div className="list flat">
             {big.map((h) => {

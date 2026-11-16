@@ -3,11 +3,12 @@ import Scene from '../components/Scene'
 import CookieProof from '../components/CookieProof'
 import Offers from '../components/Offers'
 import TaskNotes from '../components/TaskNotes'
+import Witness from '../components/Witness'
 import { NoteSheet } from '../components/MirrorNotes'
 import { HabitRow, Icon, Sheet, Toast, useTween } from '../components/ui'
 import { pullingObjects, strongestVirtueObject } from '../data/objects'
 import { SINS } from '../data/sins'
-import { bigTasksOn, dayResult, lostYesterday, otherTasksOn, scheduleLabel, wonStats } from '../lib/days'
+import { bigTasksOn, canSave, dayResult, doesItAlone, freshStart, isComeback, isSaved, lostYesterday, missedOn, missedYesterday, otherTasksOn, reserveBack, reservesLeft, scheduleLabel, wonStats } from '../lib/days'
 import { earnedFeatures } from '../lib/emblems'
 import { countdownLabel, goalTitle, mainGoal } from '../lib/goal'
 import { computeSeries, isDone } from '../lib/score'
@@ -61,6 +62,26 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
   const nowHM = new Date().toTimeString().slice(0, 5)
   const plan = s.logs[addDays(date, -1)]?.aar?.plan
   const lost = date === today && lostYesterday(s, today)
+  // Reservedagen: gisteren gemist? Eén keer red je hem, twee keer op rij niet.
+  const yesterday = addDays(today, -1)
+  const missed = date === today && missedYesterday(s, today)
+  const savable = missed && canSave(s, yesterday)
+  const left = reservesLeft(s, yesterday)
+  const twoInRow = missed && missedOn(s, addDays(today, -2))
+  const comeback = date === today && isComeback(s, today)
+  const saveYesterday = () => {
+    buzz(18)
+    update((d) => { (d.logs[yesterday] ??= { v: {} }).saved = true })
+  }
+  // Een verse start: maandag na een slechte week, of de eerste van de maand
+  const fresh = date === today && s.asked?.fresh !== today ? freshStart(s, today) : null
+  // Herinneringen afbouwen: doe je een taak al drie weken zelf, dan vraagt de app of de melding uit mag
+  const notifyOn = !!s.settings?.notify?.on
+  const selfMade = date === today && notifyOn ? [...big, ...other].find((h) => h.at && h.remind !== false && !h.remindAsked && !dayRockIds.has(h.id) && doesItAlone(s, h, today)) : undefined
+  const answerRemind = (h: Habit, keep: boolean) => update((d) => {
+    const x = d.habits.find((y) => y.id === h.id)
+    if (x) { x.remindAsked = true; if (!keep) x.remind = false }
+  })
   const goal = mainGoal(s)
   const week = Array.from({ length: 7 }).map((_, i) => addDays(today, i - 6))
   const removeRock = (id: string) => update((d) => {
@@ -93,14 +114,35 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
         )}
       </div>
 
-      {/* 2 · Nooit twee keer missen */}
-      {lost && <div className="miss-bar" role="alert">Gisteren verloren. Vandaag niet nog een keer.</div>}
+      {/* 2 · Nooit twee keer missen. Eén misser red je met een reservedag; terugkomen telt dubbel.
+          Streng, niet beschamend (Breines & Chen: wie mild naar een misser kijkt, werkt daarna harder). */}
+      {comeback ? (
+        <div className="miss-bar back">Teruggekomen na gisteren.{reserveBack(s, today) ? ' Je reservedag is terug.' : ''}</div>
+      ) : missed && isSaved(s, yesterday) ? (
+        <div className="miss-bar saved">Gisteren gered. Twee keer niet.</div>
+      ) : savable ? (
+        <div className="miss-bar" role="alert">
+          <span className="miss-text">Gisteren gemist.<span className="miss-sub">Nog {left} {left === 1 ? 'reservedag' : 'reservedagen'}</span></span>
+          <button className="miss-act" onClick={saveYesterday} aria-label="Gisteren redden met een reservedag">Red hem</button>
+        </div>
+      ) : lost ? (
+        <div className="miss-bar" role="alert">{twoInRow ? 'Twee dagen op rij gemist. Doorbreek het vandaag.' : left === 0 ? 'Gisteren gemist, geen reservedagen meer. Vandaag terug.' : 'Gisteren gemist. Vandaag terug.'}</div>
+      ) : null}
+
+      {/* Een verse start */}
+      {fresh && (
+        <div className="fresh-line">
+          <p>{fresh === 'month' ? <><b>Nieuwe maand.</b> Twee nieuwe reservedagen. Begin schoon.</> : <><b>Nieuwe week.</b> Die telt opnieuw. Wat vorige week gebeurde, ligt achter je.</>}</p>
+          <button className="link" onClick={() => update((d) => { d.asked = { ...d.asked, fresh: today } })}>Oké</button>
+        </div>
+      )}
 
       {/* 3 · Het doel, met aftelling */}
       {date === today && (goal ? (
         <button className="goal-hero" onClick={() => setGoalSheet(true)}>
           <span className="goal-title">{goalTitle(goal)}</span>
           <span className="goal-count">{goal.due ? countdownLabel(goal.due, today) : 'Zet er een datum bij'}</span>
+          {!(goal.obstacle && goal.ifThen) && <span className="goal-plan">Wat houdt je tegen? Maak een als-dan-plan.</span>}
         </button>
       ) : (
         <button className="goal-hero empty" onClick={() => setGoalSheet(true)}>
@@ -108,6 +150,9 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
           <span className="goal-count">Met een datum. Dan telt de app af.</span>
         </button>
       ))}
+
+      {/* Het obstakel bij je doel, met wat je dan doet (WOOP) */}
+      {date === today && goal?.obstacle && goal.ifThen && <p className="plan-line"><b>Als {goal.obstacle.replace(/^als\s+/i, '')}:</b> {goal.ifThen}</p>}
 
       {/* 4 · Je waarom, elke ochtend */}
       {date === today && s.why && <p className="why-line">{s.why}</p>}
@@ -123,7 +168,15 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
             ...big.map((h) => ({ h, big: true, done: done(h), late: date === today && !!h.at && h.at < nowHM && !done(h), removable: dayRockIds.has(h.id) })),
             ...other.map((h) => ({ h, big: false, done: done(h), late: false, meta: scheduleLabel(h), removable: dayRockIds.has(h.id) })),
           ]}
-          onTear={(h) => { setValue(date, h.id, h.type === 'target' ? h.amount ?? 1 : 1); setTorn((t) => ({ h, n: (t?.n ?? 0) + 1 })) }}
+          onTear={(h) => {
+            setValue(date, h.id, h.type === 'target' ? h.amount ?? 1 : 1)
+            setTorn((t) => ({ h, n: (t?.n ?? 0) + 1 }))
+            // Teruggekomen na een misser: dat is een overwinning op zich, dus een koekje
+            update((d) => {
+              const id = 'terug-' + today
+              if (date === today && isComeback(d, today) && !d.jar.some((j) => j.id === id)) d.jar.unshift({ id, text: 'Teruggekomen na een gemiste dag', date: today })
+            })
+          }}
           onBack={(h) => { setValue(date, h.id, 0); setTorn(null) }}
           onTime={setTimeFor}
           onRemove={(h) => removeRock(h.id)}
@@ -131,16 +184,30 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
         <div className="won-row">
           <div className="won-dots" aria-label={`${stats.won} van de ${stats.counted} dagen gewonnen`}>
             {week.map((d) => {
-              const r = dayResult(s, d)
-              return <button key={d} className={`won-dot ${r === true ? 'won' : r === false ? 'lost' : ''} ${d === date ? 'sel' : ''}`} disabled={d < s.createdAt} onClick={() => setDate(d)} aria-label={new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' })}>{new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short' }).slice(0, 2)}</button>
+              // Vandaag is nog niet voorbij: pas gewonnen, nooit al verloren
+              const r = d === today && dayResult(s, d) === false ? null : dayResult(s, d)
+              const sv = r === null && isSaved(s, d)
+              return <button key={d} className={`won-dot ${r === true ? 'won' : r === false ? 'lost' : sv ? 'saved' : ''} ${d === date ? 'sel' : ''}`} disabled={d < s.createdAt} onClick={() => setDate(d)} aria-label={new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' }) + (r === true ? ', gewonnen' : r === false ? ', verloren' : sv ? ', gered met een reservedag' : '')}>{new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short' }).slice(0, 2)}</button>
             })}
           </div>
           <div className="small">{stats.won} van de {stats.counted} dagen gewonnen · {s.jar.length} {s.jar.length === 1 ? 'overwinning' : 'overwinningen'}</div>
         </div>
+        {selfMade && (
+          <div className="card remind-card">
+            <p><b>{selfMade.name}</b>: drie weken bijna elke dag gedaan. Je doet dit nu zelf. Herinnering uit?</p>
+            <div className="hstack" style={{ gap: 8 }}>
+              <button className="btn sm" onClick={() => answerRemind(selfMade, false)}>Herinnering uit</button>
+              <button className="btn soft sm" onClick={() => answerRemind(selfMade, true)}>Laat aan</button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Eén keer: het nieuwe schema, of taak 4 */}
       {date === today && <section className="section"><Offers /></section>}
+
+      {/* Op zondag en maandag: je week naar je getuige */}
+      {date === today && <Witness />}
 
       {/* Verleidingen: bijhouden, telt niet mee */}
       {vices.length > 0 && (
@@ -215,17 +282,34 @@ function HardSheet({ h, date, onClose }: { h: Habit; date: string; onClose: () =
 }
 
 const TIMES = ['05:00', '06:00', '06:30', '07:00', '12:00', '18:00', '20:00', '21:00']
+const CUES = ['het opstaan', 'het tandenpoetsen', 'de koffie', 'het ontbijt', 'het werk', 'het avondeten']
 
+/**
+ * Wanneer doe je het? Eerst waarna (Stawarz e.a.: een vast moment in je dag maakt het automatisch, een melding niet),
+ * dan hoe laat. En of je op die tijd een herinnering wilt.
+ */
 function TimeSheet({ h, date, onClose }: { h: Habit; date: string; onClose: () => void }) {
-  const [at, setAt] = useState(h.at ?? '06:30')
-  const save = (v?: string) => {
+  const s = useStore()
+  const [cue, setCue] = useState(h.cue ?? '')
+  const [at, setAt] = useState(h.at ?? '')
+  const [remind, setRemind] = useState(h.remind !== false)
+  const isRock = !!s.logs[date]?.rocks?.some((x) => x.id === h.id)
+  const notifyOn = !!s.settings?.notify?.on
+  const save = () => {
     buzz(12)
+    const c = cue.trim().replace(/^na\s+/i, '') || undefined
+    const t = at || undefined
     update((d) => {
       const r = d.logs[date]?.rocks?.find((x) => x.id === h.id)
-      if (r) r.at = v
+      if (r) { r.at = t; r.cue = c }
       else {
         const x = d.habits.find((y) => y.id === h.id)
-        if (x) x.at = v
+        if (x) {
+          x.at = t
+          x.cue = c
+          if (remind) delete x.remind
+          else x.remind = false
+        }
       }
     })
     onClose()
@@ -235,16 +319,31 @@ function TimeSheet({ h, date, onClose }: { h: Habit; date: string; onClose: () =
       <div className="stack gap-16">
         <div className="stack gap-4">
           <h2 className="h2">Wanneer doe je het?</h2>
-          <p className="small" style={{ margin: 0 }}>{h.name}. Een vaste tijd maakt het niet-onderhandelbaar: dan is het een afspraak met jezelf, geen voornemen.</p>
+          <p className="small" style={{ margin: 0 }}>{h.name}. Koppel het aan iets wat je al elke dag doet. Dat maakt het een gewoonte; een melding niet.</p>
         </div>
-        <div className="chips">
-          {TIMES.map((t) => <button key={t} className={`chip ${at === t ? 'on' : ''}`} onClick={() => setAt(t)}>{t}</button>)}
+        <div className="field">
+          <label htmlFor="cue">Na</label>
+          <div className="chips">
+            {CUES.map((c) => <button key={c} className={`chip ${cue === c ? 'on' : ''}`} onClick={() => setCue(cue === c ? '' : c)}>{c}</button>)}
+          </div>
+          <input id="cue" className="input" value={cue} onChange={(e) => setCue(e.target.value)} placeholder="Of iets anders: het douchen" />
         </div>
-        <input className="input" type="time" value={at} onChange={(e) => setAt(e.target.value)} aria-label="Eigen tijd" />
-        <button className="btn" onClick={() => save(at)}>Vastleggen</button>
-        {h.at && <button className="link center" onClick={() => save(undefined)}>Geen vaste tijd</button>}
+        <div className="field">
+          <label htmlFor="at">Hoe laat</label>
+          <div className="chips">
+            {TIMES.map((t) => <button key={t} className={`chip ${at === t ? 'on' : ''}`} onClick={() => setAt(at === t ? '' : t)}>{t}</button>)}
+          </div>
+          <input id="at" className="input" type="time" value={at} onChange={(e) => setAt(e.target.value)} aria-label="Eigen tijd" />
+          {at && <button className="link" onClick={() => setAt('')}>Geen vaste tijd</button>}
+        </div>
+        {!isRock && at && notifyOn && (
+          <button className="row" role="switch" aria-checked={remind} onClick={() => setRemind((x) => !x)}>
+            <div className="grow"><div className="name">Herinnering om {at}</div><div className="meta">Alleen als het dan nog niet af is</div></div>
+            <span className={`switch ${remind ? 'on' : ''}`} aria-hidden="true"><i /></span>
+          </button>
+        )}
+        <button className="btn" onClick={save}>Vastleggen</button>
       </div>
     </Sheet>
   )
 }
-

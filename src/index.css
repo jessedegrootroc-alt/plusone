@@ -349,10 +349,25 @@ button.card:active { transform: scale(0.985); }
 .proof-foot { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
 /* ——— Vandaag: eerst het doel en je taken, het beeld daarna ——— */
 /* Nooit twee keer missen: de enige rode kleur in de app */
-.miss-bar { margin-bottom: var(--s4); padding: var(--s3) var(--s4); border-radius: var(--r-md); background: #7A1712; color: #FFF; font: var(--b); font-weight: 600; }
-.goal-hero { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s1); width: 100%; padding: var(--s1) 0 var(--s4); text-align: left; }
+.miss-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); margin-bottom: var(--s3); padding: var(--s2) var(--s2) var(--s2) var(--s4); min-height: 56px; border-radius: var(--r-md); background: #7A1712; color: #FFF; font: var(--b); font-weight: 600; }
+.miss-text { display: flex; flex-direction: column; }
+.miss-sub { font: var(--sm); font-weight: 400; opacity: 0.85; }
+.miss-bar.back { background: var(--ink); color: var(--paper); }
+.miss-bar.saved { background: var(--paper-2); color: var(--ink); font-weight: 400; box-shadow: inset 0 0 0 1px var(--line); }
+.miss-act { flex: none; min-height: 44px; padding: 0 var(--s4); border-radius: var(--r-full); background: #FFF; color: #7A1712; font: var(--sm); font-weight: 600; }
+/* Een verse start: maandag na een slechte week, of de eerste van de maand */
+.fresh-line { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); margin: 0 0 var(--s4); padding: var(--s3) var(--s4); border-radius: var(--r-md); box-shadow: inset 0 0 0 1px var(--line); }
+.fresh-line p { margin: 0; font: var(--b); line-height: 1.5; color: var(--ink-2); }
+.fresh-line b { color: var(--ink); font-weight: 600; }
+.fresh-line .link { flex: none; }
+/* Herinnering afbouwen: je doet het nu zelf */
+.remind-card { display: flex; flex-direction: column; gap: var(--s3); margin-top: var(--s4); }
+.remind-card p { margin: 0; font: var(--b); line-height: 1.5; color: var(--ink-2); }
+.remind-card b { color: var(--ink); font-weight: 600; }
+.goal-hero { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--s3); row-gap: 2px; width: 100%; padding: 0 0 var(--s3); text-align: left; }
 .goal-title { font: var(--t-l); color: var(--ink); }
-.goal-count { font: 600 20px/28px var(--sans); color: var(--ink); }
+.goal-count { font: 600 17px/24px var(--sans); color: var(--ink-2); }
+.goal-plan { flex-basis: 100%; margin-top: 2px; font: var(--sm); font-weight: 600; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
 .goal-hero.empty .goal-title { color: var(--ink-2); }
 .goal-hero.empty .goal-count { font: var(--b); color: var(--ink-3); }
 .why-line { max-width: 60ch; margin: 0 0 var(--s2); font: var(--b); line-height: 1.5; font-style: italic; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -376,6 +391,7 @@ button.card:active { transform: scale(0.985); }
 .won-dot.won { background: var(--ink); color: var(--paper); box-shadow: none; }
 .won-dot.lost { background: repeating-linear-gradient(-45deg, transparent 0 4px, rgba(255, 138, 128, 0.35) 4px 5px); color: var(--ink); box-shadow: inset 0 0 0 1px #7A1712; }
 .won-dot.sel { outline: 2px solid var(--ink); outline-offset: 2px; }
+.won-dot.saved { box-shadow: inset 0 0 0 1px var(--ink-2); background: radial-gradient(circle at 50% 82%, var(--ink-2) 0 2px, transparent 2.5px); color: var(--ink); }
 .won-dot:disabled { opacity: 0.3; }
 /* Het beeld ondersteunt: kleiner dan eerst */
 .scene-small { margin-top: var(--s6); }
@@ -710,8 +726,10 @@ button.card:active { transform: scale(0.985); }
 .task-note.pulling { transition: none; cursor: grabbing; z-index: 5; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 18px 28px -8px rgba(0, 0, 0, 0.9); }
 .task-note.torn { clip-path: polygon(0 6px, 6% 0, 12% 7px, 19% 2px, 26% 8px, 33% 1px, 41% 7px, 48% 0, 56% 6px, 63% 2px, 71% 8px, 78% 1px, 86% 7px, 93% 2px, 100% 6px, 100% 100%, 0 100%); }
 .tn-main { position: absolute; inset: 0; z-index: 1; border-radius: inherit; -webkit-tap-highlight-color: transparent; }
-.tn-time { position: relative; z-index: 2; align-self: flex-start; min-height: 44px; margin: auto 0 -12px -6px; padding: 0 6px; font: var(--sm); font-weight: 600; color: #3D3D3D; text-decoration: underline; text-underline-offset: 3px; }
-.tn-time.late { color: #A3150B; }
+.tn-time { position: relative; z-index: 2; align-self: flex-start; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; min-height: 44px; margin: auto 0 -12px -6px; padding: 4px 6px; text-align: left; font: var(--sm); color: #3D3D3D; }
+.tn-at { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.tn-cue { font-style: italic; line-height: 20px; }
+.tn-time.late .tn-at { color: #A3150B; }
 .tn-x { position: absolute; z-index: 2; top: 0; right: 0; width: 44px; height: 44px; display: grid; place-items: center; color: #595959; }
 .tn-x svg { width: 16px; height: 16px; }
 /* Wat er achterblijft: het plakband en een afgescheurd randje */
@@ -723,3 +741,11 @@ button.card:active { transform: scale(0.985); }
 .board-hint { margin: 0; text-align: center; font: var(--sm); color: var(--ink-3); }
 .tasks .won-row { margin-top: var(--s4); padding-top: 0; border-top: 0; }
 @media (prefers-reduced-motion: reduce) { .trommel.bump svg, .task-stub { animation: none; } }
+
+/* Je getuige: op zondag je week naar één persoon */
+.witness-card { display: flex; flex-direction: column; gap: var(--s3); margin-top: var(--s5); }
+.witness-card p { margin: 0; font: var(--b); line-height: 1.5; color: var(--ink-2); }
+.witness-card b { color: var(--ink); font-weight: 600; }
+.witness-text { margin: 0; padding: var(--s3); border-radius: var(--r-md); background: var(--paper-2); font: var(--sm); line-height: 1.5; color: var(--ink); white-space: pre-wrap; }
+.witness-card .link { align-self: flex-start; }
+.witness-input { flex: none; width: 128px; min-height: 44px; }

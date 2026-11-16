@@ -94,7 +94,7 @@ export default function Onboarding() {
               <h1 className="h1">Hoe het werkt</h1>
               <p className="lead">Elke dag weeg je je goede gewoontes tegen je verleidingen.</p>
               <p className="lead">Doe je je grote taken? Dan is de dag gewonnen.</p>
-              <p className="lead">Mis nooit twee keer.</p>
+              <p className="lead">Mis nooit twee keer. Eén misser red je met een reservedag: twee per maand.</p>
             </div>
             <div className="field">
               <label htmlFor="nm">Hoe heet je?</label>

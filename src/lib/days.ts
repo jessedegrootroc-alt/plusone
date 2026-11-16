@@ -46,13 +46,97 @@ export const bigTasksOn = (s: State, date: string) =>
 export const otherTasksOn = (s: State, date: string) =>
   habitsFor(s, date).filter((h) => h.kind === 'virtue' && h.weight < 3 && !isNote(h) && appliesOn(s, h, date))
 
-/** Gewonnen (true), verloren (false), of niet te zeggen (null: geen grote taken, of voor je begon). */
-export const dayResult = (s: State, date: string): boolean | null => {
+/** Gewonnen of gemist, zonder te kijken of je hem met een reservedag redde. */
+const rawResult = (s: State, date: string): boolean | null => {
   if (date < s.createdAt) return null
   const big = bigTasksOn(s, date)
   if (!big.length) return null
   const l = s.logs[date]
   return big.every((h) => isDone(h, l?.v[h.id] ?? 0) && (l?.v[h.id] ?? 0) > 0)
+}
+
+/**
+ * Gewonnen (true), verloren (false), of niet te zeggen (null: geen grote taken, voor je begon, of gered met een
+ * reservedag). Een geredde dag telt niet als gewonnen, maar breekt je reeks ook niet.
+ */
+export const dayResult = (s: State, date: string): boolean | null => {
+  const r = rawResult(s, date)
+  return r === false && s.logs[date]?.saved ? null : r
+}
+
+/**
+ * Reservedagen (Sharif & Shu): een doel met een paar reservedagen houd je langer vol dan een even zwaar doel zonder.
+ * Na een misser voelt het nog als vooruitgang, dus je geeft niet op. Twee per maand.
+ */
+export const RESERVES_PER_MONTH = 2
+
+/** Gemist, en gered met een reservedag. */
+export const isSaved = (s: State, date: string) => rawResult(s, date) === false && !!s.logs[date]?.saved
+
+/**
+ * Hoeveel reservedagen er nog over zijn in de maand van deze datum. Win je de dag na een geredde dag, dan krijg je
+ * hem terug (Milkman e.a. 2021: een bonus voor terugkomen na een misser werkte het best van 54 ideeën), één keer per maand.
+ */
+export const reservesLeft = (s: State, date: string) => {
+  const month = date.slice(0, 7)
+  const saved = Object.keys(s.logs).filter((d) => d.startsWith(month) && s.logs[d].saved)
+  const back = Math.min(1, saved.filter((d) => rawResult(s, addDays(d, 1)) === true).length)
+  return Math.max(0, RESERVES_PER_MONTH - saved.length + back)
+}
+
+/** Teruggekomen: gisteren gemist, vandaag gewonnen. */
+export const isComeback = (s: State, today = todayISO()) => rawResult(s, addDays(today, -1)) === false && rawResult(s, today) === true
+
+/** Of terugkomen vandaag een reservedag teruggaf (de eerste keer deze maand). */
+export const reserveBack = (s: State, today = todayISO()) => {
+  const y = addDays(today, -1)
+  if (!isComeback(s, today) || !s.logs[y]?.saved) return false
+  const month = y.slice(0, 7)
+  return !Object.keys(s.logs).some((d) => d.startsWith(month) && d < y && s.logs[d].saved && rawResult(s, addDays(d, 1)) === true)
+}
+
+/** Gemist (ook als je hem met een reservedag redde). */
+export const missedOn = (s: State, date: string) => rawResult(s, date) === false
+
+/** Gisteren gemist (ook als je hem al redde). */
+export const missedYesterday = (s: State, today = todayISO()) => missedOn(s, addDays(today, -1))
+
+/**
+ * Of je een gemiste dag nog kunt redden: er is een reservedag over, en de dag ervoor was niet ook gemist.
+ * Eén keer missen is menselijk, twee keer op rij is een nieuw patroon: dat red je niet.
+ */
+export const canSave = (s: State, date: string) =>
+  rawResult(s, date) === false && !s.logs[date]?.saved && rawResult(s, addDays(date, -1)) !== false && reservesLeft(s, date) > 0
+
+/**
+ * Een verse start (Dai, Milkman & Riis): na een herkenbaar begin, zoals een maandag of de eerste van de maand,
+ * beginnen mensen vaker opnieuw. Op maandag na een week met twee of meer verloren dagen, of op de eerste van de maand.
+ */
+export const freshStart = (s: State, today = todayISO()): 'week' | 'month' | null => {
+  if (today <= s.createdAt) return null
+  if (today.endsWith('-01')) return 'month'
+  if (weekday(today) !== 1) return null
+  let lost = 0
+  for (let i = 1; i <= 7; i++) if (dayResult(s, addDays(today, -i)) === false) lost++
+  return lost >= 2 ? 'week' : null
+}
+
+/**
+ * Doe je het nu zelf? (Stawarz e.a.: wie op meldingen leunt, doet het wel, maar het wordt geen gewoonte.)
+ * De afgelopen drie weken op minstens 85% van de dagen dat hij gold gedaan, en minstens tien keer.
+ */
+export const doesItAlone = (s: State, h: Habit, today = todayISO()) => {
+  let due = 0
+  let done = 0
+  for (let i = 1; i <= 21; i++) {
+    const d = addDays(today, -i)
+    if (d < s.createdAt) return false
+    if (!appliesOn(s, h, d)) continue
+    due++
+    const v = s.logs[d]?.v[h.id] ?? 0
+    if (isDone(h, v) && v > 0) done++
+  }
+  return due >= 10 && done / due >= 0.85
 }
 
 /**

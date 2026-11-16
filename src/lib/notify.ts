@@ -1,11 +1,16 @@
 // Meldingen: opstaan, dag afsluiten, naar boven. En na een verloren dag de volgende ochtend: niet nog een keer.
 // Met toestemming, en de tijden zijn aan te passen op Reis.
 //
+// Per taak met een vaste tijd: één melding op die tijd, alleen als hij dan nog niet af is. Meer meldingen helpen
+// weinig (Bidargaddi e.a.: +4% kans dat je de app opent, en het effect slijt). En wie op meldingen leunt, doet het
+// wel maar het wordt geen gewoonte (Stawarz e.a.). Daarom vraagt Vandaag na drie weken of de herinnering uit mag.
+//
 // Let op: een webapp kan zelf geen melding inplannen voor als hij helemaal dicht is. Hij plant ze zolang de app
 // open of op de achtergrond staat. Voor betrouwbare meldingen als de app dicht is, is een push-server nodig
 // (bijvoorbeeld via Supabase); die staat nog niet.
-import { lostYesterday } from './days'
-import { getState, update } from './store'
+import { bigTasksOn, canSave, freshStart, lostYesterday, missedYesterday, otherTasksOn } from './days'
+import { isDone } from './score'
+import { addDays, getState, onLocalChange, todayISO, update } from './store'
 
 export const DEFAULT_TIMES = { wake: '06:30', close: '21:00', bed: '22:15' }
 
@@ -26,10 +31,10 @@ export const enableNotify = async () => {
 
 export const disableNotify = () => update((d) => { if (d.settings?.notify) d.settings.notify.on = false })
 
-const show = async (body: string) => {
+const show = async (body: string, tag = body) => {
   try {
     const reg = await navigator.serviceWorker?.getRegistration()
-    if (reg) await reg.showNotification('PlusOne', { body, icon: '/icons/icon-192.png', badge: '/icons/favicon-32.png', tag: body })
+    if (reg) await reg.showNotification('PlusOne', { body, icon: '/icons/icon-192.png', badge: '/icons/favicon-32.png', tag })
     else new Notification('PlusOne', { body, icon: '/icons/icon-192.png' })
   } catch {
     /* melding niet mogelijk */
@@ -48,16 +53,50 @@ const msUntil = (hm: string) => {
 
 let timers: number[] = []
 
-/** Alle meldingen opnieuw inplannen (bij het starten en na het wijzigen van de tijden). */
+/** De ochtendmelding: na een misser, op een verse start, of gewoon opstaan. */
+const wakeText = (wake: string) => {
+  const s = getState()
+  const today = todayISO()
+  if (missedYesterday(s, today) && canSave(s, addDays(today, -1))) return 'Gisteren gemist. Eén dag zegt niets: red hem met een reservedag, en win vandaag.'
+  if (lostYesterday(s, today)) return 'Gisteren gemist. Twee keer niet. Vandaag terug.'
+  const fresh = freshStart(s, today)
+  if (fresh === 'week') return 'Nieuwe week. Die telt opnieuw.'
+  if (fresh === 'month') return 'Nieuwe maand. Twee nieuwe reservedagen.'
+  return `${wake.replace(/^0/, '')}. Opstaan. Je weet waarom.`
+}
+
+/** De taken van vandaag met een tijd en een herinnering, die nog niet af zijn. */
+const openTasks = () => {
+  const s = getState()
+  const today = todayISO()
+  const v = s.logs[today]?.v ?? {}
+  return [...bigTasksOn(s, today), ...otherTasksOn(s, today)].filter((h) => h.at && h.remind !== false && !(isDone(h, v[h.id] ?? 0) && (v[h.id] ?? 0) > 0))
+}
+
+/** Alle meldingen opnieuw inplannen (bij het starten, na elke wijziging, en om middernacht voor de nieuwe dag). */
 export const schedule = () => {
   timers.forEach((t) => clearTimeout(t))
   timers = []
   const n = getState().settings?.notify
   if (!n?.on || !notifySupported() || Notification.permission !== 'granted') return
-  const at = (hm: string, text: () => string) => {
-    timers.push(window.setTimeout(() => { void show(text()); schedule() }, msUntil(hm)))
+  const at = (hm: string, text: () => string | null, tag?: string) => {
+    timers.push(window.setTimeout(() => { const t = text(); if (t) void show(t, tag); schedule() }, msUntil(hm)))
   }
-  at(n.wake, () => (lostYesterday(getState()) ? 'Gisteren verloren. Vandaag niet nog een keer.' : `${n.wake.replace(/^0/, '')}. Opstaan. Je weet waarom.`))
+  at(n.wake, () => wakeText(n.wake))
   at(n.close, () => 'Tijd om je dag af te sluiten.')
   at(n.bed, () => 'Over 15 minuten naar boven. Telefoon beneden.')
+  // Per taak: op zijn tijd, en alleen als hij dan nog openstaat
+  const nowHM = new Date().toTimeString().slice(0, 5)
+  for (const h of openTasks().filter((x) => x.at! > nowHM)) {
+    at(h.at!, () => (openTasks().some((x) => x.id === h.id && x.at === h.at) ? (h.cue ? `Na ${h.cue}: ${h.name}.` : `${h.at!.replace(/^0/, '')}. ${h.name}.`) : null), 'taak:' + h.id)
+  }
+  // Om middernacht de taken van de nieuwe dag
+  at('00:01', () => null)
 }
+
+// Een taak afgescheurd of een tijd veranderd? Dan opnieuw plannen.
+let pending = 0
+onLocalChange(() => {
+  clearTimeout(pending)
+  pending = window.setTimeout(schedule, 300)
+})

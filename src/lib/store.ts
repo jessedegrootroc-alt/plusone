@@ -14,9 +14,14 @@ export interface Habit {
   amount?: number
   unit?: string
   step?: number
+  /** Waarna je het doet ("het tandenpoetsen"): een vast moment in je dag maakt het een gewoonte, een melding niet. */
   cue?: string
   /** Vaste tijd ("06:30"): Goggins plant in blokken, niet in lijstjes. */
   at?: string
+  /** Herinnering op de tijd van de taak. Uit (false) zodra je het zelf doet. */
+  remind?: boolean
+  /** De app vroeg al of de herinnering uit mag. */
+  remindAsked?: boolean
   /** Wanneer hij geldt. Zonder: elke dag. */
   schedule?: Schedule
 }
@@ -49,6 +54,7 @@ export interface DayRock {
   text: string
   size: 1 | 2 | 3
   at?: string
+  cue?: string
   /** Het ongemak van vandaag: iets wat je niet wilt doen, en toch doet. */
   suck?: boolean
   /** Komt hij van een terras (een vervolgstap), dan telt hij daar mee. */
@@ -64,6 +70,8 @@ export interface DayLog {
   aar?: { what?: string; cause?: string; plan?: string }
   /** Hoe vol je tank is (1 leeg · 2 oké · 3 vol). De rem op grenzen verleggen. */
   energy?: 1 | 2 | 3
+  /** Gemist, maar gered met een reservedag. */
+  saved?: boolean
 }
 
 /** Eén grens die je gaat verleggen. Pas gedaan als je het gedaan hebt, niet als je het zei. */
@@ -97,6 +105,9 @@ export interface MirrorNote {
   feature?: FeatureId
   /** De datum waarop het doel gehaald moet zijn (verplicht bij een race of prestatie). */
   due?: string
+  /** Wat je het meest tegenhoudt, en wat je dan doet (WOOP: je doel naast je obstakel, met een als-dan-plan). */
+  obstacle?: string
+  ifThen?: string
   /** De ladder naar het doel: elke stap een eigen post-it met een termijn, steeds iets ongemakkelijker. */
   steps?: { text: string; days?: number; startedAt?: string; doneAt?: string }[]
   createdAt: string
@@ -153,7 +164,7 @@ export interface State {
   mainGoalId?: string
   settings?: Settings
   /** Dingen die de app één keer vraagt, zodat hij het niet blijft vragen. */
-  asked?: { schema?: boolean; task4?: boolean; notify?: boolean }
+  asked?: { schema?: boolean; task4?: boolean; notify?: boolean; fresh?: string; witness?: string }
 }
 
 export interface Settings {
@@ -161,6 +172,8 @@ export interface Settings {
   showCompass?: boolean
   /** Meldingen: aan of uit, en de tijden. */
   notify?: { on: boolean; wake: string; close: string; bed: string }
+  /** Je getuige: de ene persoon die op zondag je week krijgt. */
+  witness?: string
 }
 
 const KEY = 'plusone.v1'

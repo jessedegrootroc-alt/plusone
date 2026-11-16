@@ -221,6 +221,8 @@ export function NoteSheet({ note, preset, presetSin, presetGoal, onClose }: { no
   const [goal, setGoal] = useState(note?.goal ?? presetGoal ?? '')
   const [feature, setFeature] = useState<FeatureId | undefined>(note?.feature)
   const [due, setDue] = useState(note?.due ?? '')
+  const [obstacle, setObstacle] = useState(note?.obstacle ?? '')
+  const [ifThen, setIfThen] = useState(note?.ifThen ?? '')
   const [isMain, setIsMain] = useState(() => !!note && mainGoal(s)?.id === note.id)
   const [domain, setDomain] = useState<Domain | undefined>(note?.domain ?? preset)
   const [domTouched, setDomTouched] = useState(!!(note?.domain ?? preset))
@@ -246,8 +248,8 @@ export function NoteSheet({ note, preset, presetSin, presetGoal, onClose }: { no
       if (note) {
         const x = d.notes.find((y) => y.id === note.id)!
         const reset = x.domain !== dom || (x.goal ?? '') !== goal.trim() || !x.steps?.length
-        Object.assign(x, { text: text.trim(), goal: goal.trim() || undefined, due: due || undefined, feature, sin: shownSin, domain: dom, steps: reset ? fresh(todayISO()) : x.steps })
-      } else d.notes.push({ id, text: text.trim(), goal: goal.trim() || undefined, due: due || undefined, feature, sin: shownSin, domain: dom, steps: fresh(todayISO()), createdAt: todayISO() })
+        Object.assign(x, { text: text.trim(), goal: goal.trim() || undefined, due: due || undefined, obstacle: obstacle.trim() || undefined, ifThen: ifThen.trim() || undefined, feature, sin: shownSin, domain: dom, steps: reset ? fresh(todayISO()) : x.steps })
+      } else d.notes.push({ id, text: text.trim(), goal: goal.trim() || undefined, due: due || undefined, obstacle: obstacle.trim() || undefined, ifThen: ifThen.trim() || undefined, feature, sin: shownSin, domain: dom, steps: fresh(todayISO()), createdAt: todayISO() })
     })
     onClose()
   }
@@ -333,6 +335,19 @@ export function NoteSheet({ note, preset, presetSin, presetGoal, onClose }: { no
           <input id="due" className="input" type="date" min={todayISO()} value={due} onChange={(e) => setDue(e.target.value)} />
           {dateNeeded && !due && <div className="small" style={{ color: 'var(--ink)' }}>Een race of prestatie heeft een datum nodig. Dan telt de app af.</div>}
         </div>
+        {/* WOOP (Oettingen): je doel naast wat je tegenhoudt, met een plan voor dat moment */}
+        <div className="field">
+          <label htmlFor="obstacle">Wat houdt je het meest tegen? <span style={{ fontWeight: 400, color: 'var(--ink-3)' }}>(mag ook leeg)</span></label>
+          <input id="obstacle" className="input" value={obstacle} onChange={(e) => setObstacle(e.target.value)} placeholder="Bijv. ik twijfel als de wekker gaat" />
+        </div>
+        {obstacle.trim() && (
+          <div className="field">
+            <label htmlFor="ifthen">Als dat gebeurt, dan …</label>
+            <input id="ifthen" className="input" value={ifThen} onChange={(e) => setIfThen(e.target.value)} placeholder="Bijv. sta ik op voordat ik tot 5 tel" />
+            <div className="small">Bedenk het nu, dan hoef je op het moment zelf niet te kiezen.</div>
+          </div>
+        )}
+
         <button className="row" role="switch" aria-checked={isMain} onClick={() => setIsMain((x) => !x)} style={{ borderTop: 0, padding: 0 }}>
           <div className="grow"><div className="name">Dit is mijn hoofddoel</div><div className="meta">Staat bovenaan Vandaag, met de aftelling</div></div>
           <span className={`switch ${isMain ? 'on' : ''}`} aria-hidden="true"><i /></span>

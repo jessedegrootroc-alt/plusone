@@ -160,11 +160,11 @@ function TaskNote({ item, i, jarRef, onTear, onBack, onTime, onRemove }: {
         <button className="tn-main" aria-label={`${h.name}: gedaan, afscheuren`} onClick={() => { if (moved.current) { moved.current = false; return } void tear() }} />
         <span className="jar-kind">{big ? 'Grote taak' : meta}</span>
         <span className="jar-text">{h.name}</span>
-        {h.at && (
-          <button className={`tn-time ${late ? 'late' : ''}`} onClick={onTime} aria-label={`Tijd voor ${h.name}: ${h.at}`}>
-            {h.at}{late ? ' · te laat' : ''}
-          </button>
-        )}
+        {/* Het moment: waarna, en hoe laat. Zonder moment vraagt het briefje erom. */}
+        <button className={`tn-time ${late ? 'late' : ''}`} onClick={onTime} aria-label={`Wanneer ${h.name}: ${[h.cue && `na ${h.cue}`, h.at].filter(Boolean).join(', ') || 'nog geen moment'}`}>
+          {h.cue && <span className="tn-cue">Na {h.cue}</span>}
+          {h.at ? <span className="tn-at">{h.at}{late ? ' · te laat' : ''}</span> : !h.cue && <span className="tn-at">Wanneer?</span>}
+        </button>
         {removable && <button className="tn-x" onClick={onRemove} aria-label={`${h.name} weghalen`}>{Icon.close()}</button>}
       </div>
     </div>

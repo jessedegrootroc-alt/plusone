@@ -110,10 +110,13 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
           <span className={`switch ${s.settings?.showCompass ? 'on' : ''}`} aria-hidden="true"><i /></span>
         </button>
         {notifySupported() && <NotifyRows />}
+        <div className="row">
+          <div className="grow"><div className="name">Je getuige</div><div className="meta">Krijgt op zondag je week, als jij hem stuurt</div></div>
+          <input className="input witness-input" value={s.settings?.witness ?? ''} onChange={(e) => update((d) => { d.settings = { ...d.settings, witness: e.target.value || undefined } })} placeholder="Naam" aria-label="Naam van je getuige" />
+        </div>
       </div>
 
       <div className="divider" />
-      <p className="small center">Illustraties: Gustave Doré (1832–1883) voor Dantes <i>Divina Commedia</i>. Publiek domein, via Wikimedia Commons. Je gegevens blijven op dit apparaat.</p>
       <button className="link center" style={{ display: 'block', margin: '12px auto 0' }} onClick={() => setPanel({ t: 'reset' })}>Opnieuw beginnen</button>
 
       {panel?.t === 'builder' && (
@@ -289,7 +292,7 @@ function NotifyRows() {
   return (
     <>
       <button className="row" role="switch" aria-checked={on} onClick={async () => { if (on) disableNotify(); else await enableNotify(); schedule() }}>
-        <div className="grow"><div className="name">Herinneringen</div><div className="meta">{on ? 'Werkt als de app open of op de achtergrond staat' : 'Opstaan, dag afsluiten, naar boven'}</div></div>
+        <div className="grow"><div className="name">Herinneringen</div><div className="meta">{on ? 'Werkt als de app open of op de achtergrond staat' : 'Opstaan, je taken op hun tijd, dag afsluiten, naar boven'}</div></div>
         <span className={`switch ${on ? 'on' : ''}`} aria-hidden="true"><i /></span>
       </button>
       {on && NOTIFY_ROWS.map(([k, name, meta]) => (
