@@ -7,7 +7,8 @@ export const DOMAINS: { id: Domain; name: string; line: string; sin: SinId }[] =
   { id: 'fysiek', name: 'Fysiek', line: 'Je lichaam: kracht, conditie, gewicht, slaap.', sin: 'sloth' },
   { id: 'mentaal', name: 'Mentaal', line: 'Je hoofd: discipline, focus, angst, wat je uitstelt.', sin: 'sloth' },
   { id: 'financieel', name: 'Financieel', line: 'Je geld: schulden, sparen, inkomen, je eigen zaak.', sin: 'greed' },
-  { id: 'spiritueel', name: 'Spiritueel', line: 'Je binnenkant: rust, zingeving, vergeving, wie je wilt zijn.', sin: 'pride' },
+  // Intern heet hij nog spiritueel (bestaande post-its), in de app emotioneel: wat je meedraagt en wat je verdooft
+  { id: 'spiritueel', name: 'Emotioneel', line: 'Je binnenkant: wat je verdooft, oude pijn, boosheid, alleen staan.', sin: 'pride' },
 ]
 export const DOMAIN_BY_ID = Object.fromEntries(DOMAINS.map((d) => [d.id, d])) as Record<Domain, (typeof DOMAINS)[number]>
 
@@ -15,7 +16,7 @@ export const DOMAIN_BY_ID = Object.fromEntries(DOMAINS.map((d) => [d.id, d])) as
 const DOMAIN_HINTS: [Domain, RegExp][] = [
   ['financieel', /geld|schuld|sparen|spaar|inkomen|salaris|bedrijf|omzet|klant|budget|euro|€|beleggen|huur|rood/i],
   ['fysiek', /kilo|gewicht|vet|trainen|sport|gym|rennen|hardlo|marathon|conditie|kracht|eten|suiker|slaap|lichaam|buik|roken|drinken/i],
-  ['spiritueel', /medit|bidden|geloof|zin|vergeef|vergeving|dankbaar|stilte|ziel|rust|ego|nederig|waarden/i],
+  ['spiritueel', /medit|bidden|geloof|zin|vergeef|vergeving|dankbaar|stilte|ziel|rust|ego|nederig|waarden|verdo[ov]f|verdriet|eenzaam|alleen|oude pijn|woede|boosheid/i],
   ['mentaal', /angst|bang|uitstel|stel\w* .*\buit\b|project|discipline|focus|telefoon|scherm|lezen|leren|praten|zelfvertrouwen|piekeren|boos|stress/i],
 ]
 export const guessDomain = (text: string): Domain | undefined => DOMAIN_HINTS.find(([, re]) => re.test(text))?.[0]

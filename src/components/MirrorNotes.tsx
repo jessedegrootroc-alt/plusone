@@ -40,7 +40,7 @@ const completeStep = (id: string) => update((d) => {
 })
 
 /**
- * De Accountability Mirror van Goggins, per onderdeel van je leven: fysiek, mentaal, financieel en spiritueel.
+ * De Accountability Mirror van Goggins, per onderdeel van je leven: fysiek, mentaal, financieel en emotioneel.
  * Zoals in Can't Hurt Me: bovenaan de harde waarheid, en op de post-it alleen de stap van nu, met een termijn.
  * Haal je hem, dan gaat hij eraf en hangt de volgende er, tot het doel bereikt is.
  * Hij telt elke dag mee in je balans: eraan gewerkt telt, overslaan kost. Je haalt hem pas af als het echt bereikt is.

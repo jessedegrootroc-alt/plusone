@@ -6,7 +6,7 @@ const h = (name: string, weight: 1 | 2 | 3, extra: Partial<Habit> = {}): Habit =
 
 export const defaultHabits = (): Habit[] => [
   // Grote taken, elke dag
-  h('6:30 op', 3, { at: '06:30' }),
+  h('6:30 op', 3, { at: '06:30', wake: true }),
   h('Bewegen (fietsen naar werk of hardlopen)', 3),
   h('22:30 naar boven, telefoon beneden', 3, { at: '22:30', sin: 'lust' }),
   // Vaste dagen: geen grote taak, telt niet mee voor een gewonnen dag

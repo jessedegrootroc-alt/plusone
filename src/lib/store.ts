@@ -22,6 +22,8 @@ export interface Habit {
   remind?: boolean
   /** De app vroeg al of de herinnering uit mag. */
   remindAsked?: boolean
+  /** Dit is je opstaan: de tijd loopt gelijk met je ochtendmelding. */
+  wake?: boolean
   /** Wanneer hij geldt. Zonder: elke dag. */
   schedule?: Schedule
 }
@@ -72,6 +74,10 @@ export interface DayLog {
   energy?: 1 | 2 | 3
   /** Gemist, maar gered met een reservedag. */
   saved?: boolean
+  /** Het ochtendmoment: wat je hoofd zei bij het wakker worden, en de sterke versie (Goggins, Evolution 2). */
+  morning?: { dread?: string; strong?: string; skipped?: boolean; dreadClip?: boolean; strongClip?: boolean }
+  /** Na een gemiste dag nog één goed ding voor het slapen: niet in de min naar bed. */
+  black?: string
 }
 
 /** Eén grens die je gaat verleggen. Pas gedaan als je het gedaan hebt, niet als je het zei. */
@@ -97,7 +103,7 @@ export interface MirrorNote {
   text: string
   /** Onder welke zonde dit valt. Zo telt de post-it mee in je balans en je mandala. */
   sin?: SinId
-  /** Het onderdeel van je leven: financieel, spiritueel, fysiek of mentaal. */
+  /** Het onderdeel van je leven: financieel, emotioneel (intern: spiritueel), fysiek of mentaal. */
   domain?: Domain
   /** Waar je naartoe wilt, meetbaar ("12 kilo eraf"). De tekst zelf is de harde waarheid: waar je nu staat. */
   goal?: string

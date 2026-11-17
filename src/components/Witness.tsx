@@ -35,20 +35,25 @@ export const weekText = (s: State, from: string, to: string) => {
   ].filter(Boolean).join('\n')
 }
 
+/** De week die nu gedeeld kan worden, of niets (niet de dag, al gestuurd, of nog geen week gebruikt). */
+export const witnessWeek = (s: State, today = todayISO()) => {
+  const wk = shareWeek(today)
+  if (!wk || wk.to < s.createdAt || s.asked?.witness === wk.from) return null
+  return wk
+}
+
 /**
  * Een getuige (Harkin e.a. 2016, 138 studies): bijhouden helpt, en meer als je het aan iemand laat zien.
  * Op zondag en maandag stuur je je week naar één persoon die je zelf kiest. Via je eigen berichten-app: geen server.
  */
-export default function Witness() {
+export function WitnessBody({ onDone }: { onDone: () => void }) {
   const s = useStore()
-  const today = todayISO()
-  const wk = shareWeek(today)
   const [name, setName] = useState('')
   const [copied, setCopied] = useState(false)
-  if (!wk || wk.to < s.createdAt) return null
-  if (s.asked?.witness === wk.from) return null
+  const wk = shareWeek(todayISO())
+  if (!wk) return null
   const witness = s.settings?.witness
-  const close = () => update((d) => { d.asked = { ...d.asked, witness: wk.from } })
+  const close = () => { update((d) => { d.asked = { ...d.asked, witness: wk.from } }); onDone() }
 
   const send = async () => {
     const text = weekText(s, wk.from, wk.to)
@@ -67,24 +72,26 @@ export default function Witness() {
   }
 
   return (
-    <div className="card witness-card">
+    <div className="stack gap-16 witness">
       {witness ? (
         <>
-          <p><b>Je week voor {witness}.</b> Wie zijn voortgang aan iemand laat zien, houdt het vaker vol.</p>
-          <pre className="witness-text">{weekText(s, wk.from, wk.to)}</pre>
-          <div className="hstack" style={{ gap: 8 }}>
-            <button className="btn sm" onClick={send}>{copied ? 'Gekopieerd' : `Stuur naar ${witness}`}</button>
-            <button className="btn soft sm" onClick={close}>{copied ? 'Klaar' : 'Niet deze week'}</button>
+          <div className="stack gap-4">
+            <h2 className="h2">Je week voor {witness}</h2>
+            <p className="small">Laat het zien. Wie gezien wordt, haakt minder snel af.</p>
           </div>
+          <pre className="witness-text">{weekText(s, wk.from, wk.to)}</pre>
+          <button className="btn" onClick={send}>{copied ? 'Gekopieerd' : `Stuur naar ${witness}`}</button>
+          <button className="link center" onClick={close}>{copied ? 'Klaar' : 'Niet deze week'}</button>
         </>
       ) : (
         <>
-          <p><b>Wie mag je week zien?</b> Eén persoon die je vertrouwt. Wie zijn voortgang aan iemand laat zien, houdt het vaker vol.</p>
-          <div className="hstack" style={{ gap: 8 }}>
-            <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Naam" aria-label="Naam van je getuige" onKeyDown={(e) => e.key === 'Enter' && name.trim() && saveName(name)} />
-            <button className="btn sm" style={{ flex: 'none', width: 'auto', padding: '0 20px' }} disabled={!name.trim()} onClick={() => saveName(name)}>Kies</button>
+          <div className="stack gap-4">
+            <h2 className="h2">Wie mag je week zien?</h2>
+            <p className="small">Kies iemand die je niet laat wegkomen met smoesjes.</p>
           </div>
-          <button className="link" onClick={close}>Niet nu</button>
+          <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Naam" aria-label="Naam van je getuige" onKeyDown={(e) => e.key === 'Enter' && name.trim() && saveName(name)} />
+          <button className="btn" disabled={!name.trim()} onClick={() => saveName(name)}>Kies {name.trim() || 'je getuige'}</button>
+          <button className="link center" onClick={close}>Niet nu</button>
         </>
       )}
     </div>

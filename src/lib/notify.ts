@@ -8,7 +8,7 @@
 // Let op: een webapp kan zelf geen melding inplannen voor als hij helemaal dicht is. Hij plant ze zolang de app
 // open of op de achtergrond staat. Voor betrouwbare meldingen als de app dicht is, is een push-server nodig
 // (bijvoorbeeld via Supabase); die staat nog niet.
-import { bigTasksOn, canSave, freshStart, lostYesterday, missedYesterday, otherTasksOn } from './days'
+import { bigTasksOn, canSave, dayResult, freshStart, lostYesterday, missedYesterday, otherTasksOn } from './days'
 import { isDone } from './score'
 import { addDays, getState, onLocalChange, todayISO, update } from './store'
 
@@ -57,12 +57,12 @@ let timers: number[] = []
 const wakeText = (wake: string) => {
   const s = getState()
   const today = todayISO()
-  if (missedYesterday(s, today) && canSave(s, addDays(today, -1))) return 'Gisteren gemist. Eén dag zegt niets: red hem met een reservedag, en win vandaag.'
-  if (lostYesterday(s, today)) return 'Gisteren gemist. Twee keer niet. Vandaag terug.'
+  if (missedYesterday(s, today) && canSave(s, addDays(today, -1))) return 'Gisteren gemist. Red hem met een reservedag, en lever vandaag.'
+  if (lostYesterday(s, today)) return 'Gisteren verloren. Vandaag niet. Op.'
   const fresh = freshStart(s, today)
-  if (fresh === 'week') return 'Nieuwe week. Die telt opnieuw.'
+  if (fresh === 'week') return 'Nieuwe week. Schone lei. Laat zien wie je bent.'
   if (fresh === 'month') return 'Nieuwe maand. Twee nieuwe reservedagen.'
-  return `${wake.replace(/^0/, '')}. Opstaan. Je weet waarom.`
+  return `${wake.replace(/^0/, '')}. Voeten op de vloer. De rest slaapt nog, jij niet.`
 }
 
 /** De taken van vandaag met een tijd en een herinnering, die nog niet af zijn. */
@@ -83,12 +83,17 @@ export const schedule = () => {
     timers.push(window.setTimeout(() => { const t = text(); if (t) void show(t, tag); schedule() }, msUntil(hm)))
   }
   at(n.wake, () => wakeText(n.wake))
-  at(n.close, () => 'Tijd om je dag af te sluiten.')
-  at(n.bed, () => 'Over 15 minuten naar boven. Telefoon beneden.')
+  at(n.close, () => 'Spiegel. Heb je gedaan wat je zei?')
+  // Was de dag gemist en deed je nog niets goeds? Dan eerst dat, voor je gaat slapen.
+  at(n.bed, () => {
+    const s = getState()
+    const today = todayISO()
+    return dayResult(s, today) === false && !s.logs[today]?.black ? 'Je dag staat in de min. Zo ga je niet slapen. Doe nog één ding goed.' : 'Over 15 minuten naar boven. Telefoon beneden.'
+  })
   // Per taak: op zijn tijd, en alleen als hij dan nog openstaat
   const nowHM = new Date().toTimeString().slice(0, 5)
   for (const h of openTasks().filter((x) => x.at! > nowHM)) {
-    at(h.at!, () => (openTasks().some((x) => x.id === h.id && x.at === h.at) ? (h.cue ? `Na ${h.cue}: ${h.name}.` : `${h.at!.replace(/^0/, '')}. ${h.name}.`) : null), 'taak:' + h.id)
+    at(h.at!, () => (openTasks().some((x) => x.id === h.id && x.at === h.at) ? (h.cue ? `Na ${h.cue}: ${h.name}. Geen onderhandeling.` : `${h.at!.replace(/^0/, '')}. ${h.name}. Geen onderhandeling.`) : null), 'taak:' + h.id)
   }
   // Om middernacht de taken van de nieuwe dag
   at('00:01', () => null)

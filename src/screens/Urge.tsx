@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Plate, { StagePlate } from '../components/Plate'
 import { Icon } from '../components/ui'
 import { AFTER_GAVE_IN, AFTER_RESISTED, HELP_KEYS, NEEDS, NEED_BY_ID, SURF_LINES, VOICES, type NeedId } from '../data/urge'
@@ -6,8 +6,9 @@ import { IMG, SIN_BY_ID, doreAlt } from '../data/sins'
 import { ALPHA, habitsFor } from '../lib/score'
 import { buzz, setValue, todayISO, uid, update, useStore, type UrgeEvent } from '../lib/store'
 
-type Step = 'pick' | 'level' | 'need' | 'voice' | 'film' | 'surf' | 'now' | 'act' | 'commit' | 'feel' | 'done'
-const FLOW: Step[] = ['pick', 'level', 'need', 'voice', 'film', 'surf', 'now', 'act']
+type Step = 'knee' | 'flash' | 'pick' | 'level' | 'need' | 'voice' | 'film' | 'surf' | 'now' | 'act' | 'commit' | 'feel' | 'done'
+// Eerst de beslissing van één seconde (Goggins, Evolution 3): stilstaan, twee keer ademen, vooruitkijken. Dan pas de vragen.
+const FLOW: Step[] = ['knee', 'flash', 'pick', 'level', 'need', 'voice', 'film', 'surf', 'now', 'act']
 
 const daypart = (d: Date) => {
   const h = d.getHours()
@@ -26,7 +27,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
   const s = useStore()
   const date = todayISO()
   const vices = s.habits.filter((h) => h.kind === 'vice')
-  const [step, setStep] = useState<Step>(vices.length ? 'pick' : 'level')
+  const [step, setStep] = useState<Step>('knee')
   const [ev, setEv] = useState<UrgeEvent>(() => ({ id: uid(), at: new Date().toISOString() }))
   const set = (patch: Partial<UrgeEvent>) => setEv((e) => ({ ...e, ...patch }))
   const go = (st: Step) => {
@@ -119,9 +120,19 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
       )}
 
       <div className="q" key={step} style={{ position: 'relative' }}>
+        {step === 'knee' && <Knee onDone={() => go('flash')} />}
+
+        {step === 'flash' && (
+          <>
+            <div className="big">Kijk vooruit.</div>
+            <div style={{ color: 'var(--ink-2)' }}>Geef je nu op, hoe kijk je jezelf vanavond aan? En morgenochtend in de spiegel?</div>
+            <p className="italic" style={{ color: '#F2F2F2', margin: '4px 0 0', fontSize: 16, lineHeight: '24px' }}>Nooit stoppen als het het zwaarst is. Wil je eruit, doe het als het makkelijk is. Dat is nu niet.</p>
+          </>
+        )}
+
         {step === 'pick' && (
           <>
-            <div className="big">Goed dat je hier bent in plaats van dáár.</div>
+            <div className="big">Je bent hier, niet dáár. Eerste seconde gewonnen.</div>
             <div style={{ color: 'var(--ink-2)' }}>Waar trekt het aan?</div>
             <div className="chips" style={{ justifyContent: 'center' }}>
               {vices.map((v) => (
@@ -129,6 +140,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
                   {v.name}
                 </button>
               ))}
+              <button className="chip" style={{ background: 'transparent', color: '#F2F2F2', borderColor: 'rgba(242,242,242,.3)' }} onClick={() => go('level')}>Een taak overslaan</button>
               <button className="chip" style={{ background: 'transparent', color: 'var(--ink-2)', borderColor: 'rgba(242,242,242,.2)' }} onClick={() => go('level')}>Iets anders</button>
             </div>
             {pattern && (
@@ -295,6 +307,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
       <div style={{ position: 'relative' }}>
         {step === 'voice' && ev.voice !== undefined && <button className="ans yes" style={{ width: '100%', height: 60 }} onClick={next}>Verder</button>}
         {step === 'film' && <button className="ans yes" style={{ width: '100%', height: 60 }} onClick={next}>Ik zie het. Nu de golf.</button>}
+        {step === 'flash' && <button className="ans yes" style={{ width: '100%', height: 60 }} onClick={next}>Ik blijf in het gevecht</button>}
         {step === 'commit' && (
           <div className="stack gap-8">
             <button className="ans yes" style={{ width: '100%', height: 64 }} onClick={() => finish('resisted')}>Ik heb het doorstaan</button>
@@ -307,10 +320,10 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
             <button className={ev.outcome === 'gave-in' ? 'ans' : 'ans yes'} style={{ width: '100%', height: ev.outcome === 'gave-in' ? 52 : 60 }} onClick={onClose}>Terug</button>
           </div>
         )}
-        {(['level', 'need', 'voice', 'film', 'now', 'act', 'commit'] as Step[]).includes(step) && (
+        {(['flash', 'level', 'need', 'voice', 'film', 'now', 'act', 'commit'] as Step[]).includes(step) && (
           <div className="hstack between" style={{ marginTop: 8 }}>
             <button className="link" style={{ color: 'var(--ink-3)', padding: 8 }} onClick={() => finish('gave-in')}>Ik gaf toe. Eerlijk noteren.</button>
-            {step !== 'commit' && !(step === 'voice' && ev.voice !== undefined) && step !== 'film' && (
+            {step !== 'commit' && !(step === 'voice' && ev.voice !== undefined) && step !== 'film' && step !== 'flash' && (
               <button className="link" style={{ color: 'var(--ink-3)', padding: 8 }} onClick={next}>Sla over</button>
             )}
           </div>
@@ -343,6 +356,44 @@ function Scale({ value, onPick }: { value?: number; onPick: (n: number) => void 
         )
       })}
     </div>
+  )
+}
+
+/**
+ * Even stilstaan (Goggins: "take a knee", zoals een soldaat die onder vuur knielt om te overzien): midden in de paniek stoppen en twee keer diep ademen, zodat je kunt denken
+ * in plaats van reageren. Twee ademhalingen van 3 seconden in en 3 uit; daarna verder, of eerder als je klaar bent.
+ */
+const KNEE_BREATHS = 2
+function Knee({ onDone }: { onDone: () => void }) {
+  const [t0] = useState(() => performance.now())
+  const [now, setNow] = useState(t0)
+  const el = (now - t0) / 1000
+  const over = el >= KNEE_BREATHS * 6
+  useEffect(() => {
+    let raf = 0
+    const tick = (n: number) => { setNow(n); raf = requestAnimationFrame(tick) }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+  // Na de tweede ademhaling vanzelf verder (de ref houdt de timer vast, ook al tekent het scherm elk frame opnieuw)
+  const done = useRef(onDone)
+  useEffect(() => { done.current = onDone })
+  useEffect(() => { if (over) { const t = window.setTimeout(() => done.current(), 600); return () => clearTimeout(t) } }, [over])
+  const cyc = el % 6
+  const inhale = cyc < 3
+  const scale = over ? 0.7 : inhale ? 0.45 + 0.55 * (cyc / 3) : 1 - 0.55 * ((cyc - 3) / 3)
+  return (
+    <>
+      <div className="eyebrow">Eén seconde</div>
+      <div className="big">Stop. Adem.</div>
+      <div style={{ color: 'var(--ink-2)' }}>Je hoofd zoekt de uitgang. Jij beslist, niet je paniek. Twee keer diep.</div>
+      <div className="breath">
+        <div className="orb" style={{ transform: `scale(${scale})` }} />
+        <div className="lbl">{over ? 'Nu beslis jij' : inhale ? 'Adem in' : 'Adem uit'}</div>
+      </div>
+      <div style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--ink-2)' }}>{over ? '' : `${Math.min(KNEE_BREATHS, Math.floor(el / 6) + 1)} / ${KNEE_BREATHS}`}</div>
+      <button className="ans yes" style={{ width: '100%', height: 60 }} onClick={onDone}>Ik ben er. Verder</button>
+    </>
   )
 }
 

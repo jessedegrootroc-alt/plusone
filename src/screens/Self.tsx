@@ -11,6 +11,7 @@ import { scheduleLabel, wonStats } from '../lib/days'
 import Account from '../components/Account'
 import { enableMotion, motionOn, needsPermission } from '../lib/motion'
 import { DEFAULT_TIMES, disableNotify, enableNotify, notifySupported, schedule } from '../lib/notify'
+import { setWakeTime, wakeTime } from '../lib/wake'
 import { aimedFeatures, earnedFeatures } from '../lib/emblems'
 import { IMG, SINS, stageFor, type SinId } from '../data/sins'
 import { computeSeries } from '../lib/score'
@@ -109,6 +110,11 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
           <div className="grow"><div className="name">Toon kompas</div><div className="meta">De zeven zonden en deugden, als extra tab</div></div>
           <span className={`switch ${s.settings?.showCompass ? 'on' : ''}`} aria-hidden="true"><i /></span>
         </button>
+        {/* Je opstaantijd staat er altijd, ook zonder meldingen: je grote taak loopt mee */}
+        <label className="row">
+          <div className="grow"><div className="name">Opstaan</div><div className="meta">Eerder op dan de rest. Je grote taak loopt mee.</div></div>
+          <input className="time-input" type="time" value={wakeTime(s)} onChange={(e) => { if (e.target.value) update((d) => setWakeTime(d, e.target.value)) }} aria-label="Tijd voor opstaan" />
+        </label>
         {notifySupported() && <NotifyRows />}
         <div className="row">
           <div className="grow"><div className="name">Je getuige</div><div className="meta">Krijgt op zondag je week, als jij hem stuurt</div></div>
@@ -274,7 +280,6 @@ function WhySheet({ initial, onClose }: { initial: string; onClose: () => void }
 
 
 const NOTIFY_ROWS = [
-  ['wake', 'Opstaan', 'Je weet waarom.'],
   ['close', 'Dag afsluiten', 'Tijd om je dag af te sluiten.'],
   ['bed', 'Naar boven', 'Telefoon beneden.'],
 ] as const
@@ -284,7 +289,7 @@ function NotifyRows() {
   const s = useStore()
   const n = s.settings?.notify
   const on = !!n?.on
-  const setTime = (k: 'wake' | 'close' | 'bed', v: string) => {
+  const setTime = (k: 'close' | 'bed', v: string) => {
     if (!v) return
     update((d) => { d.settings = { ...d.settings, notify: { ...DEFAULT_TIMES, on, ...d.settings?.notify, [k]: v } } })
     schedule()

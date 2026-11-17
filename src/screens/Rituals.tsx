@@ -9,6 +9,7 @@ import { addDays, buzz, setValue, todayISO, uid, update, useStore } from '../lib
 const dayLabel = (iso: string) =>
   iso === todayISO() ? 'vandaag' : new Date(iso + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })
 
+const BLACK = ['10 minuten lezen', 'Korte training', 'Huis opruimen', 'Morgen klaarzetten']
 const PLANS = ['Telefoon buiten de slaapkamer', 'Om 22:30 naar boven', 'Het zware ding als eerste', 'Kleren voor morgen klaarleggen', 'Iemand vertellen wat ik ga doen']
 
 /**
@@ -27,6 +28,7 @@ export function Mirror({ date, onClose }: { date: string; onClose: () => void })
   const [hard, setHard] = useState('')
   const [saved, setSaved] = useState(false)
   const [plan, setPlan] = useState(log?.aar?.plan ?? '')
+  const [black, setBlack] = useState('')
   const [sheet, setSheet] = useState<null | 'rock' | 'suck'>(null)
   const tomorrow = addDays(date, 1)
   const isToday = date === todayISO()
@@ -105,6 +107,27 @@ export function Mirror({ date, onClose }: { date: string; onClose: () => void })
           </div>
         )}
       </section>
+
+      {/* Niet in de min naar bed (Goggins): na een gemiste dag nog één goed ding voor het slapen */}
+      {result === false && isToday && (
+        <section className="dc-q">
+          <h2 className="dc-title">Je gaat niet in de min slapen</h2>
+          {log?.black ? (
+            <p className="lead" style={{ color: 'var(--ink)' }}>{Icon.check()} {log.black}. Afgevinkt. Je slaapt in de plus.</p>
+          ) : (
+            <>
+              <p className="small" style={{ margin: 0 }}>De dag is verloren, de avond nog niet. Doe nu één ding goed, dan begin je morgen niet op achterstand.</p>
+              <div className="chips">
+                {BLACK.map((b) => <button key={b} className={`chip ${black === b ? 'on' : ''}`} onClick={() => setBlack(b)}>{b}</button>)}
+              </div>
+              <div className="dc-row">
+                <input className="input" value={black} onChange={(e) => setBlack(e.target.value)} placeholder="Of iets anders" maxLength={60} />
+                <button className="btn ghost dc-jar" disabled={!black.trim()} onClick={() => { buzz(14); update((d) => { (d.logs[date] ??= { v: {} }).black = black.trim() }) }}>Gedaan</button>
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       {/* 3 · Wat doe ik morgen anders? Alleen na een verloren dag */}
       {result === false && (
