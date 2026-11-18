@@ -12,6 +12,7 @@ import { DOMAIN_BY_ID, planFor, type Domain } from '../data/ladders'
 import HabitEditor from './HabitEditor'
 import HabitPicker from '../components/HabitPicker'
 import { scrollToTop } from '../lib/scroll'
+import { TIERS, tierInfo, type Tier } from '../lib/tier'
 
 /*
  * De start van de app als een korte reeks vragen: één vraag per scherm, grote keuzes, en bij één keuze meteen door.
@@ -76,13 +77,9 @@ const OBSTACLES = [
   { id: 'tijd', label: 'Ik heb geen tijd', when: 'ik geen tijd heb', then: 'doe ik het voordat de rest van de dag begint.' },
 ] as const
 
-/** Waar je staat bepaalt hoeveel grote taken je elke dag doet (opstaan telt mee): beter één die je doet dan drie die je mist. */
-const LEVELS = [
-  { id: 'beginner', label: 'Beginner', sub: 'Eén of twee taken per dag. Eerst leren winnen.', min: 1, max: 2 },
-  { id: 'gemiddeld', label: 'Gemiddeld', sub: 'Twee of drie taken per dag. Deze keer hou je vol.', min: 2, max: 3 },
-  { id: 'expert', label: 'Expert', sub: 'Drie of vier taken per dag. Geen ruimte voor smoesjes.', min: 3, max: 4 },
-] as const
-const levelOf = (id: string | null) => LEVELS.find((l) => l.id === id) ?? LEVELS[1]
+/** Waar je staat bepaalt hoeveel grote taken je elke dag doet (opstaan telt mee), en welke versie van de app je krijgt. */
+const LEVELS = TIERS
+const levelOf = tierInfo
 
 /** Wat mensen er vaak bij zetten. Eén tik en hij staat in je plan. */
 const QUICK: { name: string; part: Part }[] = [
@@ -211,6 +208,7 @@ export default function Onboarding() {
       d.why = why.trim()
       d.habits = Object.values(picked).filter((h) => (h.kind === 'virtue' && h.weight === 3) || (h.kind === 'vice' && numbs))
       setWakeTime(d, wake)
+      d.settings = { ...d.settings, tier: (level ?? 'gemiddeld') as Tier }
       // Elke harde waarheid wordt een post-it op je spiegel, met een ladder naar beter
       const today = todayISO()
       const mirror: MirrorNote[] = truths.map(({ area, truth }) => ({ id: uid(), text: truth, domain: area.domain, sin: DOMAIN_BY_ID[area.domain].sin, steps: planFor(area.domain, '', truth).map((st, k) => ({ ...st, startedAt: k === 0 ? today : undefined })), createdAt: today }))

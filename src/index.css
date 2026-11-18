@@ -945,3 +945,5 @@ button.moment:active { transform: scale(0.985); }
 .ob-own { display: flex; gap: var(--s2); align-items: center; }
 .ob-own .input { flex: 1; min-width: 0; }
 .ob-own .chip { flex: none; }
+/* Niveau in Reis: uitleg boven, de drie keuzes eronder */
+.row.tier-row { flex-direction: column; align-items: stretch; gap: var(--s3); padding-top: var(--s4); padding-bottom: var(--s4); }

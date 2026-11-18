@@ -68,7 +68,9 @@ export const dayResult = (s: State, date: string): boolean | null => {
  * Reservedagen (Sharif & Shu): een doel met een paar reservedagen houd je langer vol dan een even zwaar doel zonder.
  * Na een misser voelt het nog als vooruitgang, dus je geeft niet op. Twee per maand.
  */
-export const RESERVES_PER_MONTH = 2
+/** Reservedagen per maand, per niveau: een beginner krijgt meer vangnet, een expert geen. */
+export const RESERVES = { beginner: 3, gemiddeld: 2, expert: 0 } as const
+export const reservesPerMonth = (s: State) => RESERVES[s.settings?.tier ?? 'gemiddeld']
 
 /** Gemist, en gered met een reservedag. */
 export const isSaved = (s: State, date: string) => rawResult(s, date) === false && !!s.logs[date]?.saved
@@ -81,7 +83,8 @@ export const reservesLeft = (s: State, date: string) => {
   const month = date.slice(0, 7)
   const saved = Object.keys(s.logs).filter((d) => d.startsWith(month) && s.logs[d].saved)
   const back = Math.min(1, saved.filter((d) => rawResult(s, addDays(d, 1)) === true).length)
-  return Math.max(0, RESERVES_PER_MONTH - saved.length + back)
+  const per = reservesPerMonth(s)
+  return per === 0 ? 0 : Math.max(0, per - saved.length + back)
 }
 
 /** Teruggekomen: gisteren gemist, vandaag gewonnen. */

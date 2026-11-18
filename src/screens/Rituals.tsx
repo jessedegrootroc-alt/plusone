@@ -4,6 +4,7 @@ import { GrensRow, TankStrip } from '../components/Grens'
 import { Icon } from '../components/ui'
 import { bigTasksOn, dayResult } from '../lib/days'
 import { isDone } from '../lib/score'
+import { isSimple } from '../lib/tier'
 import { addDays, buzz, setValue, todayISO, uid, update, useStore } from '../lib/store'
 
 const dayLabel = (iso: string) =>
@@ -155,11 +156,12 @@ export function Mirror({ date, onClose }: { date: string; onClose: () => void })
       {isToday && (
         <section className="dc-q dc-extra">
           <h2 className="dc-title">Voor morgen</h2>
-          <TankStrip />
-          <div className="list flat"><GrensRow /></div>
+          {/* Een beginner krijgt de eerste twee weken alleen het hoofdpad; tank, grens en 'iets wat zuigt' komen daarna */}
+          {!isSimple(s) && <TankStrip />}
+          {!isSimple(s) && <div className="list flat"><GrensRow /></div>}
           <div className="day-add">
             <button className="chip add" onClick={() => setSheet('rock')}>{Icon.plus()} Moet morgen af</button>
-            <button className="chip add" onClick={() => setSheet('suck')}>{Icon.plus()} Iets wat zuigt</button>
+            {!isSimple(s) && <button className="chip add" onClick={() => setSheet('suck')}>{Icon.plus()} Iets wat zuigt</button>}
           </div>
         </section>
       )}

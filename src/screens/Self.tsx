@@ -12,6 +12,8 @@ import Account from '../components/Account'
 import { enableMotion, motionOn, needsPermission } from '../lib/motion'
 import { DEFAULT_TIMES, disableNotify, enableNotify, notifySupported, schedule } from '../lib/notify'
 import { setWakeTime, wakeTime } from '../lib/wake'
+import { TIERS, tierInfo, tierOf } from '../lib/tier'
+import { RESERVES } from '../lib/days'
 import { aimedFeatures, earnedFeatures } from '../lib/emblems'
 import { IMG, SINS, stageFor, type SinId } from '../data/sins'
 import { computeSeries } from '../lib/score'
@@ -110,6 +112,13 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
           <div className="grow"><div className="name">Toon kompas</div><div className="meta">De zeven zonden en deugden, als extra tab</div></div>
           <span className={`switch ${s.settings?.showCompass ? 'on' : ''}`} aria-hidden="true"><i /></span>
         </button>
+        {/* Je niveau: hoeveel taken, hoeveel vangnet, welke toon */}
+        <div className="row tier-row">
+          <div className="grow"><div className="name">Niveau</div><div className="meta">{tierInfo(tierOf(s)).sub}{RESERVES[tierOf(s)] ? ` ${RESERVES[tierOf(s)]} reservedagen per maand.` : ''}</div></div>
+          <div className="seg" role="radiogroup" aria-label="Je niveau">
+            {TIERS.map((t) => <button key={t.id} role="radio" aria-checked={tierOf(s) === t.id} className={tierOf(s) === t.id ? 'on' : ''} onClick={() => update((d) => { d.settings = { ...d.settings, tier: t.id } })}>{t.label}</button>)}
+          </div>
+        </div>
         {/* Je opstaantijd staat er altijd, ook zonder meldingen: je grote taak loopt mee */}
         <label className="row">
           <div className="grow"><div className="name">Opstaan</div><div className="meta">Eerder op dan de rest. Je grote taak loopt mee.</div></div>

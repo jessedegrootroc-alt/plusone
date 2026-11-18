@@ -12,7 +12,8 @@ import { NoteSheet } from '../components/MirrorNotes'
 import { HabitRow, Icon, Sheet, Toast, useTween } from '../components/ui'
 import { pullingObjects, strongestVirtueObject } from '../data/objects'
 import { SINS } from '../data/sins'
-import { bigTasksOn, canSave, dayResult, doesItAlone, freshStart, isComeback, isSaved, lostYesterday, missedOn, missedYesterday, otherTasksOn, reserveBack, reservesLeft, scheduleLabel, wonStats } from '../lib/days'
+import { WEEKDAYS, dayNumber, inDip, isSimple, tierOf, weakDay, type Tier } from '../lib/tier'
+import { bigTasksOn, canSave, dayResult, doesItAlone, freshStart, isComeback, isSaved, lostYesterday, missedOn, missedYesterday, otherTasksOn, reserveBack, reservesLeft, reservesPerMonth, scheduleLabel, wonStats } from '../lib/days'
 import { earnedFeatures } from '../lib/emblems'
 import { countdownLabel, goalTitle, mainGoal } from '../lib/goal'
 import { computeSeries, isDone } from '../lib/score'
@@ -30,6 +31,16 @@ const greet = (name: string) => {
   const g = h < 6 ? 'Nog wakker' : h < 12 ? 'Goedemorgen' : h < 18 ? 'Goedemiddag' : 'Goedenavond'
   return name ? `${g}, ${name}` : g
 }
+
+/** Wat de balk zegt na een gemiste dag, per niveau: mild voor een beginner, hard voor een expert. */
+const lostLine = (tier: Tier, twoInRow: boolean, noReserves: boolean) => {
+  if (tier === 'beginner') return twoInRow ? 'Twee dagen gemist. Geen drama: doe vandaag één taak, dan sta je weer.' : 'Gisteren gemist. Vandaag telt gewoon weer. Begin met je kleinste taak.'
+  if (tier === 'expert') return twoInRow ? 'Twee dagen op rij. Dat is wie je was, niet wie je wordt.' : 'Gisteren gemist. Geen reserves, geen excuses. Vandaag lever je.'
+  return twoInRow ? 'Twee dagen op rij. Dat is een patroon. Breek het vandaag.' : noReserves ? 'Gemist, en je reserves zijn op. Vandaag is er geen ruimte.' : 'Gisteren gemist. Vandaag lever je.'
+}
+
+/** Maandag van deze week, als sleutel voor dingen die één keer per week verschijnen. */
+const mondayOf = (iso: string) => { const wd = new Date(iso + 'T12:00:00').getDay(); return addDays(iso, -((wd + 6) % 7)) }
 
 export default function Today({ openMirror, openUrge, openShadow }: { openMirror: (date: string) => void; openUrge: () => void; openShadow: (habitId?: string) => void }) {
   const s = useStore()
@@ -75,6 +86,32 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
   const left = reservesLeft(s, yesterday)
   const twoInRow = missed && missedOn(s, addDays(today, -2))
   const comeback = date === today && isComeback(s, today)
+  // De versie van de app die bij je niveau hoort
+  const tier = tierOf(s)
+  const simple = isSimple(s, today)
+  const dayN = dayNumber(s, today)
+  const weak = date === today && tier !== 'beginner' ? weakDay(s, today) : null
+  const weakToday = weak !== null && weak === new Date(today + 'T12:00:00').getDay()
+  const dip = date === today && tier === 'gemiddeld' && inDip(s, today) && s.asked?.dip !== mondayOf(today)
+  const unlock = date === today && tier === 'beginner' && !simple && !s.asked?.unlocked
+  // Gemiddeld: een misser hardop zeggen tegen je getuige, dan is hij half hersteld
+  const tellWitness = date === today && tier === 'gemiddeld' && missed && !comeback && !isSaved(s, yesterday) ? s.settings?.witness : undefined
+  const sendToWitness = async () => {
+    const text = 'Ik heb gisteren gemist. Vandaag sta ik weer op. Hou me eraan.'
+    buzz(12)
+    try {
+      if (navigator.share) { await navigator.share({ text }); return }
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return
+    }
+    try {
+      await navigator.clipboard.writeText(text)
+      setSlipId(null)
+      setToast(`Gekopieerd. Stuur het naar ${tellWitness}.`)
+    } catch {
+      /* geen klembord */
+    }
+  }
   const saveYesterday = () => {
     buzz(18)
     update((d) => { (d.logs[yesterday] ??= { v: {} }).saved = true })
@@ -112,7 +149,7 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
   const morningOpen = !morningDone(m) && !m?.skipped
   const morningNow = part === 'ochtend' && morningOpen && inMorningWindow(s)
   const fromHM = (() => { const [h, mm] = wake.split(':').map(Number); const t = Math.max(0, h * 60 + mm - 60); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}` })()
-  const wk = date === today ? witnessWeek(s, today) : null
+  const wk = date === today && !simple ? witnessWeek(s, today) : null
   const witness = s.settings?.witness
   const witnessMoment = wk && <Moment art="item-brief" kind="Getuige · 1 min" title={witness ? `Je week voor ${witness}` : 'Wie mag je week zien?'} sub="Wie gezien wordt, haakt minder snel af." onClick={() => setSheet('witness')} />
   const shortDate = new Date(date + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -144,13 +181,34 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
           <button className="miss-act" onClick={saveYesterday} aria-label="Gisteren redden met een reservedag">Red hem</button>
         </div>
       ) : lost ? (
-        <div className="miss-bar" role="alert">{twoInRow ? 'Twee dagen op rij. Dat is een patroon. Breek het vandaag.' : left === 0 ? 'Gemist, en je reserves zijn op. Vandaag is er geen ruimte.' : 'Gisteren gemist. Vandaag lever je.'}</div>
+        <div className="miss-bar" role="alert">{lostLine(tier, twoInRow, left === 0)}</div>
+      ) : null}
+
+      {/* Eén duwtje tegelijk, op volgorde van belang: je getuige na een misser, wat er voor een beginner bijkomt,
+          je zwakke dag, en de dip van week 3 tot 8. Nooit allemaal tegelijk: te veel tekst leest niemand. */}
+      {tellWitness ? (
+        <div className="fresh-line">
+          <p><b>Zeg het tegen {tellWitness}.</b> Een misser die je hardop zegt, herhaal je minder snel.</p>
+          <button className="link" onClick={sendToWitness}>Stuur</button>
+        </div>
+      ) : unlock ? (
+        <div className="fresh-line">
+          <p><b>Twee weken volgehouden.</b> Nieuw in Dag afsluiten: je tank en je grens van de week.</p>
+          <button className="link" onClick={() => update((d) => { d.asked = { ...d.asked, unlocked: true } })}>Oké</button>
+        </div>
+      ) : weakToday ? (
+        <p className="plan-line"><b>{WEEKDAYS[weak!][0].toUpperCase() + WEEKDAYS[weak!].slice(1)} is je zwakke dag.</b> Doe je zwaarste taak vóór 12:00.</p>
+      ) : dip ? (
+        <div className="fresh-line">
+          <p><b>Week {Math.ceil(dayN / 7)}: het zwaarste stuk.</b> De zin van het begin is weg, de gewoonte is er nog niet. Normaal, geen bewijs dat je faalt.</p>
+          <button className="link" onClick={() => update((d) => { d.asked = { ...d.asked, dip: mondayOf(today) } })}>Oké</button>
+        </div>
       ) : null}
 
       {/* Een verse start */}
       {fresh && (
         <div className="fresh-line">
-          <p>{fresh === 'month' ? <><b>Nieuwe maand.</b> Twee nieuwe reservedagen. Het doel: er geen één nodig hebben.</> : <><b>Nieuwe week.</b> Vorige week is geschiedenis. Deze schrijf je nu.</>}</p>
+          <p>{fresh === 'month' ? <><b>Nieuwe maand.</b> {reservesPerMonth(s) ? `${reservesPerMonth(s)} nieuwe reservedagen. Het doel: er geen één nodig hebben.` : 'Geen reserves. Elke dag telt.'}</> : <><b>Nieuwe week.</b> Vorige week is geschiedenis. Deze schrijf je nu.</>}</p>
           <button className="link" onClick={() => update((d) => { d.asked = { ...d.asked, fresh: today } })}>Oké</button>
         </div>
       )}
@@ -385,7 +443,9 @@ function TimeSheet({ h, date, onClose }: { h: Habit; date: string; onClose: () =
   const s = useStore()
   const [cue, setCue] = useState(h.cue ?? '')
   const [at, setAt] = useState(h.at ?? '')
-  const [remind, setRemind] = useState(h.remind !== false)
+  // Een expert krijgt per taak alleen een herinnering als hij die zelf aanzet
+  const expert = tierOf(s) === 'expert'
+  const [remind, setRemind] = useState(expert ? h.remind === true : h.remind !== false)
   const isRock = !!s.logs[date]?.rocks?.some((x) => x.id === h.id)
   const notifyOn = !!s.settings?.notify?.on
   const save = () => {
@@ -402,8 +462,9 @@ function TimeSheet({ h, date, onClose }: { h: Habit; date: string; onClose: () =
           x.cue = c
           // Je opstaan: de tijd loopt gelijk met je ochtendmelding
           if (t && isWakeHabit(x)) setWakeTime(d, t)
-          if (remind) delete x.remind
+          if (remind) x.remind = expert ? true : undefined
           else x.remind = false
+          if (x.remind === undefined) delete x.remind
         }
       }
     })

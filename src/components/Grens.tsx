@@ -4,6 +4,7 @@ import { LEVELS, MAX_OPEN, growthOf, insightsOf, levelsOf, nextSuggestion } from
 import { addDays, buzz, todayISO, uid, update, useStore, type Challenge } from '../lib/store'
 import { grensHabitId, grensWeight } from '../lib/score'
 import { Icon, Sheet } from './ui'
+import { tierOf } from '../lib/tier'
 
 const day = (iso: string) => {
   const t = todayISO()
@@ -180,7 +181,8 @@ export function ChallengeSheet({ onClose, preset }: { onClose: () => void; prese
   const [area, setArea] = useState<AreaId | null>(preset?.area ?? null)
   const [title, setTitle] = useState(preset?.title ?? '')
   const [step, setStep] = useState<string | undefined>(preset?.step)
-  const [size, setSize] = useState<Size>(preset?.size ?? 'klein')
+  // Een expert begint groot: een mijlpaal, geen uurtje. De spanning blijft 'precies goed', want doodeng is paniek, geen groei.
+  const [size, setSize] = useState<Size>(preset?.size ?? (tierOf(s) === 'expert' ? 'groot' : 'klein'))
   const [fear, setFear] = useState<1 | 2 | 3>(2)
   const [due, setDue] = useState(addDays(today, 6))
   const full = g.open.length >= MAX_OPEN

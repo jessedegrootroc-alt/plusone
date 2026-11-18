@@ -8,9 +8,10 @@
 // Let op: een webapp kan zelf geen melding inplannen voor als hij helemaal dicht is. Hij plant ze zolang de app
 // open of op de achtergrond staat. Voor betrouwbare meldingen als de app dicht is, is een push-server nodig
 // (bijvoorbeeld via Supabase); die staat nog niet.
-import { bigTasksOn, canSave, dayResult, freshStart, lostYesterday, missedYesterday, otherTasksOn } from './days'
+import { bigTasksOn, canSave, dayResult, freshStart, lostYesterday, missedYesterday, otherTasksOn, reservesPerMonth } from './days'
+import { tierOf } from './tier'
 import { isDone } from './score'
-import { addDays, getState, onLocalChange, todayISO, update } from './store'
+import { addDays, getState, onLocalChange, todayISO, update, type Habit } from './store'
 
 export const DEFAULT_TIMES = { wake: '06:30', close: '21:00', bed: '22:15' }
 
@@ -58,10 +59,10 @@ const wakeText = (wake: string) => {
   const s = getState()
   const today = todayISO()
   if (missedYesterday(s, today) && canSave(s, addDays(today, -1))) return 'Gisteren gemist. Red hem met een reservedag, en lever vandaag.'
-  if (lostYesterday(s, today)) return 'Gisteren verloren. Vandaag niet. Op.'
+  if (lostYesterday(s, today)) return tierOf(s) === 'beginner' ? 'Gisteren gemist. Vandaag telt gewoon weer. Eén taak, dan sta je.' : 'Gisteren verloren. Vandaag niet. Op.'
   const fresh = freshStart(s, today)
   if (fresh === 'week') return 'Nieuwe week. Schone lei. Laat zien wie je bent.'
-  if (fresh === 'month') return 'Nieuwe maand. Twee nieuwe reservedagen.'
+  if (fresh === 'month') return reservesPerMonth(s) ? `Nieuwe maand. ${reservesPerMonth(s)} nieuwe reservedagen.` : 'Nieuwe maand. Geen reserves. Elke dag telt.'
   return `${wake.replace(/^0/, '')}. Voeten op de vloer. De rest slaapt nog, jij niet.`
 }
 
@@ -70,7 +71,9 @@ const openTasks = () => {
   const s = getState()
   const today = todayISO()
   const v = s.logs[today]?.v ?? {}
-  return [...bigTasksOn(s, today), ...otherTasksOn(s, today)].filter((h) => h.at && h.remind !== false && !(isDone(h, v[h.id] ?? 0) && (v[h.id] ?? 0) > 0))
+  // Een expert wil geen betutteling: per taak alleen een melding als hij die zelf aanzette
+  const wants = (h: Habit) => (tierOf(s) === 'expert' ? h.remind === true : h.remind !== false)
+  return [...bigTasksOn(s, today), ...otherTasksOn(s, today)].filter((h) => h.at && wants(h) && !(isDone(h, v[h.id] ?? 0) && (v[h.id] ?? 0) > 0))
 }
 
 /** Alle meldingen opnieuw inplannen (bij het starten, na elke wijziging, en om middernacht voor de nieuwe dag). */
@@ -88,7 +91,8 @@ export const schedule = () => {
   at(n.bed, () => {
     const s = getState()
     const today = todayISO()
-    return dayResult(s, today) === false && !s.logs[today]?.black ? 'Je dag staat in de min. Zo ga je niet slapen. Doe nog één ding goed.' : 'Over 15 minuten naar boven. Telefoon beneden.'
+    if (dayResult(s, today) !== false || s.logs[today]?.black) return 'Over 15 minuten naar boven. Telefoon beneden.'
+    return tierOf(s) === 'beginner' ? 'Je dag is nog niet gewonnen. Eén klein ding voor het slapen, dan sluit je goed af.' : 'Je dag staat in de min. Zo ga je niet slapen. Doe nog één ding goed.'
   })
   // Per taak: op zijn tijd, en alleen als hij dan nog openstaat
   const nowHM = new Date().toTimeString().slice(0, 5)

@@ -4,7 +4,8 @@ import { Icon } from '../components/ui'
 import { AFTER_GAVE_IN, AFTER_RESISTED, HELP_KEYS, NEEDS, NEED_BY_ID, SURF_LINES, VOICES, type NeedId } from '../data/urge'
 import { IMG, SIN_BY_ID, doreAlt } from '../data/sins'
 import { ALPHA, habitsFor } from '../lib/score'
-import { buzz, setValue, todayISO, uid, update, useStore, type UrgeEvent } from '../lib/store'
+import { buzz, getState, setValue, todayISO, uid, update, useStore, type UrgeEvent } from '../lib/store'
+import { tierOf } from '../lib/tier'
 
 type Step = 'knee' | 'flash' | 'pick' | 'level' | 'need' | 'voice' | 'film' | 'surf' | 'now' | 'act' | 'commit' | 'feel' | 'done'
 // Eerst de beslissing van één seconde (Goggins, Evolution 3): stilstaan, twee keer ademen, vooruitkijken. Dan pas de vragen.
@@ -27,7 +28,8 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
   const s = useStore()
   const date = todayISO()
   const vices = s.habits.filter((h) => h.kind === 'vice')
-  const [step, setStep] = useState<Step>('knee')
+  // Een expert slaat het ademen over: meteen de beslissing
+  const [step, setStep] = useState<Step>(() => (tierOf(getState()) === 'expert' ? 'flash' : 'knee'))
   const [ev, setEv] = useState<UrgeEvent>(() => ({ id: uid(), at: new Date().toISOString() }))
   const set = (patch: Partial<UrgeEvent>) => setEv((e) => ({ ...e, ...patch }))
   const go = (st: Step) => {

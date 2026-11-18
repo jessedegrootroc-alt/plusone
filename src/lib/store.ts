@@ -170,7 +170,7 @@ export interface State {
   mainGoalId?: string
   settings?: Settings
   /** Dingen die de app één keer vraagt, zodat hij het niet blijft vragen. */
-  asked?: { schema?: boolean; task4?: boolean; notify?: boolean; fresh?: string; witness?: string }
+  asked?: { schema?: boolean; task4?: boolean; notify?: boolean; fresh?: string; witness?: string; dip?: string; unlocked?: boolean }
 }
 
 export interface Settings {
@@ -180,6 +180,8 @@ export interface Settings {
   notify?: { on: boolean; wake: string; close: string; bed: string }
   /** Je getuige: de ene persoon die op zondag je week krijgt. */
   witness?: string
+  /** Waar je staat: bepaalt hoeveel taken, hoeveel vangnet en welke toon. */
+  tier?: 'beginner' | 'gemiddeld' | 'expert'
 }
 
 const KEY = 'plusone.v1'
