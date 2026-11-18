@@ -26,7 +26,8 @@ export function Mirror({ date, onClose }: { date: string; onClose: () => void })
   const result = dayResult(s, date)
   const vices = s.habits.filter((h) => h.kind === 'vice')
   const [hard, setHard] = useState('')
-  const [saved, setSaved] = useState(false)
+  // Het briefje dat je net in de koektrommel deed, zodat je het kunt terugdraaien
+  const [saved, setSaved] = useState<string | null>(null)
   const [plan, setPlan] = useState(log?.aar?.plan ?? '')
   const [black, setBlack] = useState('')
   const [sheet, setSheet] = useState<null | 'rock' | 'suck'>(null)
@@ -42,15 +43,19 @@ export function Mirror({ date, onClose }: { date: string; onClose: () => void })
   const toJar = () => {
     if (!hard.trim()) return
     buzz(14)
-    update((d) => { d.jar.unshift({ id: uid(), text: hard.trim(), date }) })
-    setSaved(true)
+    const id = uid()
+    update((d) => { d.jar.unshift({ id, text: hard.trim(), date }) })
+    setSaved(id)
+  }
+  const undoJar = () => {
+    update((d) => { d.jar = d.jar.filter((j) => j.id !== saved) })
+    setSaved(null)
   }
   const finish = () => {
     update((d) => {
       const l = (d.logs[date] ??= { v: {} })
       l.sealed = true
       if (result === false && plan.trim()) l.aar = { ...l.aar, plan: plan.trim() }
-      if (hard.trim() && !saved) d.jar.unshift({ id: uid(), text: hard.trim(), date })
     })
     onClose()
   }
@@ -97,14 +102,20 @@ export function Mirror({ date, onClose }: { date: string; onClose: () => void })
 
       {/* 2 · Wat was zwaar en deed ik toch? */}
       <section className="dc-q">
-        <h2 className="dc-title"><span className="dc-n">2</span> Wat was vandaag zwaar, en deed ik toch?</h2>
+        <h2 className="dc-title"><span className="dc-n">2</span> Wat heb ik vandaag gedaan, terwijl het zwaar was?</h2>
         {saved ? (
-          <p className="lead" style={{ color: 'var(--ink)' }}>{Icon.check()} In je koektrommel.</p>
-        ) : (
-          <div className="dc-row">
-            <input className="input" value={hard} onChange={(e) => setHard(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && toJar()} placeholder="Bijv. toch gaan lopen in de regen" />
-            <button className="btn ghost dc-jar" disabled={!hard.trim()} onClick={toJar}>In de koektrommel</button>
+          <div className="hstack between" style={{ gap: 12 }}>
+            <p className="lead" style={{ color: 'var(--ink)', margin: 0 }}>{Icon.check()} „{hard.trim()}” zit in je koektrommel.</p>
+            <button className="link" onClick={undoJar}>Haal eruit</button>
           </div>
+        ) : (
+          <>
+            <p className="small" style={{ margin: 0 }}>Alleen wat je echt gedaan hebt. Het wordt bewijs voor de dagen dat je wilt opgeven. Niets gedaan? Sla over.</p>
+            <div className="dc-row">
+              <input className="input" value={hard} onChange={(e) => setHard(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && toJar()} placeholder="Bijv. toch gaan lopen in de regen" aria-label="Wat je deed, terwijl het zwaar was" />
+              <button className="btn ghost dc-jar" disabled={!hard.trim()} onClick={toJar}>Gedaan, in de koektrommel</button>
+            </div>
+          </>
         )}
       </section>
 

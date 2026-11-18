@@ -551,8 +551,9 @@ button.card:active { transform: scale(0.985); }
 .tab:active .tab-ico { transform: scale(0.92); }
 
 /* ——— Sheets en volledige schermen ——— */
-.scrim { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.7); animation: fade 0.25s both; }
-.sheet { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 41; width: 100%; max-width: 460px; max-height: 92dvh; overflow-y: auto; background: var(--paper); border-radius: var(--r-lg) var(--r-lg) 0 0; padding: var(--s3) var(--gutter) calc(env(safe-area-inset-bottom) + var(--s5)); animation: sheetUp 0.42s var(--ease) both; }
+/* Sheets liggen boven alles, ook boven schermen over de hele pagina (Dag afsluiten, Drang): die openen er zelf sheets */
+.scrim { position: fixed; inset: 0; z-index: 55; background: rgba(0, 0, 0, 0.7); animation: fade 0.25s both; }
+.sheet { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 56; width: 100%; max-width: 460px; max-height: 92dvh; overflow-y: auto; background: var(--paper); border-radius: var(--r-lg) var(--r-lg) 0 0; padding: var(--s3) var(--gutter) calc(env(safe-area-inset-bottom) + var(--s5)); animation: sheetUp 0.42s var(--ease) both; }
 .sheet .grab { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto var(--s5); }
 .full { position: fixed; inset: 0; z-index: 50; display: flex; justify-content: center; background: rgba(0, 0, 0, 0.6); }
 .full > .inner { position: relative; width: 100%; max-width: 460px; height: 100dvh; overflow-y: auto; background: var(--paper); animation: fadeUp 0.4s var(--ease) both; }
