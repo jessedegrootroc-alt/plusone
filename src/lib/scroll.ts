@@ -15,8 +15,8 @@ export const startSmoothScroll = () => {
     easing: easeOut,
     smoothWheel: true,
     syncTouch: false,
-    // Sheets en horizontale rijen scrollen zelf; daar mag het niet aan trekken
-    prevent: (node) => !!node.closest?.('.sheet, .chips.scroll'),
+    // Sheets, schermen over de hele pagina (Dag afsluiten, Drang) en horizontale rijen scrollen zelf; daar mag het niet aan trekken
+    prevent: (node) => !!node.closest?.('.sheet, .full, .chips.scroll'),
   })
   const raf = (t: number) => { lenis!.raf(t); requestAnimationFrame(raf) }
   requestAnimationFrame(raf)

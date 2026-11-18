@@ -47,7 +47,7 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 .lenis.lenis-stopped { overflow: hidden; }
 /* Een sheet scrollt zelf en geeft zijn scroll niet door aan de pagina erachter */
-.sheet { overscroll-behavior: contain; }
+.sheet, .full > .inner { overscroll-behavior: contain; }
 body { background: #000; color: var(--ink); font: var(--b); -webkit-font-smoothing: antialiased; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 input, textarea { font: inherit; color: inherit; }
@@ -941,3 +941,6 @@ button.moment:active { transform: scale(0.985); }
 .play-bar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
 .play-bar i { display: block; height: 100%; background: var(--ink); transform-origin: left; transform: scaleX(0); transition: transform 0.25s linear; }
 @media (prefers-reduced-motion: reduce) { .rec-btn.on { animation: none; } }
+.ob-own { display: flex; gap: var(--s2); align-items: center; }
+.ob-own .input { flex: 1; min-width: 0; }
+.ob-own .chip { flex: none; }

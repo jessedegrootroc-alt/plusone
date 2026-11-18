@@ -5,7 +5,6 @@ import { type HabitTemplate } from '../data/catalog'
 import { IMG, doreAlt } from '../data/sins'
 import { buzz, fromTemplate, todayISO, uid, update, type Habit, type MirrorNote } from '../lib/store'
 import { noteFromGoal } from '../lib/emblems'
-import { scheduleLabel } from '../lib/days'
 import { countdownLabel, needsDate } from '../lib/goal'
 import { enableNotify, notifySupported } from '../lib/notify'
 import { isWakeHabit, setWakeTime, shortTime } from '../lib/wake'
@@ -26,7 +25,7 @@ import { scrollToTop } from '../lib/scroll'
  */
 
 type Area = 'fysiek' | 'mentaal' | 'financieel' | 'emotioneel'
-type StepId = 'splash' | 'name' | 'mirror' | `area-${Area}` | 'obstacle' | 'level' | 'vices' | 'wake' | 'goal' | 'why' | 'build' | 'plan' | 'deal'
+type StepId = 'splash' | 'name' | 'mirror' | `area-${Area}` | 'obstacle' | 'level' | 'vices' | 'wake' | 'tasks' | 'goal' | 'why' | 'build' | 'plan' | 'deal'
 type Rating = 'sterk' | 'matig' | 'slecht'
 /** Wanneer een taak op je dag hoort. Zo komt hij in je plan en op Vandaag op de goede plek. */
 type Part = 'ochtend' | 'overdag' | 'avond'
@@ -47,21 +46,21 @@ const AREAS: { id: Area; domain: Domain; label: string; sub: string; q: string; 
     { id: 'slaap', label: 'Ik slaap slecht', truth: 'Je slaapt slecht en betaalt er elke dag voor.', task: 'Telefoon de slaapkamer uit', part: 'avond', at: '22:00' },
   ] },
   { id: 'mentaal', domain: 'mentaal', label: 'Mentaal', sub: 'Je hoofd: discipline, focus, twijfel, uitstel', q: 'Mentaal. Waar breek je?', options: [
-    { id: 'opgeven', label: 'Ik geef op als het zwaar wordt', truth: 'Je stopt op het moment dat het pijn gaat doen.', task: 'Elke dag één ding dat je liever overslaat', part: 'overdag' },
-    { id: 'uitstel', label: 'Ik stel uit wat ertoe doet', truth: 'Je stelt uit wat het meest telt.', task: 'Het zwaarste ding als eerste', part: 'ochtend', at: '09:00' },
-    { id: 'twijfel', label: 'Ik twijfel aan mezelf', truth: 'Je gelooft je twijfel meer dan je bewijs.', task: 'Eén overwinning in je koektrommel', part: 'avond', at: '21:00' },
+    { id: 'opgeven', label: 'Ik geef op als het zwaar wordt', truth: 'Je stopt op het moment dat het pijn gaat doen.', task: 'Eén ding afmaken dat je liever overslaat', part: 'overdag' },
+    { id: 'uitstel', label: 'Ik stel uit wat ertoe doet', truth: 'Je stelt uit wat het meest telt.', task: 'Je zwaarste klus als eerste, vóór je mail', part: 'ochtend', at: '09:00' },
+    { id: 'twijfel', label: 'Ik twijfel aan mezelf', truth: 'Je gelooft je twijfel meer dan je bewijs.', task: 'Opschrijven wat je vandaag overwon', part: 'avond', at: '21:00' },
     { id: 'scherm', label: 'Mijn telefoon heeft mijn aandacht', truth: 'Je telefoon krijgt meer van je aandacht dan jij zelf.', task: 'Het eerste uur zonder telefoon', part: 'ochtend' },
   ] },
   { id: 'financieel', domain: 'financieel', label: 'Financieel', sub: 'Je geld: schulden, sparen, inkomen', q: 'Financieel. Hoe staat het er echt voor?', options: [
     { id: 'uitgeven', label: 'Ik geef meer uit dan ik verdien', truth: 'Er gaat meer uit dan er binnenkomt.', task: 'Je uitgaven van vandaag opschrijven', part: 'avond', at: '21:00' },
     { id: 'schuld', label: 'Ik heb schulden', truth: 'Je schulden nemen je beslissingen.', task: '15 minuten aan je aflosplan', part: 'overdag' },
     { id: 'sparen', label: 'Ik spaar niets', truth: 'Je hebt geen buffer. Eén tegenvaller en je staat klem.', task: '€5 opzij zetten', part: 'ochtend' },
-    { id: 'groei', label: 'Ik verdien minder dan ik kan', truth: 'Je verdient minder dan je waard bent.', task: 'Een uur aan je volgende stap', part: 'overdag' },
+    { id: 'groei', label: 'Ik verdien minder dan ik kan', truth: 'Je verdient minder dan je waard bent.', task: 'Een uur aan meer inkomen: leren, solliciteren of verkopen', part: 'overdag' },
   ] },
   { id: 'emotioneel', domain: 'spiritueel', label: 'Emotioneel', sub: 'Je binnenkant: wat je verdooft, wat je meedraagt', q: 'Emotioneel. Wat draag je mee?', options: [
     { id: 'verdoof', label: 'Ik verdoof het met eten, drank of schermen', truth: 'Je verdooft wat je niet wilt voelen.', task: '10 minuten stil, zonder afleiding', part: 'ochtend' },
     { id: 'pijn', label: 'Ik draag oude pijn mee', truth: 'Je laat je verleden je toekomst kiezen.', task: 'Opschrijven wat je dwarszit', part: 'avond', at: '21:30' },
-    { id: 'alleen', label: 'Ik sta er alleen voor', truth: 'Niemand weet hoe het echt met je gaat.', task: 'Eén eerlijk gesprek', part: 'overdag' },
+    { id: 'alleen', label: 'Ik sta er alleen voor', truth: 'Niemand weet hoe het echt met je gaat.', task: 'Iemand eerlijk zeggen hoe het met je gaat', part: 'overdag' },
     { id: 'boos', label: 'Ik word snel boos', truth: 'Je woede beslist voordat jij dat doet.', task: 'Terugkijken: waar werd ik boos, en waarom?', part: 'avond', at: '21:30' },
   ] },
 ]
@@ -92,7 +91,7 @@ const QUICK: { name: string; part: Part }[] = [
   { name: 'Video maken', part: 'overdag' },
   { name: '20 pagina\'s lezen', part: 'avond' },
   { name: 'Koud douchen', part: 'ochtend' },
-  { name: 'Een uur aan je project', part: 'overdag' },
+  { name: 'Een uur aan je eigen project', part: 'overdag' },
 ]
 
 const WAKE_TIMES = ['04:30', '05:00', '05:30', '06:00', '06:30', '07:00']
@@ -121,7 +120,7 @@ export default function Onboarding() {
   const focus = AREAS.filter((a) => ratings[a.id] === 'slecht').concat(AREAS.filter((a) => ratings[a.id] === 'matig')).slice(0, 2).map((a) => a.id)
   // De verleidingen vraagt de app alleen als je zegt dat je iets verdooft
   const numbs = answers.emotioneel === 'verdoof' && focus.includes('emotioneel')
-  const flow: StepId[] = ['splash', 'name', 'mirror', ...focus.map((a) => `area-${a}` as const), 'obstacle', 'level', ...(numbs ? ['vices' as const] : []), 'wake', 'goal', 'why', 'build', 'plan', 'deal']
+  const flow: StepId[] = ['splash', 'name', 'mirror', ...focus.map((a) => `area-${a}` as const), 'obstacle', 'level', ...(numbs ? ['vices' as const] : []), 'wake', 'tasks', 'goal', 'why', 'build', 'plan', 'deal']
   const id = flow[Math.min(i, flow.length - 1)]
   const questions = flow.filter(isQuestion)
   const qIndex = questions.indexOf(id)
@@ -171,7 +170,6 @@ export default function Onboarding() {
   const dateNeeded = needsDate('medal', goalText)
   const obs = OBSTACLES.find((o) => o.id === obstacle)
   const lv = levelOf(level)
-  const countLabel = (n: number) => `${n} ${n === 1 ? 'taak' : 'taken'}`
   const quick = QUICK.filter((q) => !virtues.some((h) => h.name.toLowerCase() === q.name.toLowerCase()))
   const addQuick = (q: (typeof QUICK)[number]) => {
     buzz()
@@ -179,10 +177,29 @@ export default function Onboarding() {
     setPicked((p) => ({ ...p, [key]: { id: key, name: q.name, sin: 'sloth', kind: 'virtue', type: 'do', weight: bigs.length < lv.max ? 3 : 2 } }))
     setParts((x) => ({ ...x, [key]: q.part }))
   }
+  const [own, setOwn] = useState('')
+  const [full, setFull] = useState(false)
+  const pick = (h: Habit) => {
+    const on = h.weight === 3
+    if (!on && bigs.length >= lv.max) { buzz(); setFull(true); return }
+    buzz(6); setFull(false); setBig(h.id, !on)
+  }
+  const addOwn = () => {
+    const name = own.trim()
+    if (!name) return
+    if (bigs.length >= lv.max) { setFull(true); return }
+    const key = 'custom-' + uid()
+    buzz(6)
+    setPicked((p) => ({ ...p, [key]: { id: key, name, sin: 'sloth', kind: 'virtue', type: 'do', weight: 3 } }))
+    setParts((x) => ({ ...x, [key]: 'overdag' }))
+    setOwn('')
+  }
+  const areaOf = (k: string) => (k.startsWith('area-') ? AREA_BY_ID[k.slice(5) as Area]?.label : undefined)
+  const wakeOn = picked.wake?.weight === 3
   const habitName = (h: Habit) => (isWakeHabit(h) ? `${shortTime(wake)} op` : h.name)
   // De taken uit je antwoorden, per dagdeel, met hun tijd erbij als die er is (eigen taken staan overdag)
   const tasksIn = (part: Part) => Object.entries(picked)
-    .filter(([k, h]) => h.kind === 'virtue' && k !== 'wake' && (parts[k] ?? 'overdag') === part)
+    .filter(([k, h]) => h.kind === 'virtue' && h.weight === 3 && k !== 'wake' && (parts[k] ?? 'overdag') === part)
     .map(([, h]) => (h.at ? `${h.name}, ${shortTime(h.at)}` : h.name))
 
   const finish = () => {
@@ -192,7 +209,7 @@ export default function Onboarding() {
     update((d) => {
       d.name = name.trim()
       d.why = why.trim()
-      d.habits = Object.values(picked).filter((h) => h.kind === 'virtue' || numbs)
+      d.habits = Object.values(picked).filter((h) => (h.kind === 'virtue' && h.weight === 3) || (h.kind === 'vice' && numbs))
       setWakeTime(d, wake)
       // Elke harde waarheid wordt een post-it op je spiegel, met een ladder naar beter
       const today = todayISO()
@@ -223,8 +240,8 @@ export default function Onboarding() {
   // Je plan wordt gebouwd: de lijn van je dag tekent zichzelf
   if (id === 'build') return <PlanBuild wake={wake} bigCount={bigs.length} hasGoal={!!goalText.trim()} hasObstacle={!!obs} onDone={next} />
 
-  const dockLabel: Partial<Record<StepId, string>> = { name: 'Verder', mirror: 'Verder', vices: 'Verder', wake: 'Verder', goal: 'Verder', why: why.trim() ? 'Bouw mijn plan' : 'Sla over en bouw mijn plan', plan: 'Dit is mijn plan' }
-  const disabled = (id === 'name' && !name.trim()) || (id === 'mirror' && !AREAS.every((a) => ratings[a.id])) || (id === 'goal' && dateNeeded && !goalDue) || (id === 'plan' && (bigs.length < lv.min || bigs.length > lv.max))
+  const dockLabel: Partial<Record<StepId, string>> = { name: 'Verder', mirror: 'Verder', vices: 'Verder', wake: 'Verder', tasks: bigs.length < lv.min ? `Kies er nog ${lv.min - bigs.length}` : 'Verder', goal: 'Verder', why: why.trim() ? 'Bouw mijn plan' : 'Sla over en bouw mijn plan', plan: 'Dit is mijn plan' }
+  const disabled = (id === 'name' && !name.trim()) || (id === 'mirror' && !AREAS.every((a) => ratings[a.id])) || (id === 'goal' && dateNeeded && !goalDue) || (id === 'tasks' && (bigs.length < lv.min || bigs.length > lv.max))
 
   return (
     <div className="screen ob" style={{ paddingBottom: 140 }}>
@@ -311,6 +328,32 @@ export default function Onboarding() {
           </Q>
         )}
 
+        {id === 'tasks' && (
+          <Q title="Wat doe je elke dag?" lead={`${lv.label}: kies er ${lv.min} of ${lv.max}. Doe je ze allemaal, dan is de dag gewonnen.`}>
+            <div className="ob-opts">
+              {virtues.map((h) => {
+                const k = Object.keys(picked).find((x) => picked[x] === h)!
+                return <Opt key={h.id} multi on={h.weight === 3} label={habitName(h)} sub={areaOf(k) ? `Uit je antwoord bij ${areaOf(k)}` : undefined} onClick={() => pick(h)} />
+              })}
+            </div>
+            {quick.length > 0 && (
+              <div className="stack gap-8">
+                <span className="small">Of iets anders</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {quick.map((q) => <button key={q.name} className="chip add" onClick={() => (bigs.length >= lv.max ? (buzz(), setFull(true)) : addQuick(q))}>{Icon.plus()} {q.name}</button>)}
+                </div>
+              </div>
+            )}
+            <form className="ob-own" onSubmit={(e) => { e.preventDefault(); addOwn() }}>
+              <input className="input" value={own} onChange={(e) => setOwn(e.target.value)} placeholder="Eigen taak" aria-label="Eigen taak" />
+              <button className="chip" type="submit" disabled={!own.trim()}>Zet erbij</button>
+            </form>
+            <p className="small ob-tally" aria-live="polite" style={{ margin: 0, color: full ? 'var(--ink)' : undefined }}>
+              {full ? `Hooguit ${lv.max}. Haal er eerst een weg.` : `${bigs.length} van ${lv.min}–${lv.max} gekozen`}
+            </p>
+          </Q>
+        )}
+
         {id === 'goal' && (
           <Q title="Wat ga je halen?" lead="Eén doel, met een datum. Dan telt de app elke dag af.">
             <input className="input ob-big-input" value={goalText} onChange={(e) => setGoalText(e.target.value)} placeholder="Bijv. 12-uursloop" aria-label="Je doel" />
@@ -331,61 +374,13 @@ export default function Onboarding() {
         {id === 'plan' && (
           <div className="stack gap-24">
             <div className="stack gap-8">
-              <div className="eyebrow">Je plan</div>
               <h1 className="h1">{name.trim() ? `${name.trim()}, dit` : 'Dit'} is je dag.</h1>
+              {goalText.trim() && <p className="lead" style={{ margin: 0 }}>Op weg naar <b style={{ color: 'var(--ink)' }}>{goalText.trim()}</b>{goalDue ? `, ${countdownLabel(goalDue)}` : ''}.</p>}
             </div>
             <div className="ob-plan-line">
-              <PlanRow part="Ochtend" items={[`${shortTime(wake)} op`, 'Ochtendmoment: zeg het hardop, 30 seconden', ...tasksIn('ochtend')]} />
-              <PlanRow part="Overdag" items={tasksIn('overdag').length ? tasksIn('overdag') : ['Geen vaste taak. Wat erbij komt, zet je op Vandaag.']} />
-              <PlanRow part="Avond" items={[...tasksIn('avond'), 'Dag afsluiten, 2 minuten']} last />
-            </div>
-            {goalText.trim() && (
-              <div className="ob-goal">
-                <span className="ob-goal-title">{goalText.trim()}</span>
-                <span className="ob-goal-count">{goalDue ? countdownLabel(goalDue) : 'Zonder datum'}</span>
-                {obs && <span className="ob-goal-plan"><b>Als {obs.when}:</b> {obs.then}</span>}
-              </div>
-            )}
-            {truths.length > 0 && (
-              <div className="stack gap-12">
-                <h2 className="h2">Op je spiegel</h2>
-                <div className="ob-truths">
-                  {truths.map(({ area, truth }, k) => (
-                    <div key={area.id} className="jar-note ob-truth" style={{ '--r': `${k % 2 ? 1.5 : -1.5}deg` } as CSSProperties}>
-                      <span className="tape" aria-hidden="true" />
-                      <span className="jar-kind">{area.label}</span>
-                      <span className="jar-text">{truth}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="stack gap-8">
-              <div className="section-head" style={{ margin: 0 }}>
-                <h2 className="h2">Je grote taken</h2>
-                <span className={`small ob-tally ${bigs.length >= lv.min && bigs.length <= lv.max ? 'ok' : ''}`}>{bigs.length} van {lv.min}–{lv.max}</span>
-              </div>
-              <p className="small" style={{ margin: 0 }}>{lv.label}: elke dag {lv.min} of {lv.max} grote taken. Doe je ze allemaal, dan is de dag gewonnen.</p>
-              <div className="list">
-                {virtues.map((h) => (
-                  <div key={h.id} className="row" style={{ minHeight: 64 }}>
-                    <div className="grow"><div className="name">{habitName(h)}</div><div className="meta">{scheduleLabel(h)}</div></div>
-                    <button className={`chip ${h.weight === 3 ? 'on' : ''}`} aria-pressed={h.weight === 3} disabled={h.weight !== 3 && bigs.length >= lv.max} onClick={() => setBig(h.id, h.weight !== 3)}>Groot</button>
-                    <button className="iconbtn" aria-label={`${h.name} weghalen`} onClick={() => remove(h.id)} style={{ color: 'var(--ink-3)' }}>{Icon.close()}</button>
-                  </div>
-                ))}
-              </div>
-              {bigs.length > lv.max && <p className="small" style={{ color: 'var(--ink)', margin: 0 }}>{bigs.length} grote taken. {lv.label} is hooguit {lv.max}. Maak er een klein of haal er een weg.</p>}
-              {bigs.length < lv.min && <p className="small" style={{ color: 'var(--ink)', margin: 0 }}>Nog {countLabel(lv.min - bigs.length)} erbij. {lv.label} betekent minstens {lv.min}.</p>}
-              {bigs.length < lv.max && quick.length > 0 && (
-                <div className="stack gap-8">
-                  <span className="small">Snel erbij</span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {quick.map((q) => <button key={q.name} className="chip add" onClick={() => addQuick(q)}>{Icon.plus()} {q.name}</button>)}
-                  </div>
-                </div>
-              )}
-              <button className="chip add" style={{ alignSelf: 'flex-start' }} onClick={() => setCustom('virtue')}>{Icon.plus()} Taak toevoegen</button>
+              <PlanRow part="Ochtend" items={[...(wakeOn ? [`${shortTime(wake)} op`] : []), 'Zeg hardop waar je tegenop ziet, en wat je toch doet', ...tasksIn('ochtend')]} />
+              <PlanRow part="Overdag" items={tasksIn('overdag').length ? tasksIn('overdag') : ['Wat erbij komt, zet je op Vandaag']} />
+              <PlanRow part="Avond" items={[...tasksIn('avond'), 'Terugkijken: heb je gedaan wat je zei?']} last />
             </div>
           </div>
         )}
