@@ -77,12 +77,23 @@ const OBSTACLES = [
   { id: 'tijd', label: 'Ik heb geen tijd', when: 'ik geen tijd heb', then: 'doe ik het voordat de rest van de dag begint.' },
 ] as const
 
-/** Waar je staat bepaalt hoeveel grote taken je krijgt (opstaan telt mee): beter één die je doet dan drie die je mist. */
+/** Waar je staat bepaalt hoeveel grote taken je elke dag doet (opstaan telt mee): beter één die je doet dan drie die je mist. */
 const LEVELS = [
-  { id: 'nul', label: 'Ik begin bij nul', sub: 'Eén grote taak. Elke dag.', big: 1 },
-  { id: 'vaker', label: 'Ik heb het vaker geprobeerd', sub: 'Twee grote taken. Deze keer hou je vol.', big: 2 },
-  { id: 'bezig', label: 'Ik ben bezig en wil harder', sub: 'Drie grote taken. Geen ruimte voor smoesjes.', big: 3 },
+  { id: 'beginner', label: 'Beginner', sub: 'Eén of twee taken per dag. Eerst leren winnen.', min: 1, max: 2 },
+  { id: 'gemiddeld', label: 'Gemiddeld', sub: 'Twee of drie taken per dag. Deze keer hou je vol.', min: 2, max: 3 },
+  { id: 'expert', label: 'Expert', sub: 'Drie of vier taken per dag. Geen ruimte voor smoesjes.', min: 3, max: 4 },
 ] as const
+const levelOf = (id: string | null) => LEVELS.find((l) => l.id === id) ?? LEVELS[1]
+
+/** Wat mensen er vaak bij zetten. Eén tik en hij staat in je plan. */
+const QUICK: { name: string; part: Part }[] = [
+  { name: 'Hardlopen', part: 'ochtend' },
+  { name: 'Naar de gym', part: 'overdag' },
+  { name: 'Video maken', part: 'overdag' },
+  { name: '20 pagina\'s lezen', part: 'avond' },
+  { name: 'Koud douchen', part: 'ochtend' },
+  { name: 'Een uur aan je project', part: 'overdag' },
+]
 
 const WAKE_TIMES = ['04:30', '05:00', '05:30', '06:00', '06:30', '07:00']
 
@@ -135,7 +146,7 @@ export default function Onboarding() {
 
   // Het niveau zet het aantal grote taken: opstaan altijd, dan de taken van je zwakste delen, in die volgorde
   const applyLevel = (lv: string) => {
-    const n = LEVELS.find((l) => l.id === lv)?.big ?? 3
+    const n = levelOf(lv).max
     setPicked((p) => {
       const out = { ...p }
       const order = ['wake', ...focus.map((a) => `area-${a}`)].filter((k) => out[k])
@@ -159,6 +170,15 @@ export default function Onboarding() {
   const bigs = virtues.filter((h) => h.weight === 3)
   const dateNeeded = needsDate('medal', goalText)
   const obs = OBSTACLES.find((o) => o.id === obstacle)
+  const lv = levelOf(level)
+  const countLabel = (n: number) => `${n} ${n === 1 ? 'taak' : 'taken'}`
+  const quick = QUICK.filter((q) => !virtues.some((h) => h.name.toLowerCase() === q.name.toLowerCase()))
+  const addQuick = (q: (typeof QUICK)[number]) => {
+    buzz()
+    const key = 'custom-' + uid()
+    setPicked((p) => ({ ...p, [key]: { id: key, name: q.name, sin: 'sloth', kind: 'virtue', type: 'do', weight: bigs.length < lv.max ? 3 : 2 } }))
+    setParts((x) => ({ ...x, [key]: q.part }))
+  }
   const habitName = (h: Habit) => (isWakeHabit(h) ? `${shortTime(wake)} op` : h.name)
   // De taken uit je antwoorden, per dagdeel, met hun tijd erbij als die er is (eigen taken staan overdag)
   const tasksIn = (part: Part) => Object.entries(picked)
@@ -204,7 +224,7 @@ export default function Onboarding() {
   if (id === 'build') return <PlanBuild wake={wake} bigCount={bigs.length} hasGoal={!!goalText.trim()} hasObstacle={!!obs} onDone={next} />
 
   const dockLabel: Partial<Record<StepId, string>> = { name: 'Verder', mirror: 'Verder', vices: 'Verder', wake: 'Verder', goal: 'Verder', why: why.trim() ? 'Bouw mijn plan' : 'Sla over en bouw mijn plan', plan: 'Dit is mijn plan' }
-  const disabled = (id === 'name' && !name.trim()) || (id === 'mirror' && !AREAS.every((a) => ratings[a.id])) || (id === 'goal' && dateNeeded && !goalDue) || (id === 'plan' && bigs.length === 0)
+  const disabled = (id === 'name' && !name.trim()) || (id === 'mirror' && !AREAS.every((a) => ratings[a.id])) || (id === 'goal' && dateNeeded && !goalDue) || (id === 'plan' && (bigs.length < lv.min || bigs.length > lv.max))
 
   return (
     <div className="screen ob" style={{ paddingBottom: 140 }}>
@@ -341,18 +361,30 @@ export default function Onboarding() {
               </div>
             )}
             <div className="stack gap-8">
-              <h2 className="h2">Je grote taken</h2>
-              <p className="small" style={{ margin: 0 }}>Doe je ze allemaal, dan is de dag gewonnen. Hooguit drie.</p>
+              <div className="section-head" style={{ margin: 0 }}>
+                <h2 className="h2">Je grote taken</h2>
+                <span className={`small ob-tally ${bigs.length >= lv.min && bigs.length <= lv.max ? 'ok' : ''}`}>{bigs.length} van {lv.min}–{lv.max}</span>
+              </div>
+              <p className="small" style={{ margin: 0 }}>{lv.label}: elke dag {lv.min} of {lv.max} grote taken. Doe je ze allemaal, dan is de dag gewonnen.</p>
               <div className="list">
                 {virtues.map((h) => (
                   <div key={h.id} className="row" style={{ minHeight: 64 }}>
                     <div className="grow"><div className="name">{habitName(h)}</div><div className="meta">{scheduleLabel(h)}</div></div>
-                    <button className={`chip ${h.weight === 3 ? 'on' : ''}`} aria-pressed={h.weight === 3} onClick={() => setBig(h.id, h.weight !== 3)}>Groot</button>
+                    <button className={`chip ${h.weight === 3 ? 'on' : ''}`} aria-pressed={h.weight === 3} disabled={h.weight !== 3 && bigs.length >= lv.max} onClick={() => setBig(h.id, h.weight !== 3)}>Groot</button>
                     <button className="iconbtn" aria-label={`${h.name} weghalen`} onClick={() => remove(h.id)} style={{ color: 'var(--ink-3)' }}>{Icon.close()}</button>
                   </div>
                 ))}
               </div>
-              {bigs.length > 3 && <p className="small" style={{ color: 'var(--ink)', margin: 0 }}>{bigs.length} grote taken. Als alles groot is, is niets groot.</p>}
+              {bigs.length > lv.max && <p className="small" style={{ color: 'var(--ink)', margin: 0 }}>{bigs.length} grote taken. {lv.label} is hooguit {lv.max}. Maak er een klein of haal er een weg.</p>}
+              {bigs.length < lv.min && <p className="small" style={{ color: 'var(--ink)', margin: 0 }}>Nog {countLabel(lv.min - bigs.length)} erbij. {lv.label} betekent minstens {lv.min}.</p>}
+              {bigs.length < lv.max && quick.length > 0 && (
+                <div className="stack gap-8">
+                  <span className="small">Snel erbij</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {quick.map((q) => <button key={q.name} className="chip add" onClick={() => addQuick(q)}>{Icon.plus()} {q.name}</button>)}
+                  </div>
+                </div>
+              )}
               <button className="chip add" style={{ alignSelf: 'flex-start' }} onClick={() => setCustom('virtue')}>{Icon.plus()} Taak toevoegen</button>
             </div>
           </div>

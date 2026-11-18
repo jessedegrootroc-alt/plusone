@@ -161,6 +161,9 @@ button.card:active { transform: scale(0.985); }
 .chip:active { transform: scale(0.97); }
 .chip.on { background: var(--ink); color: var(--paper); box-shadow: none; }
 .chip.add { box-shadow: inset 0 0 0 1px var(--ink-3); color: var(--ink-2); }
+.chip:disabled { opacity: 0.35; pointer-events: none; }
+.ob-tally { flex: none; font-variant-numeric: tabular-nums; }
+.ob-tally.ok { color: var(--ink); }
 .area-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2); }
 .area-tile { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s1); padding: var(--s3) var(--s4); min-height: 72px; text-align: left; border-radius: var(--r-md); background: var(--card); box-shadow: inset 0 0 0 1px var(--line); transition: transform 0.15s var(--ease); }
 .area-tile .t { font: var(--b); font-weight: 600; color: var(--ink); }
