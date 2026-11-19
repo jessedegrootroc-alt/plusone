@@ -5,7 +5,7 @@ import HabitPicker from '../components/HabitPicker'
 import Pinboard from '../components/Pinboard'
 import SceneCompare from '../components/SceneCompare'
 import Trophies from '../components/Trophies'
-import { scheduleLabel } from '../lib/days'
+import { MILESTONES, bestStreak, scheduleLabel, winStreak } from '../lib/days'
 import Account from '../components/Account'
 import { enableMotion, motionOn, needsPermission } from '../lib/motion'
 import { DEFAULT_TIMES, disableNotify, enableNotify, notifySupported, schedule } from '../lib/notify'
@@ -13,14 +13,14 @@ import { setWakeTime, wakeTime } from '../lib/wake'
 import { TIERS, tierInfo, tierOf } from '../lib/tier'
 import { RESERVES } from '../lib/days'
 import { IMG, type SinId } from '../data/sins'
-import { fromTemplate, resetAll, update, useStore, type Habit } from '../lib/store'
+import { fromTemplate, resetAll, todayISO, update, useStore, type Habit } from '../lib/store'
 import HabitEditor from './HabitEditor'
 import { NEED_BY_ID, VOICES, type NeedId } from '../data/urge'
 import { SHADOW } from '../data/shadow'
-import { FEATURES, FEATURE_ART, type FeatureId } from '../data/catalog'
+import { FEATURES, FEATURE_ART } from '../data/catalog'
 import { aimedFeatures, earnedFeatures } from '../lib/emblems'
 
-type Panel = null | { t: 'settings' } | { t: 'emblem'; id: FeatureId } | { t: 'habit'; h?: Habit; kind: 'vice' | 'virtue' } | { t: 'catalog'; kind: 'vice' | 'virtue' } | { t: 'why' } | { t: 'reset' }
+type Panel = null | { t: 'settings' } | { t: 'emblem'; prize: string } | { t: 'habit'; h?: Habit; kind: 'vice' | 'virtue' } | { t: 'catalog'; kind: 'vice' | 'virtue' } | { t: 'why' } | { t: 'reset' }
 
 export default function Self({ openShadow }: { openShadow: () => void }) {
   const s = useStore()
@@ -49,7 +49,7 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
           Daarom het eerste op je reis, nog voor de tellers. */}
       <Pinboard compact />
       <div className="mt-24"><Trophies /></div>
-      <Emblems onOpen={(id) => setPanel({ t: 'emblem', id })} />
+      <Emblems onOpen={(prize) => setPanel({ t: 'emblem', prize })} />
 
       <div className="mt-24">
         <SceneCompare />
@@ -110,7 +110,7 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
         </Sheet>
       )}
 
-      {panel?.t === 'emblem' && <EmblemSheet id={panel.id} onClose={close} />}
+      {panel?.t === 'emblem' && <EmblemSheet prize={panel.prize} onClose={close} />}
 
       {panel?.t === 'habit' && (
         <Sheet onClose={back}>
@@ -157,52 +157,77 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
   )
 }
 
-/**
- * Je prestaties: de emblemen waar je naartoe werkt, als rij (Headway, Gentler Streak).
- * Behaald staat helder met een ring, nog te halen staat grijs. Zo zie je wat je hebt en wat er nog komt.
- */
-function Emblems({ onOpen }: { onOpen: (id: FeatureId) => void }) {
-  const s = useStore()
+/** Eén prestatie: een mijlpaal van je reeks, of een embleem van je spiegel-doel. */
+type Prize = { key: string; art: string; label: string; hint: string; on: boolean }
+
+const prizesOf = (s: ReturnType<typeof useStore>): Prize[] => {
+  const today = todayISO()
+  const best = bestStreak(s, today)
+  const now = winStreak(s, today)
   const earned = earnedFeatures(s)
-  const list = [...earned, ...aimedFeatures(s).filter((f) => !earned.includes(f))]
-  if (!list.length) return null
+  const miles = MILESTONES.map((m): Prize => ({ key: `mile:${m.days}`, art: m.art, label: `${m.days} dagen`, hint: best >= m.days ? '' : `nog ${m.days - now} ${m.days - now === 1 ? 'dag' : 'dagen'}`, on: best >= m.days }))
+  const feats = aimedFeatures(s).concat(earned.filter((f) => !aimedFeatures(s).includes(f))).map((id): Prize => ({ key: `feat:${id}`, art: FEATURE_ART[id], label: FEATURES.find((x) => x.id === id)!.name, hint: earned.includes(id) ? '' : 'spiegel-doel', on: earned.includes(id) }))
+  // Behaald eerst, dan de eerstvolgende mijlpaal, dan je spiegel-doelen, dan de verdere mijlpalen
+  const nextMile = miles.find((m) => !m.on)
+  return [...miles.filter((m) => m.on), ...feats.filter((f) => f.on), ...(nextMile ? [nextMile] : []), ...feats.filter((f) => !f.on), ...miles.filter((m) => !m.on && m !== nextMile)]
+}
+
+/**
+ * Je prestaties als rij (Headway, Gentler Streak): mijlpalen van je reeks en de emblemen van je spiegel-doelen.
+ * Behaald staat helder met een ring; nog te halen staat grijs, met eronder wat het nog vraagt.
+ */
+function Emblems({ onOpen }: { onOpen: (key: string) => void }) {
+  const s = useStore()
+  const list = prizesOf(s)
   return (
     <section className="emblems">
-      <div className="section-head"><h2 className="h2">Je prestaties</h2><span className="small">{earned.length} van {list.length}</span></div>
+      <div className="section-head"><h2 className="h2">Je prestaties</h2><span className="small">{list.filter((p) => p.on).length} van {list.length}</span></div>
       <div className="emblem-row">
-        {list.map((id) => {
-          const on = earned.includes(id)
-          const f = FEATURES.find((x) => x.id === id)!
-          return (
-            <button key={id} className={`emblem ${on ? 'on' : ''}`} onClick={() => onOpen(id)} aria-label={`${f.name}, ${on ? 'behaald' : 'nog te halen'}`}>
-              <span className="emblem-disc"><img src={`/art/${FEATURE_ART[id]}.webp`} alt="" /></span>
-              <span className="emblem-name">{f.name}</span>
-            </button>
-          )
-        })}
+        {list.map((p) => (
+          <button key={p.key} className={`emblem ${p.on ? 'on' : ''}`} onClick={() => onOpen(p.key)} aria-label={`${p.label}, ${p.on ? 'behaald' : `nog te halen: ${p.hint}`}`}>
+            <span className="emblem-disc"><img src={`/art/${p.art}.webp`} alt="" /></span>
+            <span className="emblem-name">{p.label}</span>
+            {p.hint && <span className="emblem-hint">{p.hint}</span>}
+          </button>
+        ))}
       </div>
     </section>
   )
 }
 
-/** Eén embleem: wat het betekent, en of je het al hebt of waar je eraan werkt. */
-function EmblemSheet({ id, onClose }: { id: FeatureId; onClose: () => void }) {
+/** Eén prestatie: wat hij betekent, en of je hem al hebt of wat hij nog vraagt. */
+function EmblemSheet({ prize, onClose }: { prize: string; onClose: () => void }) {
   const s = useStore()
-  const f = FEATURES.find((x) => x.id === id)!
-  const notes = (s.notes ?? []).filter((n) => n.feature === id)
-  const won = notes.find((n) => n.doneAt)
-  const open = notes.find((n) => !n.doneAt)
+  const [kind, id] = prize.split(':')
+  let art: string, title: string, meaning: string, status: string, body: string, on: boolean
+  if (kind === 'mile') {
+    const m = MILESTONES.find((x) => String(x.days) === id)!
+    const now = winStreak(s, todayISO())
+    on = bestStreak(s, todayISO()) >= m.days
+    art = m.art; title = m.name; meaning = m.meaning
+    status = on ? 'Behaald' : 'Nog te halen'
+    body = on ? `${m.days} dagen op rij. Die pakt niemand je meer af.` : `${m.days} dagen op rij. Je reeks staat op ${now}: nog ${m.days - now} ${m.days - now === 1 ? 'dag' : 'dagen'}.`
+  } else {
+    const f = FEATURES.find((x) => x.id === id)!
+    const notes = (s.notes ?? []).filter((n) => n.feature === id)
+    const won = notes.find((n) => n.doneAt)
+    const open = notes.find((n) => !n.doneAt)
+    on = !!won
+    art = FEATURE_ART[f.id]; title = f.name; meaning = f.meaning
+    status = won ? 'Behaald' : open ? 'Je werkt eraan' : 'Nog te halen'
+    body = won ? won.goal || won.text : open ? `Haal het doel op je spiegel: ${open.goal || open.text}` : 'Schrijf een post-it voor je spiegel met dit embleem als beloning.'
+  }
   return (
     <Sheet onClose={onClose}>
       <div className="stack gap-16 emblem-sheet">
-        <span className={`emblem-disc big ${won ? 'on' : ''}`}><img src={`/art/${FEATURE_ART[id]}.webp`} alt="" /></span>
+        <span className={`emblem-disc big ${on ? 'on' : ''}`}><img src={`/art/${art}.webp`} alt="" /></span>
         <div className="stack gap-4 center">
-          <h2 className="h1">{f.name}</h2>
-          <p className="small" style={{ margin: 0 }}>{f.meaning}</p>
+          <h2 className="h1">{title}</h2>
+          <p className="small" style={{ margin: 0 }}>{meaning}</p>
         </div>
         <div className="card" style={{ padding: 16 }}>
-          <div className="eyebrow">{won ? 'Behaald' : open ? 'Je werkt eraan' : 'Nog te halen'}</div>
-          <p style={{ margin: '4px 0 0' }}>{won ? won.goal || won.text : open ? open.goal || open.text : 'Schrijf een post-it voor je spiegel met dit embleem als beloning.'}</p>
+          <div className="eyebrow">{status}</div>
+          <p style={{ margin: '4px 0 0' }}>{body}</p>
         </div>
         <button className="btn ghost" onClick={onClose}>Sluiten</button>
       </div>

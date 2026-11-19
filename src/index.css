@@ -1143,3 +1143,4 @@ button.dagdeel-head { width: 100%; text-align: left; color: inherit; }
 /* Niet gewonnen, wel je reeks gehouden: half gevuld */
 .won-dot.kept { background: linear-gradient(0deg, rgba(242, 242, 242, 0.55) 50%, transparent 50%); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink-2); }
 .won-dot.kept.sel { box-shadow: inset 0 0 0 2px var(--ink); }
+.emblem-hint { margin-top: -6px; font-size: 12px; line-height: 16px; color: var(--ink-3); text-align: center; }

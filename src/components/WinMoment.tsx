@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { stageFor } from '../data/sins'
-import { climbOf, dayResult, isSaved, keptOnly, winStreak, wonStats } from '../lib/days'
+import { MILESTONES, climbOf, dayResult, isSaved, keptOnly, winStreak, wonStats } from '../lib/days'
 import { addDays, buzz, todayISO, useStore } from '../lib/store'
 
 /** Wanneer wat gebeurt (ms). Eén plek, zodat de trillingen gelijk lopen met het beeld. */
@@ -33,7 +33,10 @@ export default function WinMoment({ onClose }: { onClose: () => void }) {
   // Wat het getal betekent: een geredde dag, je belofte, of gewoon morgen
   const savedDay = [...week].reverse().find((d) => d !== today && isSaved(s, d))
   const commit = s.settings?.commit
-  const line = savedDay
+  const mile = MILESTONES.find((m) => m.days === n)
+  const line = mile
+    ? `Mijlpaal: ${mile.name.toLowerCase()}. Nieuw bij je prestaties op Reis.`
+    : savedDay
     ? `${new Date(savedDay + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' }).replace(/^./, (c) => c.toUpperCase())} ving je reservedag je op. Morgen ${n + 1}.`
     : commit && n < commit ? `Nog ${commit - n} tot je belofte van ${commit} dagen.`
     : commit && n === commit ? `Je belofte van ${commit} dagen: gehaald.`

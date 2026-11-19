@@ -204,6 +204,30 @@ export const totalWon = (s: State, today = todayISO()) => {
   return n
 }
 
+/** Je langste reeks ooit (tot en met vandaag). Een mijlpaal die je haalde, blijft van jou. */
+export const bestStreak = (s: State, today = todayISO()) => {
+  let best = 0
+  let run = 0
+  for (let d = s.createdAt; d <= today; d = addDays(d, 1)) {
+    const r = streakResult(s, d)
+    if (r === null) continue
+    if (r) best = Math.max(best, ++run)
+    else if (d !== today) run = 0
+  }
+  return best
+}
+
+/**
+ * Mijlpalen voor je reeks, dezelfde getallen als je belofte bij de start. Het eerste haal je in een week:
+ * zo heb je iets te halen lang voor je grote doel (Duolingo beloont reeks-mijlpalen op dezelfde manier).
+ */
+export const MILESTONES = [
+  { days: 7, art: 'item-kaars', name: 'Het eerste licht', meaning: 'Een week op rij. Hier begint een gewoonte.' },
+  { days: 21, art: 'item-pelgrimsstaf', name: 'De pelgrim', meaning: 'Drie weken. Hier haken de meesten af. Jij niet.' },
+  { days: 66, art: 'item-leeuw', name: 'De leeuw', meaning: 'Gemiddeld 66 dagen tot iets vanzelf gaat (Lally). Het is nu van jou.' },
+  { days: 100, art: 'item-kroon', name: 'De kroon', meaning: 'Honderd dagen op rij. Dit ben jij nu.' },
+] as const
+
 /** Je reeks: dagen op rij met het minimum van je niveau (vandaag telt mee zodra je dat minimum haalt). */
 export const winStreak = (s: State, today = todayISO()) => {
   let n = streakResult(s, today) === true ? 1 : 0
