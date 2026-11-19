@@ -8,12 +8,13 @@ import mountain from '../icons/mountain.svg?raw'
 import mirror from '../icons/mirror.svg?raw'
 import next from '../icons/next.svg?raw'
 import plus from '../icons/plus.svg?raw'
+import reis from '../icons/reis.svg?raw'
 import urge from '../icons/urge.svg?raw'
 import user from '../icons/user.svg?raw'
 
 // Eén consistente iconenset (24×24, lijn 2). Nieuwe iconen: kopieer de SVG naar src/icons/,
 // vervang #212121 door currentColor en voeg hem hier toe.
-export const ICONS = { back, check, close, compass, minus, mirror, mountain, next, plus, urge, user }
+export const ICONS = { back, check, close, compass, minus, mirror, mountain, next, plus, reis, urge, user }
 export type IconName = keyof typeof ICONS
 
 export function Ico({ name, size = 22, color, style }: { name: IconName; size?: number; color?: string; style?: CSSProperties }) {

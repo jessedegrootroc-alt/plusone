@@ -77,7 +77,7 @@ export default function App() {
 
       <nav className="tabbar" aria-label="Hoofdmenu">
         {/* Twee tabs: Vandaag en Reis. Het kompas staat verborgen achter een instelling op Reis. */}
-        {([['today', 'Vandaag', Icon.mirror], ...(s.settings?.showCompass ? [['compass', 'Kompas', Icon.compass] as const] : []), ['self', 'Reis', Icon.mountain]] as const).map(([k, l, ic]) => (
+        {([['today', 'Vandaag', Icon.mirror], ...(s.settings?.showCompass ? [['compass', 'Kompas', Icon.compass] as const] : []), ['self', 'Reis', Icon.reis]] as const).map(([k, l, ic]) => (
           <button key={k} className={`tab ${tab === k ? 'on' : ''}`} onClick={() => go(k)} aria-current={tab === k ? 'page' : undefined}>
             <span className="tab-ico">{ic()}</span>
             <span>{l}</span>

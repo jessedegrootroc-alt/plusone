@@ -188,6 +188,30 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
         )}
       </div>
 
+      {/* Je doel, met aftelling: het belangrijkste, dus direct onder je naam */}
+      {date === today && (goal ? (
+        <button className="goal-hero" onClick={() => setGoalSheet(true)}>
+          {/* Eén groot getal met een paar woorden (zoals Duolingo en Brilliant hun reeks tonen) */}
+          {goal.due && daysLeft(goal.due, today) > 0 ? (
+            <>
+              <span className="goal-num">{daysLeft(goal.due, today)}</span>
+              <span className="goal-lbl">{daysLeft(goal.due, today) === 1 ? 'dag' : 'dagen'} tot je <b>{goalTitle(goal)}</b></span>
+            </>
+          ) : (
+            <>
+              <span className="goal-title">{goalTitle(goal)}</span>
+              <span className="goal-count">{goal.due ? countdownLabel(goal.due, today) : 'Zet er een datum bij'}</span>
+            </>
+          )}
+          {!(goal.obstacle && goal.ifThen) && <span className="goal-plan">Wat gaat je tegenhouden? Bedenk nu wat je dan doet.</span>}
+        </button>
+      ) : (
+        <button className="goal-hero empty" onClick={() => setGoalSheet(true)}>
+          <span className="goal-title">Kies je doel</span>
+          <span className="goal-count">Met een datum. Dan telt de app af.</span>
+        </button>
+      ))}
+
       {/* 2 · Nooit twee keer missen. Eén misser red je met een reservedag; terugkomen telt dubbel.
           Streng, niet beschamend (Breines & Chen: wie mild naar een misser kijkt, werkt daarna harder). */}
       {comeback ? (
@@ -305,29 +329,6 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
         </div>
       )}
 
-      {/* 3 · Het doel, met aftelling */}
-      {date === today && (goal ? (
-        <button className="goal-hero" onClick={() => setGoalSheet(true)}>
-          {/* Eén groot getal met een paar woorden (zoals Duolingo en Brilliant hun reeks tonen) */}
-          {goal.due && daysLeft(goal.due, today) > 0 ? (
-            <>
-              <span className="goal-num">{daysLeft(goal.due, today)}</span>
-              <span className="goal-lbl">{daysLeft(goal.due, today) === 1 ? 'dag' : 'dagen'} tot je <b>{goalTitle(goal)}</b></span>
-            </>
-          ) : (
-            <>
-              <span className="goal-title">{goalTitle(goal)}</span>
-              <span className="goal-count">{goal.due ? countdownLabel(goal.due, today) : 'Zet er een datum bij'}</span>
-            </>
-          )}
-          {!(goal.obstacle && goal.ifThen) && <span className="goal-plan">Wat gaat je tegenhouden? Bedenk nu wat je dan doet.</span>}
-        </button>
-      ) : (
-        <button className="goal-hero empty" onClick={() => setGoalSheet(true)}>
-          <span className="goal-title">Kies je doel</span>
-          <span className="goal-count">Met een datum. Dan telt de app af.</span>
-        </button>
-      ))}
 
 
       {/* 4 · Je waarom, elke ochtend */}
