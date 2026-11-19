@@ -13,30 +13,37 @@ const fmtDate = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('nl-
  * De koektrommel als prikbord: elke overwinning een briefje met een punaise, schuin, nooit twee hetzelfde.
  * Wat van de spiegel komt, hangt er nog met het plakband van de spiegel op. Grote overwinningen zijn groter.
  */
-export default function Pinboard() {
+/** compact: alleen je laatste twee, met een link naar alles (Reis). */
+export default function Pinboard({ compact = false }: { compact?: boolean }) {
   const s = useStore()
   const [add, setAdd] = useState(false)
   const [all, setAll] = useState(false)
   const [open, setOpen] = useState<JarItem | null>(null)
   const jar = s.jar
+  const shown = compact ? 2 : ON_BOARD
+  const small = compact && jar.length > 0
 
   return (
     <section className="section">
       <div className="section-head">
         <h2 className="h2">Koektrommel</h2>
-        {jar.length > ON_BOARD ? <button className="link" onClick={() => setAll(true)}>Alle {jar.length}</button> : <span className="small">{jar.length} {jar.length === 1 ? 'overwinning' : 'overwinningen'}</span>}
+        {small ? <button className="link" onClick={() => setAdd(true)}>Ophangen</button>
+          : jar.length > ON_BOARD ? <button className="link" onClick={() => setAll(true)}>Alle {jar.length}</button> : <span className="small">{jar.length} {jar.length === 1 ? 'overwinning' : 'overwinningen'}</span>}
       </div>
 
       <div className="board">
         <BoardCols>
-          <button className="jar-note jar-add" onClick={() => setAdd(true)}>
-            {Icon.plus()}
-            <span>{jar.length ? 'Overwinning ophangen' : 'Hang je eerste overwinning op'}</span>
-          </button>
-          {jar.slice(0, ON_BOARD).map((j, i) => <Note key={j.id} j={j} i={i} onOpen={() => setOpen(j)} />)}
+          {!small && (
+            <button className="jar-note jar-add" onClick={() => setAdd(true)}>
+              {Icon.plus()}
+              <span>{jar.length ? 'Overwinning ophangen' : 'Hang je eerste overwinning op'}</span>
+            </button>
+          )}
+          {jar.slice(0, shown).map((j, i) => <Note key={j.id} j={j} i={i} onOpen={() => setOpen(j)} />)}
         </BoardCols>
         {jar.length === 0 && <p className="board-empty">Bewijs dat je zwaardere dingen hebt doorstaan. Voor de dagen dat je het vergeet.</p>}
       </div>
+      {small && jar.length > shown && <button className="link board-all" onClick={() => setAll(true)}>Alle {jar.length} bekijken</button>}
 
       {add && <AddSheet onClose={() => setAdd(false)} />}
       {all && (

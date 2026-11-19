@@ -74,6 +74,8 @@ export interface DayLog {
   energy?: 1 | 2 | 3
   /** Gemist, maar gered met een reservedag. */
   saved?: boolean
+  /** Het win-moment is getoond (of de dag was al gewonnen toen je de app opende). */
+  cheered?: boolean
   /** Het ochtendmoment: wat je hoofd zei bij het wakker worden, en de sterke versie (Goggins, Evolution 2). */
   morning?: { dread?: string; strong?: string; skipped?: boolean; dreadClip?: boolean; strongClip?: boolean }
   /** Na een gemiste dag nog één goed ding voor het slapen: niet in de min naar bed. */

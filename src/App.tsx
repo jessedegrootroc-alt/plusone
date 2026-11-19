@@ -8,6 +8,7 @@ import { STAGES, stageFor } from './data/sins'
 import { computeSeries } from './lib/score'
 import { seedDemo } from './lib/demo'
 import { useStore } from './lib/store'
+import { updateBadge } from './lib/badge'
 import Compass from './screens/Compass'
 import Onboarding from './screens/Onboarding'
 import { Mirror } from './screens/Rituals'
@@ -44,6 +45,13 @@ export default function App() {
 
   // Losse doelen van vroeger worden post-its op de spiegel, met hun embleem
   useEffect(() => { migrateGoals(s) }, [s])
+  // Het getal op je app-icoon: bij elke verandering, en als je terugkomt (een nieuwe dag)
+  useEffect(() => { updateBadge(s) }, [s])
+  useEffect(() => {
+    const onShow = () => { if (document.visibilityState === 'visible') updateBadge() }
+    document.addEventListener('visibilitychange', onShow)
+    return () => document.removeEventListener('visibilitychange', onShow)
+  }, [])
 
   // Van pagina wisselen: de oude vervaagt, de nieuwe komt op (View Transitions). De tabbalk blijft staan.
   // Zonder ondersteuning of met minder beweging: gewoon meteen.

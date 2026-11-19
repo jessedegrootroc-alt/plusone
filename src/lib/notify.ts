@@ -10,6 +10,7 @@
 // (bijvoorbeeld via Supabase); die staat nog niet.
 import { bigTasksOn, canSave, dayResult, freshStart, lostYesterday, missedYesterday, otherTasksOn, reservesPerMonth } from './days'
 import { tierOf } from './tier'
+import { updateBadge } from './badge'
 import { isDone } from './score'
 import { addDays, getState, onLocalChange, todayISO, update, type Habit } from './store'
 
@@ -35,6 +36,7 @@ export const disableNotify = () => update((d) => { if (d.settings?.notify) d.set
 const show = async (body: string, tag = body) => {
   try {
     const reg = await navigator.serviceWorker?.getRegistration()
+    updateBadge()
     if (reg) await reg.showNotification('PlusOne', { body, icon: '/icons/icon-192.png', badge: '/icons/favicon-32.png', tag })
     else new Notification('PlusOne', { body, icon: '/icons/icon-192.png' })
   } catch {

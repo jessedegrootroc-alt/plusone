@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import SceneCompare from '../components/SceneCompare'
+import WinMoment from '../components/WinMoment'
 import CookieProof from '../components/CookieProof'
 import Offers from '../components/Offers'
 import TaskNotes from '../components/TaskNotes'
@@ -13,11 +14,11 @@ import { AddTaskSheet } from '../components/DaySheets'
 import { activeNote, leftLabel, nextStep } from '../lib/focus'
 import { HabitRow, Icon, Sheet, Toast } from '../components/ui'
 import { WEEKDAYS, dayNumber, inDip, isSimple, tierOf, weakDay, type Tier } from '../lib/tier'
-import { bigTasksOn, canSave, dayResult, doesItAlone, freshStart, isComeback, isSaved, lostYesterday, missedOn, missedYesterday, otherTasksOn, reserveBack, reservesLeft, reservesPerMonth, scheduleLabel, wonStats } from '../lib/days'
+import { bigTasksOn, canSave, dayResult, doesItAlone, freshStart, isComeback, isSaved, lostYesterday, missedOn, missedYesterday, otherTasksOn, reserveBack, reservesLeft, reservesPerMonth, scheduleLabel, keptOnly, streakNeed, winStreak, wonStats } from '../lib/days'
 import { countdownLabel, daysLeft, goalTitle, mainGoal } from '../lib/goal'
 import { isDone } from '../lib/score'
 import { isWakeHabit, setWakeTime, shortTime, wakeTime } from '../lib/wake'
-import { addDays, buzz, setValue, todayISO, uid, update, useStore, type Habit } from '../lib/store'
+import { addDays, buzz, getState, setValue, todayISO, uid, update, useStore, type Habit } from '../lib/store'
 
 const SLIP_LINES = [
   'Genoteerd. Eén val is data, geen identiteit.',
@@ -59,6 +60,19 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
   const [sheet, setSheet] = useState<null | 'morning' | 'witness' | 'mirror' | 'mirror-edit' | 'mirror-all'>(null)
 
   const stats = useMemo(() => wonStats(s, today), [s, today])
+  // Je reeks (Duolingo): dagen op rij gewonnen. Een dag die je reservedag redde, breekt hem niet.
+  const streak = useMemo(() => winStreak(s, today), [s, today])
+  const wonToday = dayResult(s, today) === true
+  const keptToday = keptOnly(s, today)
+  // Het moment dat je de dag wint: één keer per dag, alleen als het gebeurt terwijl je de app gebruikt
+  const [cheer, setCheer] = useState(false)
+  const sawOpen = useRef(false)
+  useEffect(() => {
+    if (!wonToday) { sawOpen.current = true; return }
+    if (getState().logs[today]?.cheered) return
+    update((d) => { (d.logs[today] ??= { v: {} }).cheered = true })
+    if (sawOpen.current) setCheer(true)
+  }, [wonToday, today])
 
   const log = s.logs[date]
   const sealed = !!log?.sealed
@@ -69,6 +83,8 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
   const done = (h: Habit) => isDone(h, log?.v[h.id] ?? 0) && (log?.v[h.id] ?? 0) > 0
   const slips = vices.filter((h) => !isDone(h, log?.v[h.id] ?? 0))
   const bigDone = big.filter(done).length
+  // Wat je reeks vandaag nog vraagt (per niveau minder dan winnen, behalve voor een expert)
+  const streakLeft = Math.max(0, streakNeed(s, big.length) - bigDone)
   const nowHM = new Date().toTimeString().slice(0, 5)
   const plan = s.logs[addDays(date, -1)]?.aar?.plan
   const lost = date === today && lostYesterday(s, today)
@@ -156,9 +172,10 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
     <div className="won-dots" aria-label={`${stats.won} van de ${stats.counted} dagen gewonnen`}>
       {week.map((d) => {
         // Vandaag is nog niet voorbij: pas gewonnen, nooit al verloren
-        const r = d === today && dayResult(s, d) === false ? null : dayResult(s, d)
+        const kept = keptOnly(s, d)
+        const r = (d === today || kept) && dayResult(s, d) === false ? null : dayResult(s, d)
         const sv = r === null && isSaved(s, d)
-        return <button key={d} className={`won-dot ${r === true ? 'won' : r === false ? 'lost' : sv ? 'saved' : ''} ${d === date ? 'sel' : ''}`} disabled={d < s.createdAt} onClick={() => setDate(d)} aria-label={new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' }) + (r === true ? ', gewonnen' : r === false ? ', verloren' : sv ? ', gered met een reservedag' : '')}>{new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short' }).slice(0, 2)}</button>
+        return <button key={d} className={`won-dot ${r === true ? 'won' : kept ? 'kept' : r === false ? 'lost' : sv ? 'saved' : ''} ${d === date ? 'sel' : ''}`} disabled={d < s.createdAt} onClick={() => setDate(d)} aria-label={new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' }) + (r === true ? ', gewonnen' : kept ? ', niet gewonnen, reeks gehouden' : r === false ? ', verloren' : sv ? ', gered met een reservedag' : '')}>{new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short' }).slice(0, 2)}</button>
       })}
     </div>
   )
@@ -226,7 +243,16 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
           </div>
           <div className="pulse-bar" aria-hidden="true"><i style={{ transform: `scaleX(${big.length ? bigDone / big.length : 0})` }} /></div>
           {weekDots}
+          {isToday && (
+            <div className="streak-row">
+              <img src="/art/item-vuur.webp" alt="" />
+              <span className="streak-num">{streak}</span>
+              <span className="streak-lbl">{streak === 1 ? 'dag' : 'dagen'} op rij</span>
+              <span className="streak-next">{wonToday ? 'Vandaag gewonnen' : keptToday ? 'Reeks staat' : `Nog ${streakLeft} ${streakLeft === 1 ? 'taak' : 'taken'} voor ${streak + 1}`}</span>
+            </div>
+          )}
         </section>
+      {cheer && <WinMoment onClose={() => setCheer(false)} />}
 
       {/* De dag: ochtend, overdag, avond. Elk dagdeel vraagt één ding; de taken staan overdag. */}
       <div className="dag">

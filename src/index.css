@@ -1049,3 +1049,97 @@ button.dagdeel-head { width: 100%; text-align: left; color: inherit; }
 .time-input.add-time::-webkit-calendar-picker-indicator { display: none; }
 .time-input.add-time::-webkit-datetime-edit { padding: 0; }
 .time-input.add-time::-webkit-date-and-time-value { text-align: center; }
+
+/* Reis: tandwiel rechtsboven, je prestaties als rij emblemen */
+.iconbtn.gear { width: 44px; height: 44px; box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); }
+.emblems { margin-top: var(--s7); }
+.emblems .section-head { margin-bottom: var(--s3); }
+.emblem-row { display: flex; gap: var(--s3); overflow-x: auto; margin: 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter) var(--s1); scrollbar-width: none; }
+.emblem-row::-webkit-scrollbar { display: none; }
+.emblem { flex: none; width: 80px; display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
+.emblem-disc { width: 72px; height: 72px; border-radius: var(--r-full); display: grid; place-items: center; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+.emblem-disc img { width: 52px; height: 52px; object-fit: contain; filter: grayscale(1) brightness(.45); opacity: .6; }
+.emblem-disc.on, .emblem.on .emblem-disc { box-shadow: inset 0 0 0 2px var(--ink); }
+.emblem-disc.on img, .emblem.on .emblem-disc img { filter: none; opacity: 1; }
+.emblem-name { font-size: 13px; line-height: 16px; color: var(--ink-3); text-align: center; }
+.emblem.on .emblem-name { color: var(--ink); }
+.emblem-disc.big { width: 120px; height: 120px; margin: 0 auto; }
+.emblem-disc.big img { width: 88px; height: 88px; }
+.emblem-sheet .center { text-align: center; }
+.board-all { display: block; margin: var(--s3) auto 0; }
+.page-head + .section { margin-top: 0; }
+
+/* Je reeks op Vandaag, onder je week */
+.streak-row { display: flex; align-items: center; gap: var(--s2); padding-top: var(--s3); border-top: 1px solid var(--line); }
+.streak-row img { width: 28px; height: 28px; object-fit: contain; flex: none; }
+.streak-num { font: 400 24px/1 var(--title); color: var(--ink); font-variant-numeric: tabular-nums; }
+.streak-lbl { font: var(--b); color: var(--ink); }
+.streak-next { margin-left: auto; font: var(--sm); color: var(--ink-2); }
+
+/*
+ * Het win-moment. Vier gebeurtenissen, elk met voorbereiding en uitloop:
+ * 1 · 0–1.5s  de pelgrim zet drie passen een richel op, de camera gaat mee omhoog (parallax, vier lagen gravure)
+ * 2 · 1.56s   hij landt: in elkaar, stof, het beeld schokt kort
+ * 3 · 1.6s    het licht breekt door de wolken, de berg wordt lichter: je bent een stap hoger
+ * 4 · 1.65s   het oude getal rolt weg, het nieuwe rolt erin met doorschot; dan je week, vandaag als laatste gevuld
+ */
+.wm { position: fixed; inset: 0; z-index: 70; overflow: hidden; background: #050505; color: #F2F2F2; animation: clIn 0.4s ease both; }
+.wm.out { animation: fadeOut 0.28s ease forwards; }
+.wm-scene { position: absolute; inset: 0; animation: wmShake 0.3s ease 1.56s; }
+@keyframes wmShake { 20% { transform: translate(0, 3px); } 50% { transform: translate(-1px, -2px); } 80% { transform: translate(1px, 1px); } }
+.wm-layer { position: absolute; left: 50%; bottom: 0; width: auto; min-width: 100%; height: 112%; object-fit: cover; transform: translate(-50%, var(--from)); animation: wmPan 1.5s cubic-bezier(.5, 0, .25, 1) 0.2s both, wmLight 1.3s ease 1.6s both; will-change: transform, filter; }
+@keyframes wmPan { to { transform: translate(-50%, var(--to)); } }
+.wm-sky { --from: 0%; --to: 2%; --dark: brightness(0.3) contrast(1.1); --lit: brightness(0.95) contrast(1.05); }
+.wm-mid { --from: 0%; --to: 4%; --dark: brightness(0.42); --lit: brightness(0.85); }
+.wm-ground { --from: 0%; --to: 8%; --dark: brightness(0.5); --lit: brightness(0.9); }
+.wm-front { --from: 0%; --to: 14%; --dark: brightness(0.4); --lit: brightness(0.75); }
+.wm-layer { filter: var(--dark); }
+@keyframes wmLight { from { filter: var(--dark); } to { filter: var(--lit); } }
+.wm-fx { position: absolute; left: 50%; mix-blend-mode: screen; pointer-events: none; }
+.wm-glow { top: -10%; width: 110%; opacity: 0; transform: translateX(-50%) scale(0.2); animation: wmSun 1.6s cubic-bezier(.2, .8, .2, 1) 1.6s both, wmGlowBreath 4s ease-in-out 3.2s infinite; }
+@keyframes wmSun { 0% { opacity: 0; transform: translateX(-50%) scale(0.2); } 30% { opacity: 0.75; } 100% { opacity: 0.5; transform: translateX(-50%) scale(1.3); } }
+@keyframes wmGlowBreath { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.38; } }
+.wm-rays { top: -14%; width: 130%; height: 75%; object-fit: cover; transform-origin: 50% 0; opacity: 0; transform: translateX(-50%) rotate(-8deg); animation: wmRays 2s ease-out 1.65s both, wmRaysDrift 9s ease-in-out 3.65s infinite alternate; }
+@keyframes wmRays { to { opacity: 0.32; transform: translateX(-50%) rotate(2deg); } }
+@keyframes wmRaysDrift { from { transform: translateX(-50%) rotate(2deg); } to { transform: translateX(-50%) rotate(-2deg); } }
+/* De pelgrim: drie passen omhoog, dan landen */
+.wm-walker { position: absolute; left: 50%; bottom: 10%; height: 34%; aspect-ratio: 2 / 3; transform: translate(-30%, 0); animation: wmClimb 1.3s cubic-bezier(.45, 0, .3, 1) 0.26s both; }
+@keyframes wmClimb { to { transform: translate(-52%, -9vh) scale(0.86); } }
+.wm-step { position: relative; width: 100%; height: 100%; transform-origin: 50% 100%; animation: clBob 0.43s ease-in-out 0.26s 3, wmLand 0.42s cubic-bezier(.3, 1.6, .5, 1) 1.56s; }
+@keyframes wmLand { 0% { transform: scale(1.06, 0.88); } 100% { transform: scale(1, 1); } }
+.wm-step img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.75)); }
+.wm-f2 { opacity: 0; animation: clFrame 0.43s steps(1) 0.26s 3; }
+.wm-f1 { animation: clFrame 0.43s steps(1) 0.475s 3; }
+.wm-dust { position: absolute; left: 50%; bottom: -6%; width: 150%; transform: translateX(-50%) scale(0.3); opacity: 0; mix-blend-mode: screen; animation: wmDust 0.9s ease-out 1.56s both; }
+@keyframes wmDust { 0% { opacity: 0; transform: translateX(-50%) scale(0.3, 0.2); } 20% { opacity: 0.8; } 100% { opacity: 0; transform: translateX(-50%) scale(1.5, 0.9) translateY(-8%); } }
+.wm-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 5, 5, 0.75) 0%, rgba(5, 5, 5, 0) 38%, rgba(5, 5, 5, 0) 52%, rgba(5, 5, 5, 0.92) 78%); }
+.wm-flash { position: absolute; inset: 0; background: radial-gradient(55% 32% at 50% 16%, #FFF, rgba(255, 255, 255, 0) 70%); opacity: 0; animation: clFlash 1s ease-out 1.62s both; }
+/* Het getal: oud rolt weg, nieuw rolt erin */
+.wm-top { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 9vh); text-align: center; pointer-events: none; }
+.wm-count { position: relative; height: 128px; overflow: hidden; font: 400 120px/128px var(--title); font-variant-numeric: tabular-nums; text-shadow: 0 0 40px rgba(0, 0, 0, 0.6); }
+.wm-old, .wm-new { position: absolute; left: 0; right: 0; }
+.wm-old { animation: wmIn 0.5s ease 0.35s both, wmOldOut 0.4s cubic-bezier(.5, 0, .9, .4) 1.65s forwards; }
+.wm-new { transform: translateY(100%); opacity: 0; animation: wmNewIn 0.7s cubic-bezier(.2, 1.5, .4, 1) 1.8s both, wmNum 2.4s ease 2.5s both; }
+@keyframes wmIn { from { opacity: 0; transform: translateY(10px); } }
+@keyframes wmOldOut { to { transform: translateY(-90%); opacity: 0; filter: blur(3px); } }
+@keyframes wmNewIn { from { transform: translateY(100%); opacity: 0; filter: blur(3px); } to { transform: none; opacity: 1; filter: none; } }
+@keyframes wmNum { 0% { text-shadow: 0 0 40px rgba(255, 255, 255, 0.55), 0 0 40px rgba(0, 0, 0, 0.6); } 100% { text-shadow: 0 0 40px rgba(0, 0, 0, 0.6); } }
+.wm-lbl { margin-top: var(--s1); font: 400 26px/32px var(--title); color: #F2F2F2; text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8); animation: wmIn 0.6s ease 2.15s both; }
+.wm-bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 var(--s5) calc(env(safe-area-inset-bottom) + var(--s5)); display: flex; flex-direction: column; align-items: center; gap: var(--s5); }
+.wm-dots { width: 100%; max-width: 340px; }
+.wm-dots .won-dot { display: grid; place-items: center; animation: wmIn 0.4s ease calc(2.3s + var(--i) * 60ms) both; }
+.wm-dots .won-dot.wm-today { animation: wmIn 0.4s ease calc(2.3s + var(--i) * 60ms) both, wmFill 0.5s cubic-bezier(.3, 1.6, .5, 1) 2.95s both, wmRing 1.4s ease-out 3.05s; }
+@keyframes wmFill { 0% { background: transparent; color: var(--ink-2); transform: scale(1); } 50% { transform: scale(1.22); } 100% { background: var(--ink); color: var(--paper); box-shadow: none; transform: scale(1); } }
+@keyframes wmRing { 0% { box-shadow: 0 0 0 0 rgba(242, 242, 242, 0.5); } 100% { box-shadow: 0 0 0 14px rgba(242, 242, 242, 0); } }
+.wm-line { margin: 0; max-width: 320px; text-align: center; font: var(--b); color: rgba(242, 242, 242, 0.8); animation: wmIn 0.5s ease 3.15s both; }
+.wm-btn { width: 100%; animation: wmIn 0.5s ease 3.35s both; }
+/* Overslaan: alles meteen op zijn eindstand */
+.wm.skip *, .wm.skip { animation-delay: 0s !important; animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
+.wm.skip.out { animation: fadeOut 0.28s ease forwards !important; }
+/* Na het licht: een paar lichtjes die traag opstijgen, zodat het beeld blijft leven terwijl je leest */
+.wm-mote { position: absolute; bottom: 30%; left: var(--x); width: 18px; opacity: 0; mix-blend-mode: screen; animation: wmMote 6s ease-in-out calc(2s + var(--d)) infinite; }
+@keyframes wmMote { 0% { opacity: 0; transform: translate(0, 0) scale(0.6); } 20% { opacity: 0.7; } 100% { opacity: 0; transform: translate(var(--dx), -38vh) scale(1); } }
+.wm.skip .wm-mote { animation: wmMote 6s ease-in-out var(--d) infinite !important; }
+/* Niet gewonnen, wel je reeks gehouden: half gevuld */
+.won-dot.kept { background: linear-gradient(0deg, rgba(242, 242, 242, 0.55) 50%, transparent 50%); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink-2); }
+.won-dot.kept.sel { box-shadow: inset 0 0 0 2px var(--ink); }

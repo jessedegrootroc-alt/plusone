@@ -17,6 +17,7 @@ export const Icon = {
   self: () => <Ico name="user" size={24} />,
   mountain: () => <Ico name="mountain" size={24} />,
   reis: () => <Ico name="reis" size={24} />,
+  settings: () => <Ico name="settings" size={22} />,
   vandaag: () => <Ico name="vandaag" size={24} />,
   wave: () => <Ico name="urge" size={18} />,
 }

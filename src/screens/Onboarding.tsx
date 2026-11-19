@@ -331,7 +331,7 @@ export default function Onboarding() {
         {id === 'level' && (
           <Q title="Waar sta je nu?" lead="Je plan begint waar jij staat. Niet waar je zou willen staan.">
             <div className="ob-opts">
-              {LEVELS.map((l) => <Opt key={l.id} on={level === l.id} label={l.label} sub={l.sub} onClick={() => pickAndGo(() => { setLevel(l.id); applyLevel(l.id) })} />)}
+              {LEVELS.map((l) => <Opt key={l.id} on={level === l.id} label={l.label} sub={`${l.sub} ${l.streak}`} onClick={() => pickAndGo(() => { setLevel(l.id); applyLevel(l.id) })} />)}
             </div>
           </Q>
         )}

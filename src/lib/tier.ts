@@ -9,9 +9,9 @@ import { addDays, todayISO, type State } from './store'
 export type Tier = 'beginner' | 'gemiddeld' | 'expert'
 
 export const TIERS = [
-  { id: 'beginner', label: 'Beginner', sub: 'Eén of twee taken per dag. Eerst leren winnen.', min: 1, max: 2 },
-  { id: 'gemiddeld', label: 'Gemiddeld', sub: 'Twee of drie taken per dag. Deze keer hou je vol.', min: 2, max: 3 },
-  { id: 'expert', label: 'Expert', sub: 'Drie of vier taken per dag. Geen reservedagen, geen smoesjes.', min: 3, max: 4 },
+  { id: 'beginner', label: 'Beginner', sub: 'Eén of twee taken per dag. Eerst leren winnen.', streak: 'Eén grote taak houdt je reeks.', min: 1, max: 2 },
+  { id: 'gemiddeld', label: 'Gemiddeld', sub: 'Twee of drie taken per dag. Deze keer hou je vol.', streak: 'Alles op één na houdt je reeks.', min: 2, max: 3 },
+  { id: 'expert', label: 'Expert', sub: 'Drie of vier taken per dag. Geen reservedagen, geen smoesjes.', streak: 'Alleen een gewonnen dag houdt je reeks.', min: 3, max: 4 },
 ] as const
 
 export const tierOf = (s: State): Tier => s.settings?.tier ?? 'gemiddeld'

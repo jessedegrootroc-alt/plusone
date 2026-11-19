@@ -65,6 +65,32 @@ export const dayResult = (s: State, date: string): boolean | null => {
 }
 
 /**
+ * Hoeveel grote taken je reeks in leven houden, per niveau. Duolingo koppelde de reeks los van het volle dagdoel:
+ * één les is genoeg. Dat gaf +3,3% terugkeer op dag 14 en ruim de helft van de dagelijkse leerders kwam op een reeks
+ * van 7+ dagen. Gewonnen blijft hier streng (alles); de reeks vraagt minder, behalve voor een expert.
+ */
+export const streakNeed = (s: State, total: number) => {
+  const t = s.settings?.tier ?? 'gemiddeld'
+  return t === 'expert' ? total : t === 'beginner' ? Math.min(1, total) : Math.max(1, total - 1)
+}
+
+/** Grote taken die op deze dag af zijn. */
+export const bigDoneOn = (s: State, date: string) => {
+  const l = s.logs[date]
+  return bigTasksOn(s, date).filter((h) => isDone(h, l?.v[h.id] ?? 0) && (l?.v[h.id] ?? 0) > 0).length
+}
+
+/** Of je reeks die dag doorliep: gewonnen, of het minimum van je niveau gehaald. Null: telt niet mee (geen taken, of gered). */
+export const streakResult = (s: State, date: string): boolean | null => {
+  const r = dayResult(s, date)
+  if (r !== false) return r
+  return bigDoneOn(s, date) >= streakNeed(s, bigTasksOn(s, date).length)
+}
+
+/** Niet gewonnen, maar je reeks liep wel door. */
+export const keptOnly = (s: State, date: string) => dayResult(s, date) === false && streakResult(s, date) === true
+
+/**
  * Reservedagen (Sharif & Shu): een doel met een paar reservedagen houd je langer vol dan een even zwaar doel zonder.
  * Na een misser voelt het nog als vooruitgang, dus je geeft niet op. Twee per maand.
  */
@@ -178,13 +204,13 @@ export const totalWon = (s: State, today = todayISO()) => {
   return n
 }
 
-/** Hoeveel dagen op rij gewonnen, tot en met gisteren (vandaag telt mee zodra hij gewonnen is). */
+/** Je reeks: dagen op rij met het minimum van je niveau (vandaag telt mee zodra je dat minimum haalt). */
 export const winStreak = (s: State, today = todayISO()) => {
-  let n = dayResult(s, today) === true ? 1 : 0
+  let n = streakResult(s, today) === true ? 1 : 0
   for (let i = 1; ; i++) {
     const d = addDays(today, -i)
     if (d < s.createdAt) break
-    const r = dayResult(s, d)
+    const r = streakResult(s, d)
     if (r === null) continue
     if (!r) break
     n++
