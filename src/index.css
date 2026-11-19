@@ -126,7 +126,7 @@ button.card:active { transform: scale(0.985); }
 
 
 /* Trofeeënplank: drie voorwerpen op één plank, met het getal eronder. Het licht valt van boven, de plank houdt ze bij elkaar. */
-.trophies { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); padding: var(--s4) var(--s2) var(--s4); border-radius: var(--r-lg); background: radial-gradient(90% 70% at 50% 0%, rgba(242, 242, 242, 0.06), transparent 70%), var(--card); }
+.trophies { position: relative; display: grid; grid-template-columns: repeat(2, 1fr); padding: var(--s4) var(--s2) var(--s4); border-radius: var(--r-lg); background: radial-gradient(90% 70% at 50% 0%, rgba(242, 242, 242, 0.06), transparent 70%), var(--card); }
 .trophy { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0 var(--s2); text-align: center; }
 .trophy + .trophy::before { content: ''; position: absolute; left: 0; top: 24px; bottom: 8px; width: 1px; background: linear-gradient(transparent, var(--line) 30%, var(--line) 70%, transparent); }
 .trophy-img { width: 72px; height: 72px; object-fit: contain; margin-bottom: var(--s2); filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.6)); }
@@ -389,11 +389,13 @@ button.card:active { transform: scale(0.985); }
 .bt-time::before { content: ''; position: absolute; inset: -10px -4px; }
 .bt-x { width: 44px; height: 44px; color: var(--ink-3); }
 .won-row { display: flex; flex-direction: column; gap: var(--s2); margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--line); }
-.won-dots { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin: 0 calc(var(--s2) * -1); }
-.won-dot { height: 44px; border-radius: var(--r-full); font: var(--sm); font-weight: 600; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
+/* Je week: zeven gelijke rondjes op gelijke afstand. Geselecteerd is een ring binnenin, zodat niets groter wordt. */
+.won-dots { display: grid; grid-template-columns: repeat(7, 1fr); justify-items: center; gap: 4px; margin: 0; }
+.won-dot { width: 100%; max-width: 40px; aspect-ratio: 1; border-radius: 50%; font: var(--sm); font-weight: 600; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
 .won-dot.won { background: var(--ink); color: var(--paper); box-shadow: none; }
 .won-dot.lost { background: repeating-linear-gradient(-45deg, transparent 0 4px, rgba(255, 138, 128, 0.35) 4px 5px); color: var(--ink); box-shadow: inset 0 0 0 1px #7A1712; }
-.won-dot.sel { outline: 2px solid var(--ink); outline-offset: 2px; }
+.won-dot.sel { box-shadow: inset 0 0 0 2px var(--ink); }
+.won-dot.won.sel { box-shadow: inset 0 0 0 2px var(--ink), inset 0 0 0 4px var(--paper); }
 .won-dot.saved { box-shadow: inset 0 0 0 1px var(--ink-2); background: radial-gradient(circle at 50% 82%, var(--ink-2) 0 2px, transparent 2.5px); color: var(--ink); }
 .won-dot:disabled { opacity: 0.3; }
 /* Het beeld ondersteunt: kleiner dan eerst */
@@ -714,7 +716,7 @@ button.card:active { transform: scale(0.985); }
 
 /* Vandaag: de taken als briefjes op het prikbord. Afscheuren, en ze vliegen in de koektrommel. */
 .task-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s4); margin: 0 0 var(--s2); }
-.trommel { flex: none; width: 76px; height: 66px; margin: 0 -2px -8px 0; position: relative; z-index: 1; }
+.tear-target { flex: none; width: 40px; height: 28px; }
 .trommel svg { display: block; transform-origin: 50% 90%; transition: filter 0.6s ease; }
 .trommel.bump svg { animation: trBump 0.45s var(--ease); }
 .trommel.won svg { filter: drop-shadow(0 0 14px rgba(242, 242, 242, 0.3)); }
@@ -995,7 +997,6 @@ button.moment:active { transform: scale(0.985); }
 .pulse-bar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
 .pulse-bar i { display: block; height: 100%; background: var(--ink); transform-origin: left; transition: transform 0.4s var(--ease); }
 .pulse .won-dots { margin: 0; }
-.pulse .won-dot { height: 40px; }
 /* Een dagdeel dat voorbij is: één regel */
 button.dagdeel-head { width: 100%; text-align: left; color: inherit; }
 .dagdeel.shut { padding-bottom: var(--s5); }

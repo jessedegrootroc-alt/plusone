@@ -38,9 +38,6 @@ export default function TaskNotes({ items, bigDone, bigTotal, onTear, onBack, on
   title: string
 }) {
   const jarRef = useRef<HTMLDivElement>(null)
-  const [bump, setBump] = useState(0)
-  const inJar = items.filter((x) => x.done).length
-  const won = bigTotal > 0 && bigDone === bigTotal
 
   return (
     <div className="task-pad">
@@ -49,16 +46,15 @@ export default function TaskNotes({ items, bigDone, bigTotal, onTear, onBack, on
           <h2 className="h2">{title}</h2>
           {count && <span className="small">{bigTotal ? `${bigDone} van ${bigTotal} grote taken gedaan` : 'Geen grote taken'}</span>}
         </div>
-        <div ref={jarRef} key={bump} className={`trommel ${bump ? 'bump' : ''} ${won ? 'won' : ''}`} role="img" aria-label={`Gedaan: ${inJar} ${inJar === 1 ? 'briefje' : 'briefjes'}`}>
-          <Trommel count={inJar} />
-        </div>
+        {/* Geen blik meer: een afgescheurd briefje vliegt naar rechtsboven en verdwijnt */}
+        <div ref={jarRef} className="tear-target" aria-hidden="true" />
       </div>
 
       <div className="board task-board">
         {items.length ? (
           <BoardCols>
             {items.map((x, i) => (
-              <TaskNote key={x.h.id} item={x} i={i} jarRef={jarRef} onTear={() => { onTear(x.h); setBump((b) => b + 1) }} onBack={() => onBack(x.h)} onTime={() => onTime(x.h)} onRemove={() => onRemove(x.h)} />
+              <TaskNote key={x.h.id} item={x} i={i} jarRef={jarRef} onTear={() => onTear(x.h)} onBack={() => onBack(x.h)} onTime={() => onTime(x.h)} onRemove={() => onRemove(x.h)} />
             ))}
           </BoardCols>
         ) : (
@@ -179,52 +175,5 @@ function TaskNote({ item, i, jarRef, onTear, onBack, onTime, onRemove }: {
         {removable && <button className="tn-x" onClick={onRemove} aria-label={`${h.name} weghalen`}>{Icon.close()}</button>}
       </div>
     </div>
-  )
-}
-
-/**
- * Het blik voor wat gedaan is, getekend als de rest: een rond blik, het deksel schuin erachter, en voor elk afgescheurd
- * briefje een papiertje dat boven de rand uitsteekt.
- */
-function Trommel({ count }: { count: number }) {
-  const scraps = Array.from({ length: Math.min(count, 7) })
-  return (
-    <svg viewBox="0 0 120 104" width="76" height="66" aria-hidden="true">
-      <defs>
-        <linearGradient id="tr-body" x1="0" x2="1">
-          <stop offset="0" stopColor="#1A1A1A" />
-          <stop offset="0.38" stopColor="#5C5C5C" />
-          <stop offset="0.5" stopColor="#8C8C8C" />
-          <stop offset="0.66" stopColor="#4A4A4A" />
-          <stop offset="1" stopColor="#141414" />
-        </linearGradient>
-        <linearGradient id="tr-lid" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0" stopColor="#6E6E6E" />
-          <stop offset="1" stopColor="#1C1C1C" />
-        </linearGradient>
-        <pattern id="tr-hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(28)">
-          <line x1="0" y1="0" x2="0" y2="4" stroke="#000" strokeWidth="1.2" opacity="0.55" />
-        </pattern>
-      </defs>
-      {/* Het deksel, schuin tegen de achterkant */}
-      <ellipse cx="88" cy="34" rx="27" ry="31" transform="rotate(24 88 34)" fill="url(#tr-lid)" stroke="#D9D9D9" strokeWidth="1.4" />
-      <ellipse cx="88" cy="34" rx="20" ry="23" transform="rotate(24 88 34)" fill="none" stroke="#D9D9D9" strokeWidth="0.8" opacity="0.6" />
-      {/* De opening */}
-      <ellipse cx="56" cy="46" rx="46" ry="11" fill="#050505" stroke="#D9D9D9" strokeWidth="1.4" />
-      {/* De briefjes in de trommel */}
-      {scraps.map((_, i) => {
-        const x = 22 + ((i * 23) % 62)
-        const r = (i % 2 ? -1 : 1) * (6 + ((i * 7) % 16))
-        const top = 24 + ((i * 5) % 10)
-        return <rect key={i} className="tr-scrap" x={x} y={top} width="20" height="30" rx="1" transform={`rotate(${r} ${x + 10} ${top + 30})`} fill={['#F2F2F2', '#ECEBE7', '#F5F4F0', '#E7E7E5'][i % 4]} stroke="#0B0B0B" strokeWidth="0.6" />
-      })}
-      {/* Het blik zelf, met twee geperste ringen */}
-      <path d="M10 46 L10 88 A46 11 0 0 0 102 88 L102 46 A46 11 0 0 1 10 46 Z" fill="url(#tr-body)" stroke="#D9D9D9" strokeWidth="1.4" />
-      <path d="M10 46 L10 88 A46 11 0 0 0 102 88 L102 46 A46 11 0 0 1 10 46 Z" fill="url(#tr-hatch)" opacity="0.5" />
-      <path d="M10 56 A46 11 0 0 0 102 56" fill="none" stroke="#D9D9D9" strokeWidth="0.9" opacity="0.7" />
-      <path d="M10 80 A46 11 0 0 0 102 80" fill="none" stroke="#D9D9D9" strokeWidth="0.9" opacity="0.7" />
-      <path d="M30 60 L30 86 M82 60 L82 86" stroke="#F2F2F2" strokeWidth="0.6" opacity="0.25" />
-      <path d="M50 62 L50 88" stroke="#FFFFFF" strokeWidth="2.2" opacity="0.35" strokeLinecap="round" />
-    </svg>
   )
 }

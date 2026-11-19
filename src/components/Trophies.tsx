@@ -1,9 +1,10 @@
-import { dayResult, totalWon, winStreak } from '../lib/days'
+import { dayResult, totalWon } from '../lib/days'
 import { addDays, todayISO, useStore } from '../lib/store'
 
 /**
- * Drie getallen als een plank met trofeeën: elk getal staat bij zijn eigen voorwerp, getekend in de stijl van de scènes.
- * De handspiegel voor je gewonnen dagen, de lauwerkrans voor je koektrommel, de pelgrimsstaf voor hoeveel op rij.
+ * Twee getallen als een plank met trofeeën: elk getal staat bij zijn eigen voorwerp, getekend in de stijl van de scènes.
+ * De handspiegel voor je gewonnen dagen, de lauwerkrans voor je koektrommel. (Hoeveel op rij zei bijna hetzelfde als je
+ * gewonnen dagen, dus die is weg.)
  * Onder elk getal een klein teken van deze week, zodat je ziet of het nu ook leeft.
  */
 export default function Trophies() {
@@ -14,7 +15,6 @@ export default function Trophies() {
   const won = totalWon(s, today)
   const wins = s.jar.length
   const winsWeek = s.jar.filter((j) => j.date >= weekStart).length
-  const row = winStreak(s, today)
 
   return (
     <div className="trophies">
@@ -31,12 +31,6 @@ export default function Trophies() {
         <span className="trophy-num">{wins}</span>
         <span className="trophy-lbl">{wins === 1 ? 'overwinning' : 'overwinningen'}</span>
         <span className="trophy-sub">{winsWeek ? `+${winsWeek} deze week` : 'nog geen deze week'}</span>
-      </div>
-      <div className="trophy">
-        <img className="trophy-img" src="/art/item-pelgrimsstaf.webp" alt="" />
-        <span className="trophy-num">{row}</span>
-        <span className="trophy-lbl">op rij gewonnen</span>
-        <span className="trophy-sub">{row ? 'niet breken' : 'begin vandaag'}</span>
       </div>
     </div>
   )

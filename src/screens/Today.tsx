@@ -147,7 +147,10 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
   }
   // De dag in drie dagdelen, op één lijn. Wat voorbij is, wat nu is, wat nog komt.
   const part = partNow()
-  const whenOf = (p: Part) => (p === part ? 'now' : PARTS.indexOf(p) < PARTS.indexOf(part) ? 'past' : 'next') as 'past' | 'now' | 'next'
+  const isToday = date === today
+  // Een andere dag is helemaal voorbij; hij krijgt dezelfde opbouw als vandaag, alleen de inhoud verschilt
+  const whenOf = (p: Part) => (!isToday ? 'past' : p === part ? 'now' : PARTS.indexOf(p) < PARTS.indexOf(part) ? 'past' : 'next') as 'past' | 'now' | 'next'
+  const dayName = new Date(date + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' })
   const wake = wakeTime(s)
   const bed = s.settings?.notify?.bed ?? '22:15'
   const m = log?.morning
@@ -201,25 +204,22 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
       ) : null}
 
       {/* Voortgang voorop (zoals Dayrise en gewoonte-apps met een weekstrip): hoeveel grote taken, en je week. Direct daaronder je dag. */}
-      {date === today && (
-        <section className="pulse" aria-label="Voortgang vandaag">
+      <section className="pulse" aria-label={isToday ? 'Voortgang vandaag' : `Voortgang op ${dayName}`}>
           <div className="pulse-top">
             <span className="pulse-num">{bigDone}<span className="pulse-of"> / {big.length}</span></span>
-            <span className="pulse-lbl">{big.length === 1 ? 'grote taak' : 'grote taken'} vandaag</span>
+            <span className="pulse-lbl">{big.length === 1 ? 'grote taak' : 'grote taken'} {isToday ? 'vandaag' : `op ${dayName}`}</span>
           </div>
           <div className="pulse-bar" aria-hidden="true"><i style={{ transform: `scaleX(${big.length ? bigDone / big.length : 0})` }} /></div>
           {weekDots}
         </section>
-      )}
 
       {/* De dag: ochtend, overdag, avond. Elk dagdeel vraagt één ding; de taken staan overdag. */}
-      {date === today ? (
-        <div className="dag">
-          <Daypart part="ochtend" label="Ochtend" range={`${shortTime(wake)} – 12:00`} when={whenOf('ochtend')} meta={morningDone(m) ? 'Gedaan' : m?.skipped ? 'Overgeslagen' : whenOf('ochtend') === 'past' ? '1 open' : undefined} collapsible={whenOf('ochtend') === 'past'}>
+      <div className="dag">
+          <Daypart part="ochtend" label="Ochtend" range={`${shortTime(wake)} – 12:00`} when={whenOf('ochtend')} meta={morningDone(m) ? 'Gedaan' : m?.skipped ? 'Overgeslagen' : !isToday ? 'Niet gedaan' : whenOf('ochtend') === 'past' ? '1 open' : undefined} collapsible={whenOf('ochtend') === 'past'}>
             {morningDone(m) ? (
-              <Moment art="item-dageraad" kind="Ritueel" title="Ochtendmoment" sub="Gedaan. Je sterke versie staat bovenaan." done onClick={() => setSheet('morning')} />
+              <Moment art="item-dageraad" kind="Ritueel" title="Ochtendmoment" sub={isToday ? 'Gedaan. Je sterke versie staat bovenaan.' : 'Gedaan.'} done onClick={isToday ? () => setSheet('morning') : undefined} />
             ) : (
-              <Moment art="item-dageraad" kind={`Ritueel · 30 sec${inMorningWindow(s) ? '' : ` · vanaf ${fromHM}`}`} title={m?.skipped ? 'Ochtendmoment' : 'Wat zegt de zachte stem in je hoofd?'} sub={m?.skipped ? 'Vandaag overgeslagen. Toch doen?' : 'Neem het op. Dan praat jij terug.'} now={morningNow} muted={!morningNow && part !== 'ochtend'} onClick={() => setSheet('morning')} />
+              <Moment art="item-dageraad" kind={`Ritueel · 30 sec${inMorningWindow(s) ? '' : ` · vanaf ${fromHM}`}`} title={m?.skipped ? 'Ochtendmoment' : 'Wat zegt de zachte stem in je hoofd?'} sub={m?.skipped ? 'Vandaag overgeslagen. Toch doen?' : 'Neem het op. Dan praat jij terug.'} now={isToday && morningNow} muted={!isToday || (!morningNow && part !== 'ochtend')} onClick={isToday ? () => setSheet('morning') : undefined} />
             )}
             {wk && new Date().getDay() === 1 && witnessMoment}
           </Daypart>
@@ -227,8 +227,8 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
       {/* 5 en 6 · De taken van vandaag als briefjes: scheur eraf wat gedaan is, het gaat in de koektrommel */}
             <section className="tasks">
         <TaskNotes
-          title={date === today ? 'Je taken' : 'Die dag'}
-          count={date !== today}
+          title="Je taken"
+          count={false}
           bigDone={bigDone}
           bigTotal={big.length}
           items={[
@@ -265,61 +265,13 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
           </Daypart>
           <Daypart part="avond" label="Avond" range={`18:00 – ${shortTime(bed)}`} when={whenOf('avond')}>
             {sealed ? (
-              <Moment art="item-handspiegel" kind="Terugkijken" title="Dag afgesloten" sub={dayResult(s, today) === true ? 'Gewonnen. Morgen weer.' : 'Eerlijk teruggekeken. Morgen weer.'} done onClick={() => openMirror(today)} />
+              <Moment art="item-handspiegel" kind="Terugkijken" title="Dag afgesloten" sub={dayResult(s, date) === true ? (isToday ? 'Gewonnen. Morgen weer.' : 'Gewonnen.') : (isToday ? 'Eerlijk teruggekeken. Morgen weer.' : 'Eerlijk teruggekeken.')} done onClick={() => openMirror(date)} />
             ) : (
-              <Moment art="item-handspiegel" kind="Terugkijken · 2 min" title="Heb je gedaan wat je zei?" sub="Dag afsluiten" now={part === 'avond'} onClick={() => openMirror(today)} />
+              <Moment art="item-handspiegel" kind="Terugkijken · 2 min" title="Heb je gedaan wat je zei?" sub="Dag afsluiten" now={isToday && part === 'avond'} onClick={() => openMirror(date)} />
             )}
             {wk && new Date().getDay() !== 1 && witnessMoment}
           </Daypart>
         </div>
-      ) : (
-        <>
-      {/* 5 en 6 · De taken van vandaag als briefjes: scheur eraf wat gedaan is, het gaat in de koektrommel */}
-      <section className="section tasks">
-        <TaskNotes
-          title={date === today ? 'Vandaag' : 'Die dag'}
-          bigDone={bigDone}
-          bigTotal={big.length}
-          items={[
-            ...big.map((h) => ({ h, big: true, done: done(h), late: date === today && !!h.at && h.at < nowHM && !done(h), removable: dayRockIds.has(h.id) })),
-            ...other.map((h) => ({ h, big: false, done: done(h), late: false, meta: scheduleLabel(h), removable: dayRockIds.has(h.id) })),
-          ]}
-          onTear={(h) => {
-            setValue(date, h.id, h.type === 'target' ? h.amount ?? 1 : 1)
-            setTorn((t) => ({ h, n: (t?.n ?? 0) + 1 }))
-            // Teruggekomen na een misser: dat is een overwinning op zich, dus een koekje
-            update((d) => {
-              const id = 'terug-' + today
-              if (date === today && isComeback(d, today) && !d.jar.some((j) => j.id === id)) d.jar.unshift({ id, text: 'Teruggekomen na een gemiste dag', date: today })
-            })
-          }}
-          onBack={(h) => { setValue(date, h.id, 0); setTorn(null) }}
-          onTime={setTimeFor}
-          onRemove={(h) => removeRock(h.id)}
-        />
-        <div className="won-row">
-          <div className="won-dots" aria-label={`${stats.won} van de ${stats.counted} dagen gewonnen`}>
-            {week.map((d) => {
-              // Vandaag is nog niet voorbij: pas gewonnen, nooit al verloren
-              const r = d === today && dayResult(s, d) === false ? null : dayResult(s, d)
-              const sv = r === null && isSaved(s, d)
-              return <button key={d} className={`won-dot ${r === true ? 'won' : r === false ? 'lost' : sv ? 'saved' : ''} ${d === date ? 'sel' : ''}`} disabled={d < s.createdAt} onClick={() => setDate(d)} aria-label={new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' }) + (r === true ? ', gewonnen' : r === false ? ', verloren' : sv ? ', gered met een reservedag' : '')}>{new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short' }).slice(0, 2)}</button>
-            })}
-          </div>
-          <div className="small">{stats.won} van de {stats.counted} dagen gewonnen · {s.jar.length} {s.jar.length === 1 ? 'overwinning' : 'overwinningen'}</div>
-        </div>
-        {selfMade && (
-          <div className="card remind-card">
-            <p><b>{selfMade.name}</b>: drie weken bijna elke dag. Je hebt geen herinnering meer nodig om dit te doen. Uitzetten?</p>
-            <div className="hstack" style={{ gap: 8 }}>
-              <button className="btn sm" onClick={() => answerRemind(selfMade, false)}>Herinnering uit</button>
-              <button className="btn soft sm" onClick={() => answerRemind(selfMade, true)}>Laat aan</button>
-            </div>
-          </div>
-        )}
-      </section>
-        </>
-      )}
 
       {/* Na je dag, apart: je doel, je waarom en hooguit één duwtje */}
       {date === today && (
@@ -422,14 +374,6 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
         <ClimbCaption balance={climb} />
       </div>
 
-      {/* Dag afsluiten voor een eerdere dag (vandaag staat hij in de avond) */}
-      {date !== today && <div className="mt-24">
-        {sealed ? (
-          <div className="hstack center-row" style={{ gap: 12 }}>{Icon.check()}<span className="lead" style={{ color: 'var(--ink)' }}>{date === today ? 'Vandaag' : 'Deze dag'} is afgesloten</span></div>
-        ) : (
-          <button className="btn" onClick={() => openMirror(date)}>Dag afsluiten</button>
-        )}
-      </div>}
 
       {sheet === 'morning' && <Sheet onClose={() => setSheet(null)}><MorningFlow s={s} onDone={() => setSheet(null)} /></Sheet>}
       {sheet === 'mirror' && mirrorNote && <FocusSheet n={mirrorNote} onEdit={() => setSheet('mirror-edit')} onClose={() => setSheet(null)} />}
