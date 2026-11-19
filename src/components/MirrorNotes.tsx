@@ -58,7 +58,7 @@ export default function MirrorNotes() {
         <h2 className="h2">Je spiegel</h2>
         {off > 0 && <span className="small">{off} eraf gehaald</span>}
       </div>
-      <p className="small mirror-intro">Wat je eerlijk over jezelf zei, per deel van je leven. Je werkt aan één post-it tegelijk; die stap staat ook op Vandaag. Gehaald? Dan komt de volgende.</p>
+      <p className="small mirror-intro">Wat je eerlijk over jezelf zei, per deel van je leven. Je werkt aan één post-it tegelijk; die stap staat in je dag, overdag. Gehaald? Dan komt de volgende.</p>
 
       {all.length > 0 && (
         <div className="chips scroll" role="tablist" aria-label="Filter op onderdeel">
@@ -133,7 +133,7 @@ function Ladder({ n }: { n: MirrorNote }) {
  * op de post-it alleen de stap van nu met zijn termijn. Zet je hem (vasthouden: gedaan, niet gezegd),
  * dan scheurt hij eraf en plakt de volgende erop. Daaronder de hele ladder.
  */
-export function FocusSheet({ n, onEdit, onClose }: { n: MirrorNote; onEdit: () => void; onClose: () => void }) {
+export function FocusSheet({ n, onEdit, onClose, onAll }: { n: MirrorNote; onEdit: () => void; onClose: () => void; onAll?: () => void }) {
   const s = useStore()
   const st = nextStep(n)
   const dom = n.domain ? DOMAIN_BY_ID[n.domain] : null
@@ -208,7 +208,10 @@ export function FocusSheet({ n, onEdit, onClose }: { n: MirrorNote; onEdit: () =
             </ol>
           </div>
         )}
-        <button className="link center" onClick={onEdit}>Bewerken</button>
+        <div className="hstack between">
+          <button className="link" onClick={onEdit}>Bewerken</button>
+          {onAll && <button className="link" onClick={onAll}>Alle post-its</button>}
+        </div>
       </div>
     </Sheet>
   )

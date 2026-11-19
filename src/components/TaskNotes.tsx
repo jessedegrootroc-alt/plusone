@@ -25,7 +25,9 @@ export interface TaskItem {
  * Alleen wat zwaar was, wordt een koekje in de echte koektrommel (dat vraagt Vandaag na het afscheuren).
  * Tik op dat randje en het briefje hangt er weer.
  */
-export default function TaskNotes({ items, bigDone, bigTotal, onTear, onBack, onTime, onRemove, title, count = true }: {
+export default function TaskNotes({ items, bigDone, bigTotal, onTear, onBack, onTime, onRemove, onAdd, title, count = true }: {
+  /** Een nieuwe post-it op het bord (alleen vandaag) */
+  onAdd?: () => void
   items: TaskItem[]
   /** De teller onder de titel; op Vandaag staat hij al bovenaan */
   count?: boolean
@@ -56,6 +58,12 @@ export default function TaskNotes({ items, bigDone, bigTotal, onTear, onBack, on
             {items.map((x, i) => (
               <TaskNote key={x.h.id} item={x} i={i} jarRef={jarRef} onTear={() => onTear(x.h)} onBack={() => onBack(x.h)} onTime={() => onTime(x.h)} onRemove={() => onRemove(x.h)} />
             ))}
+            {onAdd && (
+              <button className="jar-note jar-add" onClick={onAdd}>
+                {Icon.plus()}
+                <span>Nieuwe post-it</span>
+              </button>
+            )}
           </BoardCols>
         ) : (
           <p className="board-empty">Geen taken voor deze dag. Maak een gewoonte groot onder Reis.</p>

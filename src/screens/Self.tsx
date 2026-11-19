@@ -1,53 +1,35 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import Plate from '../components/Plate'
 import { Icon, Sheet } from '../components/ui'
 import HabitPicker from '../components/HabitPicker'
 import Pinboard from '../components/Pinboard'
-import LivingScene from '../components/LivingScene'
-import { pullingObjects, strongestVirtueObject } from '../data/objects'
+import SceneCompare from '../components/SceneCompare'
 import Trophies from '../components/Trophies'
-import MirrorNotes from '../components/MirrorNotes'
-import { climbOf, scheduleLabel, wonStats } from '../lib/days'
-import { ClimbCaption } from '../components/Climb'
+import { scheduleLabel } from '../lib/days'
 import Account from '../components/Account'
 import { enableMotion, motionOn, needsPermission } from '../lib/motion'
 import { DEFAULT_TIMES, disableNotify, enableNotify, notifySupported, schedule } from '../lib/notify'
 import { setWakeTime, wakeTime } from '../lib/wake'
 import { TIERS, tierInfo, tierOf } from '../lib/tier'
 import { RESERVES } from '../lib/days'
-import { aimedFeatures, earnedFeatures } from '../lib/emblems'
-import { IMG, SINS, stageFor, type SinId } from '../data/sins'
-import { computeSeries } from '../lib/score'
-import { fromTemplate, resetAll, update, useStore, type AvatarConfig, type Habit } from '../lib/store'
-import Builder from './Builder'
+import { IMG, type SinId } from '../data/sins'
+import { fromTemplate, resetAll, update, useStore, type Habit } from '../lib/store'
 import HabitEditor from './HabitEditor'
 import { NEED_BY_ID, VOICES, type NeedId } from '../data/urge'
 import { SHADOW } from '../data/shadow'
 
-type Panel = null | { t: 'builder' } | { t: 'habit'; h?: Habit; kind: 'vice' | 'virtue' } | { t: 'catalog'; kind: 'vice' | 'virtue' } | { t: 'why' } | { t: 'reset' }
+type Panel = null | { t: 'habit'; h?: Habit; kind: 'vice' | 'virtue' } | { t: 'catalog'; kind: 'vice' | 'virtue' } | { t: 'why' } | { t: 'reset' }
 
 export default function Self({ openShadow }: { openShadow: () => void }) {
   const s = useStore()
-  const series = useMemo(() => computeSeries(s), [s])
   const [panel, setPanel] = useState<Panel>(null)
-  const [draftAvatar, setDraftAvatar] = useState<AvatarConfig>(s.avatar)
   const close = () => setPanel(null)
   const [askMotion, setAskMotion] = useState(() => needsPermission() && !motionOn())
 
   // Wat de levende scènes nodig hebben, net als op Vandaag. Emblemen: nu wat je verdiende, je ideale zelf alles waar je naartoe werkt
-  const earned = earnedFeatures(s)
-  const aimed = aimedFeatures(s)
-  const pulling = useMemo(() => pullingObjects(s), [s])
-  const goodObject = useMemo(() => strongestVirtueObject(s), [s])
-  const bySin = (dir: 1 | -1) => SINS.filter((x) => s.habits.some((h) => h.sin === x.id)).sort((a, b) => dir * (series.perSin[a.id] - series.perSin[b.id])).slice(0, 2).map((x) => x.id)
-  const weakest = bySin(1)
-  const strongest = bySin(-1)
 
   const virtues = s.habits.filter((h) => h.kind === 'virtue')
   const vices = s.habits.filter((h) => h.kind === 'vice')
-  // De figuur klimt mee met je gewonnen dagen, net als op Vandaag
-  const st = wonStats(s)
-  const climb = climbOf(st)
 
   return (
     <div className="screen">
@@ -60,28 +42,9 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
 
       <Trophies />
 
-      <div className="card mt-16" style={{ padding: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          {/* Dezelfde levende scènes als op Vandaag: waar je nu staat, en Paradiso als je ideale zelf */}
-          <div className="stack gap-8">
-            <div className="mini-scene" role="img" aria-label="Waar je nu staat op de berg">
-              <LivingScene scene={stageFor(climb).scene} balance={climb} strong={strongest} features={earned} objects={pulling} virtueObject={goodObject} weak={weakest} />
-            </div>
-            <div className="caption">Nu</div>
-          </div>
-          <div className="stack gap-8">
-            <div className="mini-scene" role="img" aria-label="Je ideale zelf: Paradiso">
-              <LivingScene scene="paradiso" balance={100} strong={strongest} features={aimed} />
-            </div>
-            <div className="caption">Je ideale zelf</div>
-          </div>
-        </div>
-        <ClimbCaption balance={climb} />
-        <button className="btn soft sm mt-16" onClick={() => { setDraftAvatar(s.avatar); setPanel({ t: 'builder' }) }}>Je ideale zelf aanpassen</button>
+      <div className="mt-16">
+        <SceneCompare />
       </div>
-
-      {/* Je doelen, als post-its op de spiegel */}
-      <MirrorNotes />
 
       <div className="group-title"><h2 className="h2">Waarom</h2><button className="link" onClick={() => setPanel({ t: 'why' })}>Wijzig</button></div>
       <div className="card" style={{ padding: '16px 16px' }}>
@@ -134,19 +97,6 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
 
       <div className="divider" />
       <button className="link center" style={{ display: 'block', margin: '12px auto 0' }} onClick={() => setPanel({ t: 'reset' })}>Opnieuw beginnen</button>
-
-      {panel?.t === 'builder' && (
-        <Sheet onClose={close}>
-          <div className="hstack between" style={{ marginBottom: 12 }}><h2 className="h2">Je ideale zelf</h2><button className="link" onClick={close}>Annuleer</button></div>
-          <Builder value={draftAvatar} onChange={setDraftAvatar} />
-          <button className="btn mt-24" onClick={() => {
-            update((d) => {
-              d.avatar = draftAvatar
-            })
-            close()
-          }}>Opslaan</button>
-        </Sheet>
-      )}
 
       {panel?.t === 'habit' && (
         <Sheet onClose={close}>

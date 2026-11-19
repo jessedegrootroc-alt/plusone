@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { RockIcon } from './Jar'
 import { Sheet } from './ui'
 import { ROCK_SHORT } from '../data/catalog'
-import { buzz, todayISO, uid, update } from '../lib/store'
+import { addDays as addDaysISO, buzz, todayISO, uid, update } from '../lib/store'
+import { guessSin } from '../data/ladders'
 
 /** Vandaag of morgen: de sheets openen ook vanuit Dag afsluiten, voor de dag erna. */
 const dayWord = (date: string) => (date === todayISO() ? 'vandaag' : 'morgen')
@@ -70,6 +71,89 @@ export function SuckSheet({ date, onClose }: { date: string; onClose: () => void
         </div>
         <input className="input" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} placeholder="Of schrijf je eigen" />
         <button className="btn" disabled={!text.trim()} onClick={save}>Ik doe het {dayWord(date)}</button>
+      </div>
+    </Sheet>
+  )
+}
+
+const DAYS = [1, 2, 3, 4, 5, 6, 0] // ma t/m zo
+const DAY_LABEL = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za']
+type Often = 'once' | 'daily' | 'days' | 'week'
+
+/**
+ * Een nieuwe post-it op je takenbord: wat je gaat doen, en hoe vaak. Eén keer (vandaag of morgen) wordt een losse taak
+ * voor die dag; elke dag, op vaste dagen of een paar keer per week wordt een gewoonte die vanzelf terugkomt.
+ */
+export function AddTaskSheet({ onClose }: { onClose: () => void }) {
+  const today = todayISO()
+  const [text, setText] = useState('')
+  const [often, setOften] = useState<Often>('once')
+  const [when, setWhen] = useState<'today' | 'tomorrow'>('today')
+  const [days, setDays] = useState<number[]>([1, 3, 5])
+  const [times, setTimes] = useState(3)
+  const [big, setBig] = useState(true)
+  // Hoe laat: mag leeg blijven; ingevuld komt hij op het briefje en krijg je er (met meldingen aan) een herinnering voor
+  const [at, setAt] = useState('')
+  const ok = text.trim() && (often !== 'days' || days.length > 0)
+  const save = () => {
+    if (!ok) return
+    buzz(12)
+    const name = text.trim()
+    update((d) => {
+      if (often === 'once') {
+        const date = when === 'today' ? today : addDaysISO(today, 1)
+        const l = (d.logs[date] ??= { v: {} })
+        ;(l.rocks ??= []).push({ id: 'rock-' + uid(), text: name, size: big ? 3 : 2, ...(at ? { at } : {}) })
+      } else {
+        const schedule = often === 'daily' ? { kind: 'daily' as const } : often === 'days' ? { kind: 'days' as const, days } : { kind: 'week' as const, times }
+        d.habits.push({ id: 'custom-' + uid(), name, sin: guessSin(name) ?? 'sloth', kind: 'virtue', type: 'do', weight: big ? 3 : 2, schedule, ...(at ? { at } : {}) })
+      }
+    })
+    onClose()
+  }
+  return (
+    <Sheet onClose={onClose}>
+      <div className="stack gap-16">
+        <h2 className="h2">Nieuwe post-it</h2>
+        <input className="input" autoFocus value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} placeholder="Wat ga je doen?" aria-label="Wat ga je doen?" />
+        <div className="stack gap-8">
+          <span className="small">Hoe vaak?</span>
+          <div className="seg often-seg" role="radiogroup" aria-label="Hoe vaak">
+            {([['once', 'Eén keer'], ['daily', 'Elke dag'], ['days', 'Vaste dagen'], ['week', 'Per week']] as const).map(([k, l]) => (
+              <button key={k} role="radio" aria-checked={often === k} className={often === k ? 'on' : ''} onClick={() => { buzz(6); setOften(k) }}>{l}</button>
+            ))}
+          </div>
+          {often === 'once' && (
+            <div className="chips">
+              <button className={`chip ${when === 'today' ? 'on' : ''}`} onClick={() => setWhen('today')}>Vandaag</button>
+              <button className={`chip ${when === 'tomorrow' ? 'on' : ''}`} onClick={() => setWhen('tomorrow')}>Morgen</button>
+            </div>
+          )}
+          {often === 'days' && (
+            <div className="week-pick" role="group" aria-label="Op welke dagen">
+              {DAYS.map((d) => (
+                <button key={d} className={`chip ${days.includes(d) ? 'on' : ''}`} aria-pressed={days.includes(d)} onClick={() => setDays((x) => (x.includes(d) ? x.filter((y) => y !== d) : [...x, d]))}>{DAY_LABEL[d]}</button>
+              ))}
+            </div>
+          )}
+          {often === 'week' && (
+            <div className="hstack" style={{ gap: 12 }}>
+              <button className="chip" aria-label="Minder" onClick={() => setTimes((t) => Math.max(1, t - 1))}>−</button>
+              <span className="lead" style={{ margin: 0, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{times} keer per week</span>
+              <button className="chip" aria-label="Meer" onClick={() => setTimes((t) => Math.min(6, t + 1))}>+</button>
+            </div>
+          )}
+        </div>
+        <label className="row add-row">
+          <div className="grow"><div className="name">Hoe laat</div><div className="meta">Optioneel</div></div>
+          {at && <button className="link" onClick={(e) => { e.preventDefault(); setAt('') }} style={{ marginRight: 12 }}>Geen tijd</button>}
+          <input className="time-input add-time" type="time" value={at} onChange={(e) => setAt(e.target.value)} aria-label="Hoe laat (optioneel)" />
+        </label>
+        <button className="row add-row" role="switch" aria-checked={big} onClick={() => setBig((x) => !x)}>
+          <div className="grow"><div className="name">Grote taak</div><div className="meta">Telt mee of je de dag wint</div></div>
+          <span className={`switch ${big ? 'on' : ''}`} aria-hidden="true"><i /></span>
+        </button>
+        <button className="btn" disabled={!ok} onClick={save}>Plak hem op je bord</button>
       </div>
     </Sheet>
   )

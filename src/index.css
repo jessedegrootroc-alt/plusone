@@ -1030,3 +1030,22 @@ button.dagdeel-head { width: 100%; text-align: left; color: inherit; }
 .ob-win .lead { margin: 0; }
 @keyframes winIn { from { opacity: 0; transform: scale(0.85) translateY(10px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .ob-win, .ob-win-art { animation: none; } }
+/* Vandaag: waar je nu staat naast je ideale zelf */
+.scene-today { margin-top: var(--s6); }
+/* Je spiegel als paneel op Vandaag: geen marge van een los blok erboven */
+.sheet > .section { margin-top: 0; }
+/* Nieuwe post-it: vier keuzes in twee rijen, de dagen op één rij */
+.seg.often-seg { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2); padding: 0; border-radius: 0; background: none; overflow: visible; }
+.seg.often-seg button { height: 48px; border-radius: var(--r-md); background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+.seg.often-seg button.on { background: var(--ink); color: var(--paper); box-shadow: none; }
+.week-pick { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.week-pick .chip { justify-content: center; padding: 0; min-width: 0; }
+/* Nieuwe post-it: de regels even hoog, het tijdveld met gelijke ruimte links en rechts */
+.row.add-row { min-height: 0; padding: var(--s4) 0; align-items: center; }
+/* De laatste regel krijgt ook een lijn eronder: overal 16 px tussen lijn en inhoud, en tussen de blokken */
+.row.add-row + .btn { margin-top: 0; }
+.row.add-row:has(+ .btn) { border-bottom: 1px solid var(--line); }
+.time-input.add-time { width: 104px; min-width: 0; height: 44px; padding: 0 12px; text-align: center; font-variant-numeric: tabular-nums; }
+.time-input.add-time::-webkit-calendar-picker-indicator { display: none; }
+.time-input.add-time::-webkit-datetime-edit { padding: 0; }
+.time-input.add-time::-webkit-date-and-time-value { text-align: center; }

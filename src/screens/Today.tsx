@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import Scene from '../components/Scene'
+import SceneCompare from '../components/SceneCompare'
 import CookieProof from '../components/CookieProof'
 import Offers from '../components/Offers'
 import TaskNotes from '../components/TaskNotes'
@@ -8,17 +8,14 @@ import { MorningFlow, inMorningWindow, morningDone } from '../components/Morning
 import { Playback } from '../components/Recorder'
 import { clipKey } from '../lib/voice'
 import { Daypart, Moment, PARTS, partNow, type Part } from '../components/Day'
-import { FocusSheet, NoteSheet } from '../components/MirrorNotes'
+import MirrorNotes, { FocusSheet, NoteSheet } from '../components/MirrorNotes'
+import { AddTaskSheet } from '../components/DaySheets'
 import { activeNote, leftLabel, nextStep } from '../lib/focus'
-import { HabitRow, Icon, Sheet, Toast, useTween } from '../components/ui'
-import { pullingObjects, strongestVirtueObject } from '../data/objects'
-import { SINS } from '../data/sins'
+import { HabitRow, Icon, Sheet, Toast } from '../components/ui'
 import { WEEKDAYS, dayNumber, inDip, isSimple, tierOf, weakDay, type Tier } from '../lib/tier'
-import { ClimbCaption } from '../components/Climb'
-import { bigTasksOn, canSave, climbOf, dayResult, doesItAlone, freshStart, isComeback, isSaved, lostYesterday, missedOn, missedYesterday, otherTasksOn, reserveBack, reservesLeft, reservesPerMonth, scheduleLabel, wonStats } from '../lib/days'
-import { earnedFeatures } from '../lib/emblems'
+import { bigTasksOn, canSave, dayResult, doesItAlone, freshStart, isComeback, isSaved, lostYesterday, missedOn, missedYesterday, otherTasksOn, reserveBack, reservesLeft, reservesPerMonth, scheduleLabel, wonStats } from '../lib/days'
 import { countdownLabel, daysLeft, goalTitle, mainGoal } from '../lib/goal'
-import { computeSeries, isDone } from '../lib/score'
+import { isDone } from '../lib/score'
 import { isWakeHabit, setWakeTime, shortTime, wakeTime } from '../lib/wake'
 import { addDays, buzz, setValue, todayISO, uid, update, useStore, type Habit } from '../lib/store'
 
@@ -53,21 +50,15 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
   const clearToast = useCallback(() => setToast(null), [])
   const [timeFor, setTimeFor] = useState<Habit | null>(null)
   const [goalSheet, setGoalSheet] = useState(false)
+  const [addTask, setAddTask] = useState(false)
   const [showVices, setShowVices] = useState(false)
   // Na het afscheuren: was het zwaar? Dan wordt het een koekje. Anders is het gewoon gedaan.
   const [torn, setTorn] = useState<{ h: Habit; n: number } | null>(null)
   const [hardFor, setHardFor] = useState<Habit | null>(null)
   const clearTorn = useCallback(() => setTorn(null), [])
-  const [sheet, setSheet] = useState<null | 'morning' | 'witness' | 'mirror' | 'mirror-edit'>(null)
+  const [sheet, setSheet] = useState<null | 'morning' | 'witness' | 'mirror' | 'mirror-edit' | 'mirror-all'>(null)
 
-  const series = useMemo(() => computeSeries(s), [s])
   const stats = useMemo(() => wonStats(s, today), [s, today])
-  // De figuur klimt mee met je gewonnen dagen: hoe groter het deel, hoe hoger op de berg. Geen punten erbij.
-  const climb = climbOf(stats)
-  const shown = useTween(climb)
-  const pulling = useMemo(() => pullingObjects(s), [s])
-  const goodObject = useMemo(() => strongestVirtueObject(s), [s])
-  const bySin = (dir: 1 | -1) => SINS.filter((x) => s.habits.some((h) => h.sin === x.id)).sort((a, b) => dir * (series.perSin[a.id] - series.perSin[b.id])).slice(0, 2).map((x) => x.id)
 
   const log = s.logs[date]
   const sealed = !!log?.sealed
@@ -271,6 +262,7 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
           onBack={(h) => { setValue(date, h.id, 0); setTorn(null) }}
           onTime={setTimeFor}
           onRemove={(h) => removeRock(h.id)}
+          onAdd={isToday ? () => setAddTask(true) : undefined}
         />
         {selfMade && (
           <div className="card remind-card">
@@ -283,8 +275,11 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
         )}
       </section>
 
-            {mirrorNote && mirrorStep?.step && (
+            {/* Je spiegel woont alleen hier: de stap van nu, en vandaar al je post-its */}
+            {mirrorNote && mirrorStep?.step ? (
               <Moment art="item-lantaarn" kind={`Spiegel · ${leftLabel(mirrorStep.left)}`} title={mirrorStep.step.text} sub={mirrorNote.text} onClick={() => setSheet('mirror')} />
+            ) : isToday && (
+              <Moment art="item-lantaarn" kind="Spiegel" title="Wat moet er anders?" sub="Schrijf een post-it voor je spiegel" onClick={() => setSheet('mirror-all')} />
             )}
           </Daypart>
           <Daypart part="avond" label="Avond" range={`18:00 – ${shortTime(bed)}`} when={whenOf('avond')}>
@@ -370,18 +365,19 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
       {date === today && <CookieProof />}
 
       {/* 7 · Het beeld: de figuur klimt mee met je gewonnen dagen */}
-      <div className="card scene-small" style={{ padding: 0, overflow: 'hidden' }}>
-        <Scene balance={shown} onTap={() => openMirror(date)} strong={bySin(-1)} features={earnedFeatures(s)} objects={pulling} virtueObject={goodObject} weak={bySin(1)} />
-        <ClimbCaption balance={climb} />
+      <div className="scene-today">
+        <SceneCompare />
       </div>
 
 
       {sheet === 'morning' && <Sheet onClose={() => setSheet(null)}><MorningFlow s={s} onDone={() => setSheet(null)} /></Sheet>}
-      {sheet === 'mirror' && mirrorNote && <FocusSheet n={mirrorNote} onEdit={() => setSheet('mirror-edit')} onClose={() => setSheet(null)} />}
+      {sheet === 'mirror' && mirrorNote && <FocusSheet n={mirrorNote} onEdit={() => setSheet('mirror-edit')} onAll={() => setSheet('mirror-all')} onClose={() => setSheet(null)} />}
+      {sheet === 'mirror-all' && <Sheet onClose={() => setSheet(null)}><MirrorNotes /></Sheet>}
       {sheet === 'mirror-edit' && mirrorNote && <NoteSheet note={mirrorNote} onClose={() => setSheet(null)} />}
       {sheet === 'witness' && <Sheet onClose={() => setSheet(null)}><WitnessBody onDone={() => setSheet(null)} /></Sheet>}
       {timeFor && <TimeSheet h={timeFor} date={date} onClose={() => setTimeFor(null)} />}
       {goalSheet && <NoteSheet note={goal} onClose={() => setGoalSheet(false)} />}
+      {addTask && <AddTaskSheet onClose={() => setAddTask(false)} />}
       {torn && !toast && <Toast key={torn.n} text="Gedaan. Kostte het je iets?" action="In de koektrommel" onDone={clearTorn} onAction={() => setHardFor(torn.h)} />}
       {hardFor && <HardSheet h={hardFor} date={date} onClose={() => setHardFor(null)} />}
       {toast && <Toast text={toast} onDone={clearToast} action={slipId ? 'Vraag je schaduw' : undefined} onAction={() => slipId && openShadow(slipId)} />}
