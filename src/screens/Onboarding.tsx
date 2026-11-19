@@ -26,11 +26,29 @@ import { TIERS, tierInfo, type Tier } from '../lib/tier'
  */
 
 type Area = 'fysiek' | 'mentaal' | 'financieel' | 'emotioneel'
-type StepId = 'splash' | 'name' | 'mirror' | `area-${Area}` | 'obstacle' | 'level' | 'vices' | 'wake' | 'tasks' | 'goal' | 'why' | 'build' | 'plan' | 'deal'
+type StepId = 'splash' | 'name' | 'mirror' | `area-${Area}` | 'obstacle' | 'win-spiegel' | 'level' | 'vices' | 'wake' | 'tasks' | 'win-dag' | 'goal' | 'commit' | 'why' | 'build' | 'plan' | 'deal'
 type Rating = 'sterk' | 'matig' | 'slecht'
 /** Wanneer een taak op je dag hoort. Zo komt hij in je plan en op Vandaag op de goede plek. */
 type Part = 'ochtend' | 'overdag' | 'avond'
-const isQuestion = (x: StepId) => !['splash', 'build', 'plan', 'deal'].includes(x)
+/**
+ * De start in vier hoofdstukken (zoals Headway): bovenaan zie je waar je bent, en na een hoofdstuk krijg je een beloning.
+ * Elk hoofdstuk vult zijn eigen streep; wat af is staat vol.
+ */
+const CHAPTERS: { label: string; has: (x: StepId) => boolean }[] = [
+  { label: 'Jij', has: (x) => x === 'name' },
+  { label: 'Spiegel', has: (x) => x === 'mirror' || x.startsWith('area-') || x === 'obstacle' || x === 'win-spiegel' },
+  { label: 'Je dag', has: (x) => ['level', 'vices', 'wake', 'tasks', 'win-dag'].includes(x) },
+  { label: 'Je doel', has: (x) => ['goal', 'commit', 'why'].includes(x) },
+]
+const chapterOf = (x: StepId) => CHAPTERS.findIndex((c) => c.has(x))
+
+/** Hoe lang je volhoudt (zoals Duolingo en Headway een reeks laten kiezen). 66 dagen: zo lang duurt een gewoonte gemiddeld. */
+const COMMITS = [
+  { days: 7, sub: 'Een begin' },
+  { days: 21, sub: 'Serieus' },
+  { days: 66, sub: 'Dan is het een gewoonte' },
+  { days: 100, sub: 'Onbreekbaar' },
+] as const
 
 const RATINGS: { id: Rating; label: string }[] = [
   { id: 'sterk', label: 'Sterk' },
@@ -105,6 +123,7 @@ export default function Onboarding() {
   const [obstacle, setObstacle] = useState<string | null>(null)
   const [level, setLevel] = useState<string | null>(null)
   const [why, setWhy] = useState('')
+  const [commit, setCommit] = useState<number | null>(null)
   // Je plan begint met opstaan; de antwoorden op de spiegel voegen er per deel een taak aan toe
   const [picked, setPicked] = useState<Record<string, Habit>>(() => ({ wake: wakeHabit() }))
   const [custom, setCustom] = useState<null | 'vice' | 'virtue'>(null)
@@ -117,10 +136,16 @@ export default function Onboarding() {
   const focus = AREAS.filter((a) => ratings[a.id] === 'slecht').concat(AREAS.filter((a) => ratings[a.id] === 'matig')).slice(0, 2).map((a) => a.id)
   // De verleidingen vraagt de app alleen als je zegt dat je iets verdooft
   const numbs = answers.emotioneel === 'verdoof' && focus.includes('emotioneel')
-  const flow: StepId[] = ['splash', 'name', 'mirror', ...focus.map((a) => `area-${a}` as const), 'obstacle', 'level', ...(numbs ? ['vices' as const] : []), 'wake', 'tasks', 'goal', 'why', 'build', 'plan', 'deal']
+  const flow: StepId[] = ['splash', 'name', 'mirror', ...focus.map((a) => `area-${a}` as const), 'obstacle', 'win-spiegel', 'level', ...(numbs ? ['vices' as const] : []), 'wake', 'tasks', 'win-dag', 'goal', 'commit', 'why', 'build', 'plan', 'deal']
   const id = flow[Math.min(i, flow.length - 1)]
-  const questions = flow.filter(isQuestion)
-  const qIndex = questions.indexOf(id)
+  // Per hoofdstuk: hoe ver je bent (0 tot 1)
+  const chapter = chapterOf(id)
+  const chapterFill = CHAPTERS.map((c, k) => {
+    if (k < chapter) return 1
+    if (k > chapter) return 0
+    const steps = flow.filter(c.has)
+    return (steps.indexOf(id) + 1) / steps.length
+  })
 
   const next = () => { buzz(); setI((x) => Math.min(flow.length - 1, x + 1)); scrollToTop() }
   const back = () => { setI((x) => Math.max(0, x - (id === 'plan' ? 2 : 1))); scrollToTop() }
@@ -208,7 +233,7 @@ export default function Onboarding() {
       d.why = why.trim()
       d.habits = Object.values(picked).filter((h) => (h.kind === 'virtue' && h.weight === 3) || (h.kind === 'vice' && numbs))
       setWakeTime(d, wake)
-      d.settings = { ...d.settings, tier: (level ?? 'gemiddeld') as Tier }
+      d.settings = { ...d.settings, tier: (level ?? 'gemiddeld') as Tier, commit: commit ?? undefined }
       // Elke harde waarheid wordt een post-it op je spiegel, met de vaste ladder van dat antwoord
       const today = todayISO()
       const mirror: MirrorNote[] = truths.map(({ area, truth, key }) => ({ id: uid(), text: truth, answer: key, domain: area.domain, sin: DOMAIN_BY_ID[area.domain].sin, steps: answerPlan(key).map((st, k) => ({ ...st, startedAt: k === 0 ? today : undefined })), createdAt: today }))
@@ -238,16 +263,21 @@ export default function Onboarding() {
   // Je plan wordt gebouwd: de lijn van je dag tekent zichzelf
   if (id === 'build') return <PlanBuild wake={wake} bigCount={bigs.length} hasGoal={!!goalText.trim()} hasObstacle={!!obs} onDone={next} />
 
-  const dockLabel: Partial<Record<StepId, string>> = { name: 'Verder', mirror: 'Verder', vices: 'Verder', wake: 'Verder', tasks: bigs.length < lv.min ? `Kies er nog ${lv.min - bigs.length}` : 'Verder', goal: 'Verder', why: why.trim() ? 'Bouw mijn plan' : 'Sla over en bouw mijn plan', plan: 'Dit is mijn plan' }
+  const dockLabel: Partial<Record<StepId, string>> = { name: 'Verder', mirror: 'Verder', vices: 'Verder', wake: 'Verder', 'win-spiegel': 'Verder', 'win-dag': 'Verder', tasks: bigs.length < lv.min ? `Kies er nog ${lv.min - bigs.length}` : 'Verder', goal: 'Verder', why: why.trim() ? 'Bouw mijn plan' : 'Sla over en bouw mijn plan', plan: 'Dit is mijn plan' }
   const disabled = (id === 'name' && !name.trim()) || (id === 'mirror' && !AREAS.every((a) => ratings[a.id])) || (id === 'goal' && dateNeeded && !goalDue) || (id === 'tasks' && (bigs.length < lv.min || bigs.length > lv.max))
 
   return (
     <div className="screen ob" style={{ paddingBottom: 140 }}>
       <div className="ob-top">
         <button className="iconbtn" onClick={back} aria-label="Terug" style={{ marginLeft: -8 }}>{Icon.back()}</button>
-        {qIndex >= 0 ? (
-          <div className="ob-progress" role="progressbar" aria-valuemin={0} aria-valuemax={questions.length} aria-valuenow={qIndex + 1} aria-label="Voortgang">
-            <i style={{ transform: `scaleX(${(qIndex + 1) / questions.length})` }} />
+        {chapter >= 0 ? (
+          <div className="ob-chapters" role="progressbar" aria-valuemin={1} aria-valuemax={CHAPTERS.length} aria-valuenow={chapter + 1} aria-label={`Hoofdstuk ${chapter + 1} van ${CHAPTERS.length}: ${CHAPTERS[chapter].label}`}>
+            {CHAPTERS.map((c, k) => (
+              <div key={c.label} className={`ob-chapter ${k <= chapter ? 'on' : ''}`}>
+                <i><b style={{ transform: `scaleX(${chapterFill[k]})` }} /></i>
+                <span>{c.label}</span>
+              </div>
+            ))}
           </div>
         ) : <div style={{ flex: 1 }} />}
         {/* Geen teller: het aantal vragen hangt af van je antwoorden, en een teller die oploopt voelt als terugvallen */}
@@ -352,6 +382,22 @@ export default function Onboarding() {
           </Q>
         )}
 
+        {id === 'win-spiegel' && (
+          <Win art="item-handspiegel" kicker="Hoofdstuk 2 af" title="Eerlijk gekeken." lead="Dat doen de meesten nooit. Nu je dag." />
+        )}
+
+        {id === 'win-dag' && (
+          <Win art="item-dageraad" kicker="Hoofdstuk 3 af" title="Je dag staat." lead={`${bigs.length} ${bigs.length === 1 ? 'grote taak' : 'grote taken'}${wakeOn ? `, op om ${shortTime(wake)}` : ''}. Nu waar je naartoe gaat.`} />
+        )}
+
+        {id === 'commit' && (
+          <Q title="Hoe lang hou je vol?" lead="Een belofte aan jezelf. De app telt mee.">
+            <div className="ob-opts">
+              {COMMITS.map((c) => <Opt key={c.days} on={commit === c.days} label={`${c.days} dagen`} sub={c.sub} onClick={() => pickAndGo(() => setCommit(c.days))} />)}
+            </div>
+          </Q>
+        )}
+
         {id === 'goal' && (
           <Q title="Wat ga je halen?" lead="Eén doel, met een datum. Dan telt de app elke dag af.">
             <input className="input ob-big-input" value={goalText} onChange={(e) => setGoalText(e.target.value)} placeholder="Bijv. 12-uursloop" aria-label="Je doel" />
@@ -391,6 +437,7 @@ export default function Onboarding() {
             </div>
             <div className="card" style={{ padding: '20px 24px' }}>
               <ol className="lead" style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 8 }}>
+                {commit && <li>Ik hou {commit} dagen vol.</li>}
                 <li>Ik doe mijn grote taken. Elke dag.</li>
                 <li>Ik kijk elke avond eerlijk terug.</li>
                 <li>Ik mis nooit twee keer.</li>
@@ -424,6 +471,18 @@ export default function Onboarding() {
           />
         </Sheet>
       )}
+    </div>
+  )
+}
+
+/** Een beloning na een hoofdstuk: een gravure, wat je net deed, en waar je nu heen gaat. */
+function Win({ art, kicker, title, lead }: { art: string; kicker: string; title: string; lead: string }) {
+  return (
+    <div className="ob-win">
+      <img src={`/art/${art}.webp`} alt="" className="ob-win-art" />
+      <div className="eyebrow">{kicker}</div>
+      <h1 className="h1">{title}</h1>
+      <p className="lead">{lead}</p>
     </div>
   )
 }

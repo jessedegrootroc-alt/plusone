@@ -1016,3 +1016,16 @@ button.dagdeel-head { width: 100%; text-align: left; color: inherit; }
 .climb-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
 .climb-place { flex: none; white-space: nowrap; font: 400 26px/32px var(--title); color: var(--ink); }
 .climb-hint { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: var(--sm); color: var(--ink-3); text-align: right; }
+/* De start in hoofdstukken: vier strepen met een naam, elk vult zich */
+.ob-chapters { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.ob-chapter { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ob-chapter i { display: block; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.ob-chapter i b { display: block; height: 100%; background: var(--ink); transform-origin: left; transition: transform 0.5s var(--ease); }
+.ob-chapter span { font: 600 11px/14px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ob-chapter.on span { color: var(--ink); }
+/* Een beloning na een hoofdstuk */
+.ob-win { display: flex; flex-direction: column; align-items: center; gap: var(--s2); padding-top: var(--s7); text-align: center; animation: fadeUp 0.5s var(--ease) both; }
+.ob-win-art { width: 150px; height: 150px; object-fit: contain; margin-bottom: var(--s4); filter: drop-shadow(0 20px 40px rgba(255, 255, 255, 0.12)); animation: winIn 0.7s var(--ease) both; }
+.ob-win .lead { margin: 0; }
+@keyframes winIn { from { opacity: 0; transform: scale(0.85) translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ob-win, .ob-win-art { animation: none; } }

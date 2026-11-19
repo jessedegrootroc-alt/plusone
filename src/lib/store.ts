@@ -186,6 +186,8 @@ export interface Settings {
   witness?: string
   /** Waar je staat: bepaalt hoeveel taken, hoeveel vangnet en welke toon. */
   tier?: 'beginner' | 'gemiddeld' | 'expert'
+  /** Je belofte bij de start: zoveel dagen hou je vol (7, 21, 66 of 100). */
+  commit?: number
 }
 
 const KEY = 'plusone.v1'
