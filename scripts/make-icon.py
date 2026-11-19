@@ -1,144 +1,121 @@
-# Maakt het app-icoon: de lauwerkrans van de overwinning rond "+1", in zilver op diep zwart.
-#   python3 scripts/make-icon.py            -> public/icons/*.png
-# Opbouw zoals een icoonontwerper het doet: één sterk silhouet, licht van boven, de krans als ring
-# waar "+1" in staat (de voorste bladeren vallen over de cijfers), korrel tegen het "digitale" vlak,
-# en per formaat apart afgesteld: hoe kleiner, hoe groter en eenvoudiger.
+# Maakt het app-icoon: post-its zoals in de app, op diep zwart. Op het voorste staat "+1".
+#   python3 scripts/make-icon.py            -> public/icons/*.png en public/icon.svg
+# Dezelfde briefjes als op Vandaag en je spiegel: bijna wit papier met haast rechte hoeken, grijs plakband met
+# gekartelde uiteinden, een donker omgekruld hoekje rechtsonder, de serif van de titels. Achter ligt een tweede
+# briefje schuin, zo zie je dat het er meer zijn. Op 32 px (favicon) blijft één briefje met "+1" over.
 import numpy as np
-from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-SRC = 'art/bron/item-lauwerkrans.png'
+K = 4  # supersampling: alles op 4x tekenen, dan verkleinen
 FONT = '/System/Library/Fonts/Optima.ttc'  # flared sans, verwant aan Marcellus uit de app
 
-
-def wreath_src():
-    im = Image.open(SRC).convert('RGBA')
-    im = im.crop(im.getchannel('A').point(lambda a: 255 if a > 24 else 0).getbbox())
-    rgb = ImageEnhance.Contrast(im.convert('RGB')).enhance(1.18)
-    rgb = ImageEnhance.Brightness(rgb).enhance(1.06)
-    out = rgb.convert('RGBA')
-    out.putalpha(im.getchannel('A'))
-    return out
-
-
-WREATH = wreath_src()
+FRONT = (242, 242, 240)  # --tint van de briefjes (#F2F2F2, iets warmer)
+BACK = (196, 195, 190)   # het briefje erachter, in de schaduw
+INK = (11, 11, 11)       # tekst op de briefjes (#0B0B0B)
 
 
 def background(S):
     y, x = np.mgrid[0:S, 0:S] / S
-    # Diep zwart met licht van boven: radiaal, iets boven het midden
-    d = np.sqrt((x - 0.5) ** 2 + ((y - 0.36) * 1.15) ** 2)
-    t = np.clip(d / 0.78, 0, 1)
-    v = 44 * (1 - t) ** 1.8 + 8
-    # Vignet langs de randen
-    v *= 1 - 0.35 * np.clip((np.maximum(abs(x - 0.5), abs(y - 0.5)) - 0.36) / 0.14, 0, 1) ** 2
-    # Korrel, zodat het vlak niet plastic aanvoelt
+    # Diep zwart met licht van boven, zoals het bord achter de briefjes in de app
+    d = np.sqrt((x - 0.5) ** 2 + ((y - 0.32) * 1.15) ** 2)
+    t = np.clip(d / 0.8, 0, 1)
+    v = 42 * (1 - t) ** 1.8 + 8
+    v *= 1 - 0.3 * np.clip((np.maximum(abs(x - 0.5), abs(y - 0.5)) - 0.36) / 0.14, 0, 1) ** 2
     rng = np.random.default_rng(7)
-    v += rng.normal(0, 1.6, (S, S))
+    v += rng.normal(0, 1.5, (S, S))
     v = np.clip(v, 0, 255).astype(np.uint8)
     return Image.fromarray(np.stack([v, v, v, np.full_like(v, 255)], -1))
 
 
-def beam(S):
-    # Een zachte lichtbundel van boven op de krans
-    m = Image.new('L', (S, S), 0)
-    ImageDraw.Draw(m).polygon([(S * 0.42, -S * 0.05), (S * 0.58, -S * 0.05), (S * 0.8, S * 0.75), (S * 0.2, S * 0.75)], fill=255)
-    m = m.filter(ImageFilter.GaussianBlur(S * 0.07))
-    return m.point(lambda a: int(a * 0.07))
+def paper_grain(im, box, strength):
+    """Een zweem papierstructuur, zodat het briefje niet plastic aanvoelt."""
+    x0, y0, x1, y1 = box
+    w, h = x1 - x0, y1 - y0
+    rng = np.random.default_rng(int(w + h))
+    n = rng.normal(0, strength, (h, w))
+    a = np.array(im.crop(box)).astype(np.float32)
+    a[..., :3] = np.clip(a[..., :3] + n[..., None], 0, 255)
+    im.paste(Image.fromarray(a.astype(np.uint8)), (x0, y0))
 
 
-def text_layer(S, size_k, cx, cy):
-    """'+1' in zilver: verloop van licht naar donker, met een schaduw en een randje licht bovenop."""
-    big = ImageFont.truetype(FONT, int(S * size_k), index=1)
-    small = ImageFont.truetype(FONT, int(S * size_k * 0.72), index=1)
-    one_w = big.getbbox('1')[2] - big.getbbox('1')[0]
-    plus_box = small.getbbox('+')
-    plus_w = plus_box[2] - plus_box[0]
-    gap = S * size_k * 0.04
-    total = plus_w + gap + one_w
-    mask = Image.new('L', (S, S), 0)
-    d = ImageDraw.Draw(mask)
-    x0 = cx - total / 2
-    one_box = big.getbbox('1')
-    oy = cy - (one_box[3] + one_box[1]) / 2
-    d.text((x0 + plus_w + gap - one_box[0], oy), '1', font=big, fill=255)
-    py = cy - (plus_box[3] + plus_box[1]) / 2 + S * size_k * 0.02
-    d.text((x0 - plus_box[0], py), '+', font=small, fill=255)
-    bb = mask.getbbox()
-    grad = np.zeros((S, S), np.float32)
-    ys = np.arange(S)[:, None]
-    tt = np.clip((ys - bb[1]) / max(1, bb[3] - bb[1]), 0, 1)
-    grad[:] = 255 - 95 * tt  # wit boven, zilvergrijs onder
-    g = Image.fromarray(grad.astype(np.uint8))
-    silver = Image.merge('RGBA', (g, g, g, mask))
-    shadow = Image.new('RGBA', (S, S), (0, 0, 0, 0))
-    sm = mask.filter(ImageFilter.GaussianBlur(S * 0.012)).point(lambda a: int(a * 0.85))
-    shadow.paste((0, 0, 0, 255), (0, int(S * 0.012)), sm)
-    # Lichtrandje: het masker iets omhoog verschoven, alleen waar het over de rand uitsteekt
-    edge = ImageChops_sub(mask, mask.transform(mask.size, Image.AFFINE, (1, 0, 0, 0, 1, S * 0.004)))
-    hl = Image.new('RGBA', (S, S), (255, 255, 255, 0))
-    hl.putalpha(edge.point(lambda a: int(a * 0.8)))
-    return shadow, silver, hl
+def tape(w, h, angle):
+    """Plakband: grijs, half doorzichtig, met gekartelde uiteinden (zoals .tape in de app)."""
+    im = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    teeth = 5
+    pts = []
+    for i in range(teeth + 1):
+        pts.append((int(w * 0.04 * (i % 2)), int(h * i / teeth)))
+    for i in range(teeth, -1, -1):
+        pts.append((w - 1 - int(w * 0.04 * ((i + 1) % 2)), int(h * i / teeth)))
+    ImageDraw.Draw(im).polygon(pts, fill=(222, 222, 216, 150))
+    return im.rotate(angle, expand=True, resample=Image.BICUBIC)
 
 
-def ImageChops_sub(a, b):
-    from PIL import ImageChops
-    return ImageChops.subtract(a, b)
+def note(W, H, color, text=None, tape_on=True, fold=True, font_k=0.62, bold=False):
+    pad = int(W * 0.3)
+    im = Image.new('RGBA', (W + 2 * pad, H + 2 * pad), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    box = (pad, pad, pad + W, pad + H)
+    d.rounded_rectangle(box, radius=max(2, int(W * 0.012)), fill=color + (255,))
+    paper_grain(im, box, 2.2)
+    d = ImageDraw.Draw(im)
+    if fold:
+        # Het omgekrulde hoekje: een donkere driehoek met een schaduwrand, zoals .jar-note::after
+        c = int(W * 0.1)
+        x1, y1 = pad + W, pad + H
+        d.polygon([(x1 - c, y1), (x1, y1 - c), (x1, y1)], fill=(22, 22, 22, 255))
+        d.polygon([(x1 - c, y1), (x1, y1 - c), (x1 - c, y1 - c)], fill=tuple(int(v * 0.86) for v in color) + (255,))
+    if text:
+        f = ImageFont.truetype(FONT, int(H * font_k), index=1 if bold else 0)  # Regular zoals Marcellus; vet alleen op het kleinste formaat
+        bb = d.textbbox((0, 0), text, font=f)
+        tw, th = bb[2] - bb[0], bb[3] - bb[1]
+        d.text((pad + (W - tw) / 2 - bb[0], pad + (H - th) / 2 - bb[1] + H * 0.04), text, font=f, fill=INK + (255,))
+    if tape_on:
+        t = tape(int(W * 0.42), int(H * 0.17), -3)
+        im.alpha_composite(t, (pad + W // 2 - t.width // 2, pad - t.height // 2))
+    return im
 
 
-def icon(size, k=1.0, with_text=True, supersample=4):
-    S = size * supersample
-    img = background(S)
-    light = Image.new('RGBA', (S, S), (242, 242, 242, 255))
-    img = Image.composite(light, img, beam(S))
-    # De krans
-    w = int(S * 0.74 * k)
-    h = int(WREATH.height * w / WREATH.width)
-    cy = S * 0.51  # de groep (krans + cijfers) staat optisch in het midden
-    wr = WREATH.resize((w, h), Image.LANCZOS)
-    x, y = (S - w) // 2, int(cy - h / 2)
-    # Gloed achter de krans en een contactschaduw eronder
-    a = Image.new('L', (S, S), 0)
-    a.paste(wr.getchannel('A'), (x, y))
-    glow = a.filter(ImageFilter.GaussianBlur(S * 0.05)).point(lambda v: int(v * 0.12))
-    img = Image.composite(Image.new('RGBA', (S, S), (242, 242, 242, 255)), img, glow)
-    sh = Image.new('L', (S, S), 0)
-    ImageDraw.Draw(sh).ellipse([S / 2 - w * 0.4, y + h - S * 0.03, S / 2 + w * 0.4, y + h + S * 0.035], fill=190)
-    img = Image.composite(Image.new('RGBA', (S, S), (0, 0, 0, 255)), img, sh.filter(ImageFilter.GaussianBlur(S * 0.025)))
-    img.alpha_composite(wr, (x, y))
-    if with_text:
-        tcy = cy - h * 0.11
-        shadow, silver, hl = text_layer(S, 0.31 * k, S / 2, tcy)
-        img.alpha_composite(shadow)
-        img.alpha_composite(silver)
-        img.alpha_composite(hl)
-        # De voorste bladeren vallen over de cijfers: zo staat "+1" ín de krans
-        front = wr.copy()
-        fm = Image.new('L', wr.size, 0)
-        ImageDraw.Draw(fm).rectangle([0, int(h * 0.64), w, h], fill=255)
-        fm = fm.filter(ImageFilter.GaussianBlur(h * 0.03))
-        from PIL import ImageChops
-        front.putalpha(ImageChops.multiply(front.getchannel('A'), fm))
-        img.alpha_composite(front, (x, y))
-    out = img.resize((size, size), Image.LANCZOS).convert('RGB')
-    return out.filter(ImageFilter.UnsharpMask(radius=1.2 if size >= 128 else 0.6, percent=60, threshold=2))
+def paste(canvas, layer, cx, cy, angle, shadow=0.7):
+    r = layer.rotate(angle, expand=True, resample=Image.BICUBIC)
+    if shadow:
+        a = r.getchannel('A').filter(ImageFilter.GaussianBlur(r.width * 0.03))
+        sh = Image.new('RGBA', r.size, (0, 0, 0, 0))
+        sh.putalpha(a.point(lambda v: int(v * shadow)))
+        canvas.alpha_composite(sh, (int(cx - r.width / 2), int(cy - r.height / 2 + r.width * 0.03)))
+    canvas.alpha_composite(r, (int(cx - r.width / 2), int(cy - r.height / 2)))
 
 
-def favicon(size):
-    """Zo klein leest een krans als ruis: alleen '+1' in zilver, groot, op hetzelfde zwart."""
-    S = size * 8
-    img = background(S)
-    shadow, silver, hl = text_layer(S, 0.62, S / 2, S * 0.52)
-    for l in (shadow, silver, hl):
-        img.alpha_composite(l)
-    return img.resize((size, size), Image.LANCZOS).convert('RGB')
+def icon(size, scale=1.0, simple=False):
+    S = size * K
+    im = background(S)
+    c = S / 2
+    if simple:
+        # Favicon: één briefje met "+1", groot, zonder plakband en hoekje
+        paste(im, note(int(S * 0.8), int(S * 0.74), FRONT, '+1', tape_on=False, fold=False, font_k=0.7, bold=True), c, c, -4, 0)
+    else:
+        W, H = int(S * 0.6 * scale), int(S * 0.56 * scale)
+        # Een briefje erachter, schuin naar rechts; het voorste schuin naar links, met "+1"
+        paste(im, note(W, H, BACK, tape_on=False), c + S * 0.06 * scale, c - S * 0.05 * scale, 9)
+        paste(im, note(W, H, FRONT, '+1'), c - S * 0.02 * scale, c + S * 0.04 * scale, -5)
+    return im.resize((size, size), Image.LANCZOS).convert('RGB')
 
 
 if __name__ == '__main__':
-    import sys
-    outdir = sys.argv[1] if len(sys.argv) > 1 else 'public/icons'
-    icon(180).save(f'{outdir}/apple-touch-icon.png', optimize=True)
-    icon(192).save(f'{outdir}/icon-192.png', optimize=True)
-    icon(512).save(f'{outdir}/icon-512.png', optimize=True)
-    icon(512, k=0.78).save(f'{outdir}/icon-maskable-512.png', optimize=True)  # binnen de veilige cirkel
-    favicon(32).save(f'{outdir}/favicon-32.png', optimize=True)
+    icon(180).save('public/icons/apple-touch-icon.png')
+    icon(192).save('public/icons/icon-192.png')
+    icon(512).save('public/icons/icon-512.png')
+    # Maskable: de inhoud binnen de veilige zone (80%), zodat Android hem rond of als druppel mag knippen
+    icon(512, scale=0.8).save('public/icons/icon-maskable-512.png')
+    icon(32, simple=True).save('public/icons/favicon-32.png')
+    # De SVG voor browsers die die liever nemen: één briefje met "+1" op zwart
+    open('public/icon.svg', 'w').write(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">\n'
+        '  <rect width="64" height="64" rx="14" fill="#0E0E0E"/>\n'
+        '  <g transform="rotate(-4 32 32)">\n'
+        '    <rect x="10" y="11" width="44" height="42" rx="1" fill="#F2F2F0"/>\n'
+        '    <path d="M23 32h12M29 26v12" stroke="#0B0B0B" stroke-width="3.2" stroke-linecap="round"/>\n'
+        '    <path d="M39 25l3-2v16" fill="none" stroke="#0B0B0B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>\n'
+        '  </g>\n'
+        '</svg>\n')
     print('klaar')
