@@ -724,7 +724,7 @@ button.card:active { transform: scale(0.985); }
 .task-slot > .tape { z-index: 2; }
 .task-slot.flying { z-index: 20; }
 .task-note { margin: 0; min-height: 104px; padding-top: var(--s5); touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: grab; animation: pinIn 0.55s var(--ease) backwards; }
-.task-note .jar-text { font-size: 18px; line-height: 24px; }
+.task-note .jar-text { font-size: 18px; line-height: 24px; -webkit-hyphens: auto; hyphens: auto; }
 .task-note.minor { min-height: 92px; padding: var(--s4) var(--s3) var(--s3); }
 .task-note.minor .jar-text { font-size: 16px; line-height: 22px; }
 .task-note.pulling { transition: none; cursor: grabbing; z-index: 5; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 18px 28px -8px rgba(0, 0, 0, 0.9); }
@@ -734,6 +734,9 @@ button.card:active { transform: scale(0.985); }
 .tn-at { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .tn-cue { font-style: italic; line-height: 20px; }
 .tn-time.late .tn-at { color: #A3150B; }
+/* Opstaan: de tijd staat er, maar is geen knop; vegen gaat er dwars doorheen */
+.tn-time.static { pointer-events: none; }
+.tn-time.static .tn-at { text-decoration: none; }
 .tn-x { position: absolute; z-index: 2; top: 0; right: 0; width: 44px; height: 44px; display: grid; place-items: center; color: #595959; }
 .tn-x svg { width: 16px; height: 16px; }
 /* Wat er achterblijft: het plakband en een afgescheurd randje */
@@ -775,9 +778,9 @@ button.card:active { transform: scale(0.985); }
 .dagdeel-meta { font: var(--sm); color: var(--ink-3); }
 .dagdeel-body { display: flex; flex-direction: column; gap: var(--s3); }
 .dagdeel .task-head .h2 { font-size: 20px; line-height: 28px; }
-/* Het prikbord krijgt de volle breedte: de lijn loopt erachter langs */
-.dagdeel-body > .tasks .task-board, .dagdeel-body > .tasks .won-row, .dagdeel-body > .tasks .remind-card { position: relative; margin-left: -30px; }
+/* Het prikbord, de dagen en de kaarten blijven rechts van de daglijn, net als de rest van het dagdeel */
 .dagdeel .tasks .won-row { margin-top: var(--s3); }
+.dagdeel .won-dots { margin: 0; }
 
 /* Een moment op de lijn: gravure, wat het is en hoe lang, de vraag zelf */
 .moment { display: grid; grid-template-columns: 72px 1fr auto; align-items: center; gap: var(--s4); width: 100%; min-height: 96px; padding: var(--s3) var(--s4) var(--s3) var(--s3); border-radius: var(--r-lg); background: var(--paper-2); color: var(--ink); text-align: left; transition: transform 0.15s var(--ease), background-color 0.3s ease; }
@@ -924,18 +927,35 @@ button.moment:active { transform: scale(0.985); }
 .ob-truth .jar-text { font-size: 18px; line-height: 24px; }
 
 /* Opnemen en terugluisteren (het ochtendmoment) */
-.rec { display: flex; align-items: center; gap: var(--s4); padding: var(--s3); border-radius: var(--r-lg); background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--line); }
-.rec-btn { flex: none; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--ink); transition: transform 0.15s var(--ease); }
+.rec { display: flex; flex-direction: column; align-items: center; gap: var(--s3); padding: var(--s6) var(--s4) var(--s5); border-radius: var(--r-lg); background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--line); text-align: center; }
+.rec-btn { flex: none; display: grid; place-items: center; width: 88px; height: 88px; border-radius: 50%; background: var(--ink); transition: transform 0.15s var(--ease), background 0.2s ease; }
 .rec-btn:active { transform: scale(0.94); }
 .rec-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-.rec-dot { width: 22px; height: 22px; border-radius: 50%; background: #A3150B; transition: border-radius 0.2s ease, transform 0.2s ease; }
+.rec-btn svg { width: 32px; height: 32px; }
+.rec-dot { width: 30px; height: 30px; border-radius: 50%; background: #A3150B; transition: border-radius 0.2s ease, transform 0.2s ease; }
 .rec-btn.on { background: #A3150B; animation: recPulse 1.4s ease-in-out infinite; }
-.rec-btn.on .rec-dot { border-radius: 4px; background: #FFF; transform: scale(0.9); }
-@keyframes recPulse { 50% { box-shadow: 0 0 0 10px rgba(163, 21, 11, 0.25); } }
-.rec-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rec-btn.on .rec-dot { border-radius: 6px; background: #FFF; transform: scale(0.8); }
+@keyframes recPulse { 50% { box-shadow: 0 0 0 14px rgba(163, 21, 11, 0.22); } }
+.rec-txt { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
 .rec-label { font: 600 17px/24px var(--sans); color: var(--ink); }
-.rec-live { font: 600 17px/24px var(--sans); color: #FF8A80; font-variant-numeric: tabular-nums; }
+.rec-live { font: 600 28px/34px var(--sans); color: #FF8A80; font-variant-numeric: tabular-nums; }
 .rec-hint { font: var(--sm); color: var(--ink-3); }
+/* Ochtendmoment: twee stappen, altijd zichtbaar waar je bent */
+.mf-steps { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2); margin: 0; padding: 0; list-style: none; }
+.mf-steps li { display: flex; flex-direction: column; gap: 6px; font: var(--sm); color: var(--ink-3); }
+.mf-steps i { display: block; height: 3px; border-radius: 2px; background: var(--line); transition: background 0.3s ease; }
+.mf-steps li.on, .mf-steps li.done { color: var(--ink); }
+.mf-steps li.on i, .mf-steps li.done i { background: var(--ink); }
+.mf-steps li.on span { font-weight: 600; }
+.mf-moving { display: flex; flex-direction: column; align-items: center; gap: var(--s1); padding: var(--s6) var(--s4); border-radius: var(--r-lg); background: var(--paper-2); color: var(--ink); font: 600 17px/24px var(--sans); text-align: center; animation: fadeUp 0.3s var(--ease) both; }
+.mf-ok { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: var(--s2); border-radius: 50%; background: var(--ink); }
+.mf-next { font: var(--b); font-weight: 400; color: var(--ink-2); }
+.mf-links { display: flex; justify-content: space-between; align-items: center; }
+.mf-done { display: flex; flex-direction: column; align-items: stretch; gap: var(--s3); }
+.mf-done .link { align-self: flex-start; }
+.mf-saved { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4); border-radius: var(--r-lg); background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--line); font: var(--b); color: var(--ink-2); }
+.mf-saved b { color: var(--ink); font-weight: 600; }
+.mf-ok.sm { flex: none; width: 36px; height: 36px; margin: 0; }
 .play { display: grid; grid-template-columns: 36px 1fr; grid-template-rows: auto 4px; column-gap: var(--s3); row-gap: 6px; align-items: center; width: 100%; min-height: 56px; padding: var(--s2) var(--s4) var(--s2) var(--s2); border-radius: var(--r-lg); background: var(--paper-2); color: var(--ink); text-align: left; }
 .play-ico { grid-row: 1 / 3; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--ink); color: var(--paper); font-size: 12px; }
 .play-label { font: 600 15px/20px var(--sans); }
@@ -947,3 +967,52 @@ button.moment:active { transform: scale(0.985); }
 .ob-own .chip { flex: none; }
 /* Niveau in Reis: uitleg boven, de drie keuzes eronder */
 .row.tier-row { flex-direction: column; align-items: stretch; gap: var(--s3); padding-top: var(--s4); padding-bottom: var(--s4); }
+/* Onder de scène: de berg als balk, waar je staat, en hoe je klimt of zakt */
+.climb-cap { display: flex; flex-direction: column; gap: var(--s2); padding: var(--s4); }
+.climb-track { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin: 0 0 var(--s1); padding: 0; list-style: none; }
+.climb-track li { display: flex; flex-direction: column; gap: 6px; min-width: 0; font: 500 11px/14px var(--sans); color: var(--ink-3); text-align: center; }
+.climb-track i { display: block; height: 4px; border-radius: 2px; background: var(--line); }
+.climb-track li.past i { background: var(--ink-3); }
+.climb-track li.on i { background: var(--ink); box-shadow: 0 0 10px rgba(242, 242, 242, 0.45); }
+.climb-track li.on { color: var(--ink); font-weight: 700; }
+.climb-track span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.climb-where { margin: 0; font: var(--b); line-height: 1.5; color: var(--ink-2); }
+.climb-where b { color: var(--ink); font-weight: 600; }
+.climb-rule { margin: 0; font: var(--sm); line-height: 1.45; color: var(--ink-3); }
+.card .climb-cap { padding: var(--s4) 0 0; }
+.scene-small .climb-cap { padding: var(--s4); }
+.mirror-intro { margin: 0 0 var(--s4); max-width: 60ch; line-height: 1.45; }
+/* Eén stap tegelijk: wachtende post-its staan er wel, maar stil en grijs */
+.mnote.waiting { filter: grayscale(1); opacity: 0.55; }
+.mnote.waiting .mnote-truth { -webkit-line-clamp: 3; }
+.mnote-wait { margin-top: var(--s1); font: 600 12px/16px var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: #6B6B6B; }
+/* Vandaag · voortgang voorop: hoeveel grote taken, en je week. Compact, één kaart */
+.pulse { display: flex; flex-direction: column; gap: var(--s3); margin: 0 0 var(--s2); padding: var(--s4); border-radius: var(--r-lg); background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+.pulse-top { display: flex; align-items: baseline; gap: var(--s3); }
+.pulse-num { font: 400 40px/44px var(--title); color: var(--ink); font-variant-numeric: tabular-nums; }
+.pulse-of { color: var(--ink-3); }
+.pulse-lbl { font: var(--b); color: var(--ink-2); }
+.pulse-bar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.pulse-bar i { display: block; height: 100%; background: var(--ink); transform-origin: left; transition: transform 0.4s var(--ease); }
+.pulse .won-dots { margin: 0; }
+.pulse .won-dot { height: 40px; }
+/* Een dagdeel dat voorbij is: één regel */
+button.dagdeel-head { width: 100%; text-align: left; color: inherit; }
+.dagdeel.shut { padding-bottom: var(--s5); }
+.dagdeel.shut .dagdeel-head { margin-bottom: 0; }
+.dagdeel-chev { display: inline-grid; margin-left: var(--s1); vertical-align: -3px; transform: rotate(90deg); transition: transform 0.2s var(--ease); }
+.dagdeel-chev.open { transform: rotate(-90deg); }
+.dagdeel-chev svg { width: 14px; height: 14px; }
+/* Na je dag: apart, met een lijn ertussen */
+.after-day { margin-top: var(--s5); padding-top: var(--s6); border-top: 1px solid var(--line); }
+.after-day > :last-child { margin-bottom: 0; }
+.morning-quote { margin: 0; font: var(--t-s); font-size: 18px; line-height: 26px; color: var(--ink); }
+.morning-quote span { font: var(--sm); color: var(--ink-3); }
+/* Doel als één groot getal met een paar woorden */
+.goal-num { font: 400 48px/52px var(--title); color: var(--ink); font-variant-numeric: tabular-nums; }
+.goal-lbl { font: var(--b); color: var(--ink-2); }
+.goal-lbl b { color: var(--ink); font-weight: 600; }
+/* Onder de scène: je plek groot, de berg als balk */
+.climb-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
+.climb-place { flex: none; white-space: nowrap; font: 400 26px/32px var(--title); color: var(--ink); }
+.climb-hint { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: var(--sm); color: var(--ink-3); text-align: right; }

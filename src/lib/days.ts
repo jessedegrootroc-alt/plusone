@@ -146,6 +146,13 @@ export const doesItAlone = (s: State, h: Habit, today = todayISO()) => {
  * "18 van de 21 dagen gewonnen": de laatste 21 dagen sinds je begon, tot en met gisteren.
  * Vandaag telt pas mee als hij al gewonnen is (hij is nog niet voorbij).
  */
+/**
+ * Waar je staat op de berg, van -100 (Inferno) tot 100 (Paradiso): je deel gewonnen dagen,
+ * maar pas ten volle na drie weken. Eén goede dag maakt je geen ideale zelf, één slechte geen schim.
+ */
+export const climbOf = (st: { won: number; counted: number }) =>
+  st.counted ? (-100 + (200 * st.won) / st.counted) * Math.min(1, st.counted / 21) : 0
+
 export const wonStats = (s: State, today = todayISO(), span = 21) => {
   let won = 0
   let counted = 0

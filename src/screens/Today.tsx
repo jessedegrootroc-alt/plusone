@@ -8,14 +8,16 @@ import { MorningFlow, inMorningWindow, morningDone } from '../components/Morning
 import { Playback } from '../components/Recorder'
 import { clipKey } from '../lib/voice'
 import { Daypart, Moment, PARTS, partNow, type Part } from '../components/Day'
-import { NoteSheet } from '../components/MirrorNotes'
+import { FocusSheet, NoteSheet } from '../components/MirrorNotes'
+import { activeNote, leftLabel, nextStep } from '../lib/focus'
 import { HabitRow, Icon, Sheet, Toast, useTween } from '../components/ui'
 import { pullingObjects, strongestVirtueObject } from '../data/objects'
 import { SINS } from '../data/sins'
 import { WEEKDAYS, dayNumber, inDip, isSimple, tierOf, weakDay, type Tier } from '../lib/tier'
-import { bigTasksOn, canSave, dayResult, doesItAlone, freshStart, isComeback, isSaved, lostYesterday, missedOn, missedYesterday, otherTasksOn, reserveBack, reservesLeft, reservesPerMonth, scheduleLabel, wonStats } from '../lib/days'
+import { ClimbCaption } from '../components/Climb'
+import { bigTasksOn, canSave, climbOf, dayResult, doesItAlone, freshStart, isComeback, isSaved, lostYesterday, missedOn, missedYesterday, otherTasksOn, reserveBack, reservesLeft, reservesPerMonth, scheduleLabel, wonStats } from '../lib/days'
 import { earnedFeatures } from '../lib/emblems'
-import { countdownLabel, goalTitle, mainGoal } from '../lib/goal'
+import { countdownLabel, daysLeft, goalTitle, mainGoal } from '../lib/goal'
 import { computeSeries, isDone } from '../lib/score'
 import { isWakeHabit, setWakeTime, shortTime, wakeTime } from '../lib/wake'
 import { addDays, buzz, setValue, todayISO, uid, update, useStore, type Habit } from '../lib/store'
@@ -56,12 +58,12 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
   const [torn, setTorn] = useState<{ h: Habit; n: number } | null>(null)
   const [hardFor, setHardFor] = useState<Habit | null>(null)
   const clearTorn = useCallback(() => setTorn(null), [])
-  const [sheet, setSheet] = useState<null | 'morning' | 'witness'>(null)
+  const [sheet, setSheet] = useState<null | 'morning' | 'witness' | 'mirror' | 'mirror-edit'>(null)
 
   const series = useMemo(() => computeSeries(s), [s])
   const stats = useMemo(() => wonStats(s, today), [s, today])
   // De figuur klimt mee met je gewonnen dagen: hoe groter het deel, hoe hoger op de berg. Geen punten erbij.
-  const climb = stats.counted ? -100 + 200 * (stats.won / stats.counted) : 0
+  const climb = climbOf(stats)
   const shown = useTween(climb)
   const pulling = useMemo(() => pullingObjects(s), [s])
   const goodObject = useMemo(() => strongestVirtueObject(s), [s])
@@ -126,6 +128,9 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
     if (x) { x.remindAsked = true; if (!keep) x.remind = false }
   })
   const goal = mainGoal(s)
+  // Je ene stap van de spiegel: hij staat hier, zodat je hem niet in Reis hoeft te zoeken
+  const mirrorNote = date === today ? activeNote(s) : undefined
+  const mirrorStep = mirrorNote ? nextStep(mirrorNote, today) : null
   const week = Array.from({ length: 7 }).map((_, i) => addDays(today, i - 6))
   const removeRock = (id: string) => update((d) => {
     const l = d.logs[date]
@@ -152,6 +157,17 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
   const wk = date === today && !simple ? witnessWeek(s, today) : null
   const witness = s.settings?.witness
   const witnessMoment = wk && <Moment art="item-brief" kind="Getuige · 1 min" title={witness ? `Je week voor ${witness}` : 'Wie mag je week zien?'} sub="Wie gezien wordt, haakt minder snel af." onClick={() => setSheet('witness')} />
+  // Je week als zeven rondjes: gewonnen, gemist of gered. Tik een dag om terug te kijken.
+  const weekDots = (
+    <div className="won-dots" aria-label={`${stats.won} van de ${stats.counted} dagen gewonnen`}>
+      {week.map((d) => {
+        // Vandaag is nog niet voorbij: pas gewonnen, nooit al verloren
+        const r = d === today && dayResult(s, d) === false ? null : dayResult(s, d)
+        const sv = r === null && isSaved(s, d)
+        return <button key={d} className={`won-dot ${r === true ? 'won' : r === false ? 'lost' : sv ? 'saved' : ''} ${d === date ? 'sel' : ''}`} disabled={d < s.createdAt} onClick={() => setDate(d)} aria-label={new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' }) + (r === true ? ', gewonnen' : r === false ? ', verloren' : sv ? ', gered met een reservedag' : '')}>{new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short' }).slice(0, 2)}</button>
+      })}
+    </div>
+  )
   const shortDate = new Date(date + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
@@ -184,65 +200,22 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
         <div className="miss-bar" role="alert">{lostLine(tier, twoInRow, left === 0)}</div>
       ) : null}
 
-      {/* Eén duwtje tegelijk, op volgorde van belang: je getuige na een misser, wat er voor een beginner bijkomt,
-          je zwakke dag, en de dip van week 3 tot 8. Nooit allemaal tegelijk: te veel tekst leest niemand. */}
-      {tellWitness ? (
-        <div className="fresh-line">
-          <p><b>Zeg het tegen {tellWitness}.</b> Een misser die je hardop zegt, herhaal je minder snel.</p>
-          <button className="link" onClick={sendToWitness}>Stuur</button>
-        </div>
-      ) : unlock ? (
-        <div className="fresh-line">
-          <p><b>Twee weken volgehouden.</b> Nieuw in Dag afsluiten: je tank en je grens van de week.</p>
-          <button className="link" onClick={() => update((d) => { d.asked = { ...d.asked, unlocked: true } })}>Oké</button>
-        </div>
-      ) : weakToday ? (
-        <p className="plan-line"><b>{WEEKDAYS[weak!][0].toUpperCase() + WEEKDAYS[weak!].slice(1)} is je zwakke dag.</b> Doe je zwaarste taak vóór 12:00.</p>
-      ) : dip ? (
-        <div className="fresh-line">
-          <p><b>Week {Math.ceil(dayN / 7)}: het zwaarste stuk.</b> De zin van het begin is weg, de gewoonte is er nog niet. Normaal, geen bewijs dat je faalt.</p>
-          <button className="link" onClick={() => update((d) => { d.asked = { ...d.asked, dip: mondayOf(today) } })}>Oké</button>
-        </div>
-      ) : null}
-
-      {/* Een verse start */}
-      {fresh && (
-        <div className="fresh-line">
-          <p>{fresh === 'month' ? <><b>Nieuwe maand.</b> {reservesPerMonth(s) ? `${reservesPerMonth(s)} nieuwe reservedagen. Het doel: er geen één nodig hebben.` : 'Geen reserves. Elke dag telt.'}</> : <><b>Nieuwe week.</b> Vorige week is geschiedenis. Deze schrijf je nu.</>}</p>
-          <button className="link" onClick={() => update((d) => { d.asked = { ...d.asked, fresh: today } })}>Oké</button>
-        </div>
+      {/* Voortgang voorop (zoals Dayrise en gewoonte-apps met een weekstrip): hoeveel grote taken, en je week. Direct daaronder je dag. */}
+      {date === today && (
+        <section className="pulse" aria-label="Voortgang vandaag">
+          <div className="pulse-top">
+            <span className="pulse-num">{bigDone}<span className="pulse-of"> / {big.length}</span></span>
+            <span className="pulse-lbl">{big.length === 1 ? 'grote taak' : 'grote taken'} vandaag</span>
+          </div>
+          <div className="pulse-bar" aria-hidden="true"><i style={{ transform: `scaleX(${big.length ? bigDone / big.length : 0})` }} /></div>
+          {weekDots}
+        </section>
       )}
-
-      {/* 3 · Het doel, met aftelling */}
-      {date === today && (goal ? (
-        <button className="goal-hero" onClick={() => setGoalSheet(true)}>
-          <span className="goal-title">{goalTitle(goal)}</span>
-          <span className="goal-count">{goal.due ? countdownLabel(goal.due, today) : 'Zet er een datum bij'}</span>
-          {!(goal.obstacle && goal.ifThen) && <span className="goal-plan">Wat gaat je tegenhouden? Bedenk nu wat je dan doet.</span>}
-        </button>
-      ) : (
-        <button className="goal-hero empty" onClick={() => setGoalSheet(true)}>
-          <span className="goal-title">Kies je doel</span>
-          <span className="goal-count">Met een datum. Dan telt de app af.</span>
-        </button>
-      ))}
-
-      {/* Het obstakel bij je doel, met wat je dan doet (WOOP) */}
-      {date === today && goal?.obstacle && goal.ifThen && <p className="plan-line"><b>Als {goal.obstacle.replace(/^als\s+/i, '')}:</b> {goal.ifThen}</p>}
-
-      {/* 4 · Je waarom, elke ochtend */}
-      {date === today && (morningDone(log?.morning) ? (
-        <div className="morning-line">
-          {log?.morning?.strong && <p><b>Vandaag:</b> {log.morning.strong}</p>}
-          {log?.morning?.strongClip && <Playback clip={clipKey(today, 'strong')} label="Je sterke versie van vanochtend" />}
-        </div>
-      ) : s.why && <p className="why-line">{s.why}</p>)}
-      {plan && date === today && <p className="plan-line"><b>Plan van gisteren:</b> {plan}</p>}
 
       {/* De dag: ochtend, overdag, avond. Elk dagdeel vraagt één ding; de taken staan overdag. */}
       {date === today ? (
         <div className="dag">
-          <Daypart part="ochtend" label="Ochtend" range={`${shortTime(wake)} – 12:00`} when={whenOf('ochtend')} meta={m?.strong ? 'Gedaan' : undefined}>
+          <Daypart part="ochtend" label="Ochtend" range={`${shortTime(wake)} – 12:00`} when={whenOf('ochtend')} meta={morningDone(m) ? 'Gedaan' : m?.skipped ? 'Overgeslagen' : whenOf('ochtend') === 'past' ? '1 open' : undefined} collapsible={whenOf('ochtend') === 'past'}>
             {morningDone(m) ? (
               <Moment art="item-dageraad" kind="Ritueel" title="Ochtendmoment" sub="Gedaan. Je sterke versie staat bovenaan." done onClick={() => setSheet('morning')} />
             ) : (
@@ -255,6 +228,7 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
             <section className="tasks">
         <TaskNotes
           title={date === today ? 'Je taken' : 'Die dag'}
+          count={date !== today}
           bigDone={bigDone}
           bigTotal={big.length}
           items={[
@@ -274,17 +248,6 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
           onTime={setTimeFor}
           onRemove={(h) => removeRock(h.id)}
         />
-        <div className="won-row">
-          <div className="won-dots" aria-label={`${stats.won} van de ${stats.counted} dagen gewonnen`}>
-            {week.map((d) => {
-              // Vandaag is nog niet voorbij: pas gewonnen, nooit al verloren
-              const r = d === today && dayResult(s, d) === false ? null : dayResult(s, d)
-              const sv = r === null && isSaved(s, d)
-              return <button key={d} className={`won-dot ${r === true ? 'won' : r === false ? 'lost' : sv ? 'saved' : ''} ${d === date ? 'sel' : ''}`} disabled={d < s.createdAt} onClick={() => setDate(d)} aria-label={new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' }) + (r === true ? ', gewonnen' : r === false ? ', verloren' : sv ? ', gered met een reservedag' : '')}>{new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short' }).slice(0, 2)}</button>
-            })}
-          </div>
-          <div className="small">{stats.won} van de {stats.counted} dagen gewonnen · {s.jar.length} {s.jar.length === 1 ? 'overwinning' : 'overwinningen'}</div>
-        </div>
         {selfMade && (
           <div className="card remind-card">
             <p><b>{selfMade.name}</b>: drie weken bijna elke dag. Je hebt geen herinnering meer nodig om dit te doen. Uitzetten?</p>
@@ -296,12 +259,15 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
         )}
       </section>
 
+            {mirrorNote && mirrorStep?.step && (
+              <Moment art="item-lantaarn" kind={`Spiegel · ${leftLabel(mirrorStep.left)}`} title={mirrorStep.step.text} sub={mirrorNote.text} onClick={() => setSheet('mirror')} />
+            )}
           </Daypart>
           <Daypart part="avond" label="Avond" range={`18:00 – ${shortTime(bed)}`} when={whenOf('avond')}>
             {sealed ? (
-              <Moment art="item-handspiegel" kind="Spiegel" title="Dag afgesloten" sub={dayResult(s, today) === true ? 'Gewonnen. Morgen weer.' : 'Eerlijk teruggekeken. Morgen weer.'} done onClick={() => openMirror(today)} />
+              <Moment art="item-handspiegel" kind="Terugkijken" title="Dag afgesloten" sub={dayResult(s, today) === true ? 'Gewonnen. Morgen weer.' : 'Eerlijk teruggekeken. Morgen weer.'} done onClick={() => openMirror(today)} />
             ) : (
-              <Moment art="item-handspiegel" kind="Spiegel · 2 min" title="Heb je gedaan wat je zei?" sub="Dag afsluiten" now={part === 'avond'} onClick={() => openMirror(today)} />
+              <Moment art="item-handspiegel" kind="Terugkijken · 2 min" title="Heb je gedaan wat je zei?" sub="Dag afsluiten" now={part === 'avond'} onClick={() => openMirror(today)} />
             )}
             {wk && new Date().getDay() !== 1 && witnessMoment}
           </Daypart>
@@ -355,6 +321,75 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
         </>
       )}
 
+      {/* Na je dag, apart: je doel, je waarom en hooguit één duwtje */}
+      {date === today && (
+        <div className="after-day">
+      {/* Eén duwtje tegelijk, op volgorde van belang: je getuige na een misser, wat er voor een beginner bijkomt,
+          je zwakke dag, en de dip van week 3 tot 8. Nooit allemaal tegelijk: te veel tekst leest niemand. */}
+      {tellWitness ? (
+        <div className="fresh-line">
+          <p><b>Zeg het tegen {tellWitness}.</b> Een misser die je hardop zegt, herhaal je minder snel.</p>
+          <button className="link" onClick={sendToWitness}>Stuur</button>
+        </div>
+      ) : unlock ? (
+        <div className="fresh-line">
+          <p><b>Twee weken volgehouden.</b> Nieuw in Dag afsluiten: je tank en je grens van de week.</p>
+          <button className="link" onClick={() => update((d) => { d.asked = { ...d.asked, unlocked: true } })}>Oké</button>
+        </div>
+      ) : weakToday ? (
+        <p className="plan-line"><b>{WEEKDAYS[weak!][0].toUpperCase() + WEEKDAYS[weak!].slice(1)} is je zwakke dag.</b> Doe je zwaarste taak vóór 12:00.</p>
+      ) : dip ? (
+        <div className="fresh-line">
+          <p><b>Week {Math.ceil(dayN / 7)}: het zwaarste stuk.</b> Zwaar voelen is normaal. Ga door.</p>
+          <button className="link" onClick={() => update((d) => { d.asked = { ...d.asked, dip: mondayOf(today) } })}>Oké</button>
+        </div>
+      ) : null}
+
+      {/* Een verse start */}
+      {fresh && (
+        <div className="fresh-line">
+          <p>{fresh === 'month' ? <><b>Nieuwe maand.</b> {reservesPerMonth(s) ? `${reservesPerMonth(s)} nieuwe reservedagen. Het doel: er geen één nodig hebben.` : 'Geen reserves. Elke dag telt.'}</> : <><b>Nieuwe week.</b> Vorige week is geschiedenis. Deze schrijf je nu.</>}</p>
+          <button className="link" onClick={() => update((d) => { d.asked = { ...d.asked, fresh: today } })}>Oké</button>
+        </div>
+      )}
+
+      {/* 3 · Het doel, met aftelling */}
+      {date === today && (goal ? (
+        <button className="goal-hero" onClick={() => setGoalSheet(true)}>
+          {/* Eén groot getal met een paar woorden (zoals Duolingo en Brilliant hun reeks tonen) */}
+          {goal.due && daysLeft(goal.due, today) > 0 ? (
+            <>
+              <span className="goal-num">{daysLeft(goal.due, today)}</span>
+              <span className="goal-lbl">{daysLeft(goal.due, today) === 1 ? 'dag' : 'dagen'} tot je <b>{goalTitle(goal)}</b></span>
+            </>
+          ) : (
+            <>
+              <span className="goal-title">{goalTitle(goal)}</span>
+              <span className="goal-count">{goal.due ? countdownLabel(goal.due, today) : 'Zet er een datum bij'}</span>
+            </>
+          )}
+          {!(goal.obstacle && goal.ifThen) && <span className="goal-plan">Wat gaat je tegenhouden? Bedenk nu wat je dan doet.</span>}
+        </button>
+      ) : (
+        <button className="goal-hero empty" onClick={() => setGoalSheet(true)}>
+          <span className="goal-title">Kies je doel</span>
+          <span className="goal-count">Met een datum. Dan telt de app af.</span>
+        </button>
+      ))}
+
+
+      {/* 4 · Je waarom, elke ochtend */}
+      {date === today && (morningDone(log?.morning) ? (
+        <div className="morning-line">
+          {log?.morning?.strong && <p className="morning-quote">“{log.morning.strong}” <span>zei je vanochtend</span></p>}
+          {log?.morning?.strongClip && <Playback clip={clipKey(today, 'strong')} label="Je sterke versie van vanochtend" />}
+        </div>
+      ) : s.why && <p className="why-line">{s.why}</p>)}
+      {plan && date === today && <p className="plan-line"><b>Plan van gisteren:</b> {plan}</p>}
+
+        </div>
+      )}
+
       {/* Eén keer: het nieuwe schema, of taak 4 */}
       {date === today && <section className="section"><Offers /></section>}
 
@@ -384,6 +419,7 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
       {/* 7 · Het beeld: de figuur klimt mee met je gewonnen dagen */}
       <div className="card scene-small" style={{ padding: 0, overflow: 'hidden' }}>
         <Scene balance={shown} onTap={() => openMirror(date)} strong={bySin(-1)} features={earnedFeatures(s)} objects={pulling} virtueObject={goodObject} weak={bySin(1)} />
+        <ClimbCaption balance={climb} />
       </div>
 
       {/* Dag afsluiten voor een eerdere dag (vandaag staat hij in de avond) */}
@@ -396,6 +432,8 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
       </div>}
 
       {sheet === 'morning' && <Sheet onClose={() => setSheet(null)}><MorningFlow s={s} onDone={() => setSheet(null)} /></Sheet>}
+      {sheet === 'mirror' && mirrorNote && <FocusSheet n={mirrorNote} onEdit={() => setSheet('mirror-edit')} onClose={() => setSheet(null)} />}
+      {sheet === 'mirror-edit' && mirrorNote && <NoteSheet note={mirrorNote} onClose={() => setSheet(null)} />}
       {sheet === 'witness' && <Sheet onClose={() => setSheet(null)}><WitnessBody onDone={() => setSheet(null)} /></Sheet>}
       {timeFor && <TimeSheet h={timeFor} date={date} onClose={() => setTimeFor(null)} />}
       {goalSheet && <NoteSheet note={goal} onClose={() => setGoalSheet(false)} />}

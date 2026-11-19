@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import type { FeatureId, HabitTemplate, HabitType } from '../data/catalog'
 import type { AreaId, Size } from '../data/growth'
-import type { Domain } from '../data/ladders'
+import { upgradeNotes, type Domain } from '../data/ladders'
 import type { SinId } from '../data/sins'
 
 export interface Habit {
@@ -114,6 +114,8 @@ export interface MirrorNote {
   /** Wat je het meest tegenhoudt, en wat je dan doet (WOOP: je doel naast je obstakel, met een als-dan-plan). */
   obstacle?: string
   ifThen?: string
+  /** Bij een post-it uit de start van de app: het antwoord waar zijn vaste ladder bij hoort (bijv. 'financieel:groei'). */
+  answer?: string
   /** De ladder naar het doel: elke stap een eigen post-it met een termijn, steeds iets ongemakkelijker. */
   steps?: { text: string; days?: number; startedAt?: string; doneAt?: string }[]
   createdAt: string
@@ -168,6 +170,8 @@ export interface State {
   notes: MirrorNote[]
   /** Het hoofddoel dat bovenaan Vandaag staat, met aftelling (een post-it). */
   mainGoalId?: string
+  /** De post-it waar je nu aan werkt: één stap tegelijk (zie lib/focus). */
+  focusNote?: string
   settings?: Settings
   /** Dingen die de app één keer vraagt, zodat hij het niet blijft vragen. */
   asked?: { schema?: boolean; task4?: boolean; notify?: boolean; fresh?: string; witness?: string; dip?: string; unlocked?: boolean }
@@ -231,7 +235,11 @@ const fresh = (): State => ({
 const load = (): State => {
   try {
     const raw = localStorage.getItem(KEY)
-    if (raw) return { ...fresh(), ...JSON.parse(raw) }
+    if (raw) {
+      const s: State = { ...fresh(), ...JSON.parse(raw) }
+      // Post-its uit een eerdere start van de app krijgen eenmalig de vaste ladder van hun antwoord
+      return { ...s, notes: upgradeNotes(s.notes ?? [], todayISO()) }
+    }
   } catch {
     /* geen opslag beschikbaar */
   }

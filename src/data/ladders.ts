@@ -371,19 +371,8 @@ const daysFor = (t: string, i: number, total: number, prev: { kilo: number; amou
 }
 
 /** De ladder met een termijn per stap. Je doel gaat voor; staat daar geen getal in, dan je harde waarheid. */
-export const planFor = (domain: Domain, goal: string, truth = ''): { text: string; days: number }[] => {
-  const steps = (goal.trim() && numericLadder(goal)) || ladderFor(domain, goal.trim() ? `${goal}. ${truth}` : truth)
-  const prev = { kilo: 0, amount: 0, count: 1 }
-  return steps.map((text, i) => {
-    const days = daysFor(text, i, steps.length, prev)
-    if (i > 0) {
-      prev.kilo = kiloIn(text) ?? prev.kilo
-      prev.amount = amountIn(text) ?? prev.amount
-      prev.count = countIn(text)?.n ?? prev.count
-    }
-    return { text, days }
-  })
-}
+export const planFor = (domain: Domain, goal: string, truth = ''): { text: string; days: number }[] =>
+  withDays((goal.trim() && numericLadder(goal)) || ladderFor(domain, goal.trim() ? `${goal}. ${truth}` : truth))
 
 /** Een termijn in woorden: vandaag, binnen 3 dagen, binnen 2 weken. */
 export const termLabel = (days: number) =>
@@ -400,3 +389,174 @@ const HINTS: [SinId, RegExp][] = [
   ['sloth', /trainen|sport|bedrijf|bel|uitstel|lui|opstaan|bed|werk|lezen|leren/i],
 ]
 export const guessSin = (text: string, domain?: Domain): SinId | undefined => HINTS.find(([, re]) => re.test(text))?.[0] ?? (domain ? DOMAIN_BY_ID[domain].sin : undefined)
+
+// ── Vaste ladders per antwoord uit de start van de app ──
+// Elk antwoord krijgt een ladder die bij precies dat probleem hoort, opgesteld zoals de expert van dat deel het zou doen:
+// fysiek een leefstijlarts of Head of Performance, mentaal een prestatiepsycholoog, financieel een Register Financial Planner,
+// emotioneel een psychotherapeut. Geen gok meer op losse woorden: "Ik verdien te weinig" krijgt een inkomensladder, geen schuldenlijst.
+
+export type AnswerKey = `${'fysiek' | 'mentaal' | 'financieel' | 'emotioneel'}:${string}`
+
+export const ANSWERS: Record<AnswerKey, { truth: string; steps: string[] }> = {
+  // Fysiek · leefstijlarts / Head of Performance: eerst meten, dan geleidelijk opbouwen, herstel telt mee
+  'fysiek:beweeg': { truth: 'Je lichaam doet bijna niets. Dat verandert vandaag.', steps: [
+    'Vandaag 20 minuten stevig wandelen, telefoon in je zak',
+    'Een week elke dag 7.000 stappen',
+    'Twee weken drie keer per week 30 minuten, zo snel dat praten lastig wordt',
+    'Een maand lang drie keer per week conditie en twee keer kracht',
+    '5 km lopen of 20 km fietsen zonder te stoppen',
+    'Drie maanden minstens 150 minuten per week bewegen, geen week overslaan',
+  ] },
+  'fysiek:zwaar': { truth: 'Je bent te zwaar, en je weet het.', steps: [
+    'Vandaag wegen en je buikomvang meten, en beide opschrijven',
+    'Een week alles opschrijven wat je eet en drinkt, zonder iets te veranderen',
+    'Twee weken bij elke maaltijd eerst groente en eiwit, doordeweeks geen alcohol',
+    'Een maand elke dag 8.000 stappen en twee keer per week krachttraining',
+    'Vijf procent van je gewicht eraf, rustig: ongeveer een halve kilo per week',
+    'Drie maanden je nieuwe gewicht vasthouden',
+  ] },
+  'fysiek:zacht': { truth: 'Je traint, maar je zoekt nooit je grens op.', steps: [
+    'Vandaag je niveau vastleggen: je langste training, je zwaarste set en je rustpols',
+    'Een schema van acht weken: één zware training per week, de rest rustig',
+    'Twee weken de zware training écht zwaar en de rustige écht rustig',
+    'Vier weken elke week 5 à 10 procent meer, daarna een lichtere week',
+    'Een test op je grens: wedstrijd, tijdrit of zwaarste set, met iemand erbij',
+    'Een nieuw doel boven je oude grens, met een nieuw schema',
+  ] },
+  'fysiek:slaap': { truth: 'Je slaapt slecht en betaalt er elke dag voor.', steps: [
+    'Vanavond je telefoon buiten de slaapkamer',
+    'Een week elke dag op dezelfde tijd op, ook in het weekend',
+    'Twee weken acht uur voor je opstaat in bed, schermen een uur ervoor uit',
+    'Twee weken na 14:00 geen koffie of energiedrank meer',
+    'Een maand gemiddeld zeven uur of meer slaap, bijgehouden',
+    'Drie maanden vaste slaaptijden, ook na een feest',
+  ] },
+  // Mentaal · prestatiepsycholoog: patroon zien, gedrag concreet maken (wat, wanneer, waar), dan oefenen onder druk
+  'mentaal:opgeven': { truth: 'Je stopt op het moment dat het pijn gaat doen.', steps: [
+    'Opschrijven wanneer je de laatste drie keer stopte, en wat je jezelf toen zei',
+    'Vandaag één zwaar ding afmaken, ook als het lelijk wordt',
+    'Een week lang: wil je stoppen, dan nog tien minuten door',
+    'Twee weken elke dag iets wat je liever overslaat, en het afmaken',
+    'Een uitdaging van 30 dagen, zonder één dag over te slaan',
+    'Iets afmaken waar je eerder op opgaf',
+  ] },
+  'mentaal:uitstel': { truth: 'Je stelt uit wat het meest telt.', steps: [
+    'Vanavond je belangrijkste taak van morgen opschrijven, met tijd en plek',
+    'Vijf dagen het zwaarste ding als eerste, vóór je mail en je telefoon',
+    'Twee weken elke dag 90 minuten diep werk, telefoon in een andere kamer',
+    'Een project afmaken dat al maanden half af ligt',
+    'Een maand zonder één dag je belangrijkste taak over te slaan',
+  ] },
+  'mentaal:twijfel': { truth: 'Je gelooft je twijfel meer dan je bewijs.', steps: [
+    'Drie dingen opschrijven die je lukten terwijl je eraan twijfelde',
+    'Vandaag één klein ding doen waar je aan twijfelt, en kijken wat er gebeurt',
+    'Een week elke avond één bewijs in je koektrommel',
+    'Twee weken: zegt je hoofd "dat kan ik niet", schrijf dan het tegenbewijs op',
+    'Iets doen waarbij je kunt falen, voor publiek',
+    'Het ding doen waar je het meest aan twijfelde',
+  ] },
+  'mentaal:scherm': { truth: 'Je telefoon krijgt meer van je aandacht dan jij zelf.', steps: [
+    'Vandaag je schermtijd opzoeken en opschrijven',
+    'Social media van je beginscherm, en meldingen uit behalve bellen',
+    'Een week het eerste en het laatste uur van de dag zonder telefoon',
+    'Een volledige dag zonder social media',
+    'Een maand onder de twee uur schermtijd per dag',
+  ] },
+  // Financieel · Register Financial Planner: eerst weten waar je staat, dan het lek dichten, dan opbouwen
+  'financieel:uitgeven': { truth: 'Er gaat meer uit dan er binnenkomt.', steps: [
+    'Vandaag je inkomen en al je vaste lasten op één lijst',
+    'Een maand elke uitgave bijhouden, ook de kleine',
+    'Twee abonnementen of vaste lasten opzeggen',
+    'Een budget per maand maken, en één maand eronder blijven',
+    'Drie maanden achter elkaar meer binnen dan eruit',
+  ] },
+  'financieel:schuld': { truth: 'Je schulden nemen je beslissingen.', steps: [
+    'Vandaag al je schulden op één lijst, met bedrag, rente en maandbedrag',
+    'Achter met betalen? Bel je schuldeisers of de schuldhulp van je gemeente',
+    'Een maand elke uitgave bijhouden, en één vaste last schrappen',
+    'De kleinste schuld helemaal aflossen',
+    'Zes maanden elke maand een vast bedrag extra aflossen',
+    'Schuldenvrij',
+  ] },
+  'financieel:sparen': { truth: 'Je hebt geen buffer. Eén tegenvaller en je staat klem.', steps: [
+    'Vandaag een aparte spaarrekening openen',
+    'Een automatische overboeking op de dag dat je inkomen binnenkomt, hoe klein ook',
+    'Een maand niets kopen wat je niet nodig hebt',
+    'Je eerste 1.000 euro buffer',
+    'Drie maanden vaste lasten als buffer',
+  ] },
+  'financieel:groei': { truth: 'Je verdient minder dan je waard bent.', steps: [
+    'Opzoeken wat mensen met jouw werk en ervaring verdienen',
+    'Je resultaten van het afgelopen jaar opschrijven, in cijfers',
+    'Kiezen wat je wilt: opslag, een andere baan of iets ernaast, met een bedrag',
+    'Het gesprek voeren met dat bedrag, of drie sollicitaties versturen',
+    'Dertig dagen een vaardigheid leren die je meer waard maakt',
+    'Je inkomen minstens tien procent omhoog',
+  ] },
+  // Emotioneel · psychotherapeut: eerst voelen en benoemen, dan delen, en hulp vragen is een stap, geen falen
+  'emotioneel:verdoof': { truth: 'Je verdooft wat je niet wilt voelen.', steps: [
+    'Opschrijven wanneer je deze week verdoofde, en wat je vlak daarvoor voelde',
+    'Een week lang: komt de drang, wacht dan tien minuten en benoem wat je voelt',
+    'Eén avond per week helemaal zonder je verdoving',
+    'Twee weken iets anders in de plaats: wandelen, iemand bellen of opschrijven',
+    'Praten over wat eronder zit: met een vriend, je huisarts of een psycholoog',
+    'Een maand zonder dat het je avonden bepaalt',
+  ] },
+  'emotioneel:pijn': { truth: 'Je laat je verleden je toekomst kiezen.', steps: [
+    'Tien minuten opschrijven wat je dwarszit, zonder te stoppen',
+    'Een week elke avond vijf minuten opschrijven wat er bovenkomt',
+    'Een brief schrijven aan wie je pijn deed, die je niet verstuurt',
+    'Het aan één persoon vertellen die je vertrouwt',
+    'Blijft het je dagen bepalen? Hulp vragen bij je huisarts of een psycholoog',
+    'Opschrijven wat je eraan overhoudt, en wat je loslaat',
+  ] },
+  'emotioneel:alleen': { truth: 'Niemand weet hoe het echt met je gaat.', steps: [
+    'Drie mensen opschrijven bij wie je eerlijk zou kunnen zijn',
+    'Vandaag één van hen een bericht sturen, gewoon om te vragen hoe het gaat',
+    'Deze week iemand zien, niet alleen appen',
+    'Iemand eerlijk vertellen hoe het echt met je gaat',
+    'Een maand lang elke week een vaste afspraak met iemand',
+    'Iets doen in een groep: een sportclub, een team of vrijwilligerswerk',
+  ] },
+  'emotioneel:boos': { truth: 'Je woede beslist voordat jij dat doet.', steps: [
+    'Opschrijven wanneer je laatst ontplofte, en wat daar vlak voor gebeurde',
+    'Een week lang: word je boos, tel dan tot tien en adem één keer lang uit',
+    'Je drie vaste triggers opschrijven, en wat je dan voortaan doet',
+    'Sorry zeggen tegen iemand die je woede over zich heen kreeg',
+    'Twee weken elke avond terugkijken: waar werd ik boos, en wat had ik nodig?',
+    'Een maand zonder uitbarsting waar je spijt van hebt',
+  ] },
+}
+
+/** Termijnen bij een vaste lijst stappen, net zoals bij een ladder uit je eigen woorden. */
+const withDays = (steps: string[]) => {
+  const prev = { kilo: 0, amount: 0, count: 1 }
+  return steps.map((text, i) => {
+    const days = daysFor(text, i, steps.length, prev)
+    if (i > 0) {
+      prev.kilo = kiloIn(text) ?? prev.kilo
+      prev.amount = amountIn(text) ?? prev.amount
+      prev.count = countIn(text)?.n ?? prev.count
+    }
+    return { text, days }
+  })
+}
+
+/** De ladder bij een antwoord uit de start van de app. */
+export const answerPlan = (key: AnswerKey) => withDays(ANSWERS[key].steps)
+
+type NoteLike = { text: string; answer?: string; steps?: { text: string; days?: number; startedAt?: string; doneAt?: string }[] }
+
+/**
+ * Eenmalig: post-its uit een eerdere start van de app krijgen de vaste ladder van hun antwoord.
+ * Alleen als er nog geen stap van is afgevinkt; wie al op weg is, houdt zijn ladder.
+ */
+export const upgradeNotes = <N extends NoteLike>(notes: N[], today: string): N[] =>
+  notes.map((n) => {
+    if (n.answer) return n
+    const key = (Object.keys(ANSWERS) as AnswerKey[]).find((k) => ANSWERS[k].truth === n.text)
+    if (!key) return n
+    if (n.steps?.some((st) => st.doneAt)) return { ...n, answer: key }
+    const startedAt = n.steps?.[0]?.startedAt ?? today
+    return { ...n, answer: key, steps: answerPlan(key).map((st, k) => ({ ...st, startedAt: k === 0 ? startedAt : undefined })) }
+  })

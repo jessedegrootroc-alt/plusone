@@ -6,25 +6,13 @@ import { countdownLabel, domainForFeature, mainGoal, needsDate } from '../lib/go
 import { FEATURES, FEATURE_ART, type FeatureId } from '../data/catalog'
 import { BoardCols } from './Pinboard'
 import { noteHabitId, stepHabitId, stepWeight } from '../lib/score'
-import { addDays, buzz, setValue, todayISO, uid, update, useStore, type MirrorNote } from '../lib/store'
+import { activeNote, focusOn, leftLabel, nextStep } from '../lib/focus'
+import { buzz, todayISO, uid, update, useStore, type MirrorNote } from '../lib/store'
 import { HoldButton, Icon, Sheet } from './ui'
 
 /** Hooguit twee per onderdeel: als alles moet, gebeurt er niets. */
 const MAX_PER = 2
 
-
-const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5)
-
-/** De stap die nu op de spiegel hangt, en hoeveel dagen je er nog voor hebt. */
-const nextStep = (n: MirrorNote, today = todayISO()) => {
-  const steps = n.steps ?? []
-  const i = steps.findIndex((x) => !x.doneAt)
-  const step = i >= 0 ? steps[i] : null
-  const start = step ? step.startedAt ?? steps[i - 1]?.doneAt ?? n.createdAt : today
-  const left = step ? daysBetween(today, addDays(start, step.days ?? 7)) : 0
-  return { i, step, total: steps.length, done: steps.filter((x) => x.doneAt).length, left }
-}
-const leftLabel = (left: number) => (left < 0 ? 'over tijd' : left === 0 ? 'vandaag' : left === 1 ? 'nog 1 dag' : `nog ${left} dagen`)
 
 /** Een stap afvinken: hij gaat eraf en de koektrommel in, de volgende hangt er vanaf vandaag. */
 const completeStep = (id: string) => update((d) => {
@@ -35,6 +23,12 @@ const completeStep = (id: string) => update((d) => {
   x.steps![i].doneAt = today
   if (x.steps![i + 1]) x.steps![i + 1].startedAt = today
   ;(d.logs[today] ??= { v: {} }).v[stepHabitId(x, i)] = 1
+  // Laatste stap gezet? Dan is de volgende post-it aan de beurt, en zijn termijn begint vandaag
+  if (!x.steps![i + 1]) {
+    delete d.focusNote
+    const nx = activeNote(d)
+    if (nx) focusOn(d, nx.id)
+  }
   // Een gehaalde post-it gaat de koektrommel in, met het plakband van de spiegel er nog aan
   d.jar.unshift({ id: uid(), text: `Van de spiegel: ${x.steps![i].text}`, date: today })
 })
@@ -43,9 +37,9 @@ const completeStep = (id: string) => update((d) => {
  * De Accountability Mirror van Goggins, per onderdeel van je leven: fysiek, mentaal, financieel en emotioneel.
  * Zoals in Can't Hurt Me: bovenaan de harde waarheid, en op de post-it alleen de stap van nu, met een termijn.
  * Haal je hem, dan gaat hij eraf en hangt de volgende er, tot het doel bereikt is.
- * Hij telt elke dag mee in je balans: eraan gewerkt telt, overslaan kost. Je haalt hem pas af als het echt bereikt is.
+ * Eén post-it tegelijk: aan de stap van die ene werk je, de rest wacht met "Daarna". Die stap staat ook op Vandaag.
  */
-export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
+export default function MirrorNotes() {
   const s = useStore()
   const all = (s.notes ?? []).filter((n) => !n.doneAt)
   const off = (s.notes ?? []).length - all.length
@@ -53,16 +47,18 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
   const [edit, setEdit] = useState<MirrorNote | 'new' | null>(null)
   const [focusId, setFocus] = useState<string | null>(null)
   const focused = focusId ? all.find((n) => n.id === focusId) : undefined
-  const log = s.logs[date]
-  const notes = filter === 'alles' ? all : all.filter((n) => n.domain === filter)
+  const act = activeNote(s)
+  const notes = (filter === 'alles' ? all : all.filter((n) => n.domain === filter)).sort((a, b) => Number(b.id === act?.id) - Number(a.id === act?.id))
   const count = (d: Domain) => all.filter((n) => n.domain === d).length
 
   return (
     <section className="section">
-      <div className="section-head">
-        <h2 className="h2">De spiegel</h2>
-        <span className="small">{off > 0 ? `${off} eraf gehaald` : 'telt elke dag mee'}</span>
+      {/* Voor wie het voor het eerst ziet: wat dit blok is, en wat je ermee doet */}
+      <div className="section-head" style={{ marginBottom: 'var(--s2)' }}>
+        <h2 className="h2">Je spiegel</h2>
+        {off > 0 && <span className="small">{off} eraf gehaald</span>}
       </div>
+      <p className="small mirror-intro">Wat je eerlijk over jezelf zei, per deel van je leven. Je werkt aan één post-it tegelijk; die stap staat ook op Vandaag. Gehaald? Dan komt de volgende.</p>
 
       {all.length > 0 && (
         <div className="chips scroll" role="tablist" aria-label="Filter op onderdeel">
@@ -84,27 +80,26 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
         <div className="board glass" aria-label="Post-its op je spiegel">
           <BoardCols>
             {notes.map((n, i) => {
-              const on = (log?.v[noteHabitId(n)] ?? 0) >= 1
+              const waiting = n.id !== act?.id
               const dom = n.domain ? DOMAIN_BY_ID[n.domain] : null
               const st = nextStep(n)
               const p = paperFor(n.id, 4)
               return (
-                <div key={`${n.id}:${st.i}`} className="jar-note mnote" style={{ '--rot': `${p.rot}deg`, '--dx': `${p.dx}px`, '--tint': p.tint, '--pin': `${p.pin}%`, '--tape': `${p.tape}deg`, animationDelay: `${Math.min(i, 8) * 70}ms` } as CSSProperties}>
+                <div key={`${n.id}:${st.i}`} className={`jar-note mnote ${waiting ? 'waiting' : 'now'}`} style={{ '--rot': `${p.rot}deg`, '--dx': `${p.dx}px`, '--tint': p.tint, '--pin': `${p.pin}%`, '--tape': `${p.tape}deg`, animationDelay: `${Math.min(i, 8) * 70}ms` } as CSSProperties}>
                   <span className="tape" aria-hidden="true" />
                   {n.feature && <img className="mnote-emblem" src={`/art/${FEATURE_ART[n.feature]}.webp`} alt="" />}
                   <button className="mnote-open" onClick={() => setFocus(n.id)}>
-                    <span className="jar-kind">{dom ? dom.name : 'Kies een onderdeel'}</span>
+                    <span className="jar-kind">{dom ? dom.name : 'Kies een onderdeel'}{!waiting && st.step ? ' · nu' : ''}</span>
                     <span className="mnote-truth">{n.text}</span>
-                    <span className="mnote-text">{st.step ? st.step.text : 'Doel bereikt? Haal hem eraf, of leg de lat hoger.'}</span>
+                    {waiting ? (
+                      <span className="mnote-wait">Daarna</span>
+                    ) : (
+                      <span className="mnote-text">{st.step ? st.step.text : 'Doel bereikt? Haal hem eraf, of leg de lat hoger.'}</span>
+                    )}
                     {st.total > 0 && <Ladder n={n} />}
                   </button>
                   <div className="mnote-foot">
-                    <span className="jar-date">{n.due ? countdownLabel(n.due) : ''}</span>
-                    {n.sin && (
-                      <button className={`mnote-check ${on ? 'on' : ''}`} aria-pressed={on} aria-label={on ? 'Vandaag gedaan' : 'Vandaag gedaan?'} onClick={() => { buzz(); setValue(date, noteHabitId(n), on ? 0 : 1) }}>
-                        {Icon.check(on ? '#F2F2F2' : '#0B0B0B')}
-                      </button>
-                    )}
+                    <span className="jar-date">{waiting ? (n.due ? countdownLabel(n.due) : '') : st.step ? leftLabel(st.left) : n.due ? countdownLabel(n.due) : ''}</span>
                   </div>
                 </div>
               )
@@ -118,7 +113,7 @@ export default function MirrorNotes({ date = todayISO() }: { date?: string }) {
         </div>
       )}
 
-      {focused && <FocusSheet n={focused} date={date} onEdit={() => { setFocus(null); setEdit(focused) }} onClose={() => setFocus(null)} />}
+      {focused && <FocusSheet n={focused} onEdit={() => { setFocus(null); setEdit(focused) }} onClose={() => setFocus(null)} />}
       {edit && <NoteSheet note={edit === 'new' ? undefined : edit} preset={filter === 'alles' ? undefined : filter} onClose={() => setEdit(null)} />}
     </section>
   )
@@ -138,11 +133,12 @@ function Ladder({ n }: { n: MirrorNote }) {
  * op de post-it alleen de stap van nu met zijn termijn. Zet je hem (vasthouden: gedaan, niet gezegd),
  * dan scheurt hij eraf en plakt de volgende erop. Daaronder de hele ladder.
  */
-function FocusSheet({ n, date, onEdit, onClose }: { n: MirrorNote; date: string; onEdit: () => void; onClose: () => void }) {
+export function FocusSheet({ n, onEdit, onClose }: { n: MirrorNote; onEdit: () => void; onClose: () => void }) {
   const s = useStore()
   const st = nextStep(n)
   const dom = n.domain ? DOMAIN_BY_ID[n.domain] : null
-  const on = (s.logs[date]?.v[noteHabitId(n)] ?? 0) >= 1
+  const act = activeNote(s)
+  const waiting = !!act && act.id !== n.id
   const [peel, setPeel] = useState<string | null>(null)
   const paper = (salt: number) => {
     const p = paperFor(`${n.id}:${salt}`, 2.5)
@@ -185,12 +181,16 @@ function FocusSheet({ n, date, onEdit, onClose }: { n: MirrorNote; date: string;
         </div>
 
         <div className="stack gap-12">
-          {st.step && <HoldButton key={st.i} className="btn" label={st.left < 0 ? 'Toch gehaald' : 'Gehaald: scheur hem eraf'} ms={900} onDone={stepDone} />}
-          {st.step && st.left < 0 && <p className="small center" style={{ margin: 0 }}>Over tijd. Haal hem deze week, of maak hem kleiner via bewerken. Eerlijk zijn is de helft.</p>}
-          {n.sin && (
-            <button className={`btn ${on ? '' : 'ghost'}`} aria-pressed={on} onClick={() => { buzz(); setValue(date, noteHabitId(n), on ? 0 : 1) }}>
-              {on ? <>{Icon.check('#0B0B0B')} Vandaag aan gewerkt</> : 'Vandaag aan gewerkt?'}
-            </button>
+          {waiting ? (
+            <>
+              <p className="small center" style={{ margin: 0 }}>Je werkt aan één post-it tegelijk. Nu: <b style={{ color: 'var(--ink)' }}>{act!.text}</b></p>
+              <button className="btn ghost" onClick={() => { buzz(); update((d) => focusOn(d, n.id)); onClose() }}>Hier eerst aan werken</button>
+            </>
+          ) : (
+            <>
+              {st.step && <HoldButton key={st.i} className="btn" label={st.left < 0 ? 'Toch gehaald' : 'Gehaald: scheur hem eraf'} ms={900} onDone={stepDone} />}
+              {st.step && st.left < 0 && <p className="small center" style={{ margin: 0 }}>Over tijd. Haal hem deze week, of maak hem kleiner via bewerken. Eerlijk zijn is de helft.</p>}
+            </>
           )}
         </div>
 
@@ -258,8 +258,15 @@ export function NoteSheet({ note, preset, presetSin, presetGoal, onClose }: { no
     update((d) => {
       const x = d.notes.find((y) => y.id === note!.id)
       if (!x) return
+      const wasActive = activeNote(d)?.id === x.id
       x.doneAt = today
       ;(d.logs[today] ??= { v: {} }).v[noteHabitId(x)] = 1
+      // Was dit je actieve post-it? Dan is de volgende aan de beurt
+      if (wasActive) {
+        delete d.focusNote
+        const nx = activeNote(d)
+        if (nx) focusOn(d, nx.id)
+      }
       d.jar.unshift({ id: uid(), text: `Van de spiegel: ${x.text}`, date: today })
     })
     onClose()

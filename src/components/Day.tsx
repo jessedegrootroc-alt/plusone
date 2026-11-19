@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Icon } from './ui'
 
 export type Part = 'ochtend' | 'overdag' | 'avond'
@@ -14,16 +14,26 @@ export const partNow = (now = new Date()): Part => {
  * Eén dagdeel op de lijn van je dag. De lijn is de signatuur van Vandaag: wat voorbij is staat er dicht,
  * wat nog komt gestippeld, en waar je nu bent brandt een licht. Zo zie je in één blik waar je in je dag staat.
  */
-export function Daypart({ part, label, range, when, meta, children }: { part: Part; label: string; range: string; when: 'past' | 'now' | 'next'; meta?: string; children: ReactNode }) {
+export function Daypart({ part, label, range, when, meta, collapsible, children }: { part: Part; label: string; range: string; when: 'past' | 'now' | 'next'; meta?: string; collapsible?: boolean; children: ReactNode }) {
+  // Wat voorbij is klapt in tot één regel (zoals Tiimo): je taken van nu komen hoger. Tik om hem open te klappen.
+  const [open, setOpen] = useState(!collapsible)
+  const shut = collapsible && !open
+  const head = (
+    <>
+      <span className="dagdeel-dot" aria-hidden="true" />
+      <h2 id={`dd-${part}`} className="dagdeel-label">{label}</h2>
+      <span className="dagdeel-range">{range}</span>
+      {when === 'now' ? <span className="dagdeel-nu">Nu</span> : meta ? <span className="dagdeel-meta">{meta}{collapsible && <span className={`dagdeel-chev ${open ? 'open' : ''}`} aria-hidden="true">{Icon.next()}</span>}</span> : null}
+    </>
+  )
   return (
-    <section className={`dagdeel ${when}`} aria-labelledby={`dd-${part}`}>
-      <header className="dagdeel-head">
-        <span className="dagdeel-dot" aria-hidden="true" />
-        <h2 id={`dd-${part}`} className="dagdeel-label">{label}</h2>
-        <span className="dagdeel-range">{range}</span>
-        {when === 'now' ? <span className="dagdeel-nu">Nu</span> : meta ? <span className="dagdeel-meta">{meta}</span> : null}
-      </header>
-      <div className="dagdeel-body">{children}</div>
+    <section className={`dagdeel ${when} ${shut ? 'shut' : ''}`} aria-labelledby={`dd-${part}`}>
+      {collapsible ? (
+        <button className="dagdeel-head" aria-expanded={open} onClick={() => setOpen((x) => !x)}>{head}</button>
+      ) : (
+        <header className="dagdeel-head">{head}</header>
+      )}
+      {!shut && <div className="dagdeel-body">{children}</div>}
     </section>
   )
 }

@@ -7,7 +7,8 @@ import LivingScene from '../components/LivingScene'
 import { pullingObjects, strongestVirtueObject } from '../data/objects'
 import Trophies from '../components/Trophies'
 import MirrorNotes from '../components/MirrorNotes'
-import { scheduleLabel, wonStats } from '../lib/days'
+import { climbOf, scheduleLabel, wonStats } from '../lib/days'
+import { ClimbCaption } from '../components/Climb'
 import Account from '../components/Account'
 import { enableMotion, motionOn, needsPermission } from '../lib/motion'
 import { DEFAULT_TIMES, disableNotify, enableNotify, notifySupported, schedule } from '../lib/notify'
@@ -46,7 +47,7 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
   const vices = s.habits.filter((h) => h.kind === 'vice')
   // De figuur klimt mee met je gewonnen dagen, net als op Vandaag
   const st = wonStats(s)
-  const climb = st.counted ? -100 + 200 * (st.won / st.counted) : 0
+  const climb = climbOf(st)
 
   return (
     <div className="screen">
@@ -75,7 +76,7 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
             <div className="caption">Je ideale zelf</div>
           </div>
         </div>
-        <p className="small center mt-16" style={{ margin: '16px 0 0' }}>{st.won} van de {st.counted} dagen gewonnen. Elke gewonnen dag klim je hoger.</p>
+        <ClimbCaption balance={climb} />
         <button className="btn soft sm mt-16" onClick={() => { setDraftAvatar(s.avatar); setPanel({ t: 'builder' }) }}>Je ideale zelf aanpassen</button>
       </div>
 

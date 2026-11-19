@@ -1,6 +1,7 @@
 import { useRef, useState, type CSSProperties, type PointerEvent, type RefObject } from 'react'
 import { paperFor } from '../lib/paper'
 import { buzz, type Habit } from '../lib/store'
+import { isWakeHabit } from '../lib/wake'
 import { BoardCols } from './Pinboard'
 import { Icon } from './ui'
 
@@ -24,8 +25,10 @@ export interface TaskItem {
  * Alleen wat zwaar was, wordt een koekje in de echte koektrommel (dat vraagt Vandaag na het afscheuren).
  * Tik op dat randje en het briefje hangt er weer.
  */
-export default function TaskNotes({ items, bigDone, bigTotal, onTear, onBack, onTime, onRemove, title }: {
+export default function TaskNotes({ items, bigDone, bigTotal, onTear, onBack, onTime, onRemove, title, count = true }: {
   items: TaskItem[]
+  /** De teller onder de titel; op Vandaag staat hij al bovenaan */
+  count?: boolean
   bigDone: number
   bigTotal: number
   onTear: (h: Habit) => void
@@ -44,7 +47,7 @@ export default function TaskNotes({ items, bigDone, bigTotal, onTear, onBack, on
       <div className="task-head">
         <div className="stack gap-4">
           <h2 className="h2">{title}</h2>
-          <span className="small">{bigTotal ? `${bigDone} van ${bigTotal} grote taken gedaan` : 'Geen grote taken'}</span>
+          {count && <span className="small">{bigTotal ? `${bigDone} van ${bigTotal} grote taken gedaan` : 'Geen grote taken'}</span>}
         </div>
         <div ref={jarRef} key={bump} className={`trommel ${bump ? 'bump' : ''} ${won ? 'won' : ''}`} role="img" aria-label={`Gedaan: ${inJar} ${inJar === 1 ? 'briefje' : 'briefjes'}`}>
           <Trommel count={inJar} />
@@ -160,11 +163,19 @@ function TaskNote({ item, i, jarRef, onTear, onBack, onTime, onRemove }: {
         <button className="tn-main" aria-label={`${h.name}: gedaan, afscheuren`} onClick={() => { if (moved.current) { moved.current = false; return } void tear() }} />
         <span className="jar-kind">{big ? 'Grote taak' : meta}</span>
         <span className="jar-text">{h.name}</span>
-        {/* Het moment: waarna, en hoe laat. Zonder moment vraagt het briefje erom. */}
-        <button className={`tn-time ${late ? 'late' : ''}`} onClick={onTime} aria-label={`Wanneer ${h.name}: ${[h.cue && `na ${h.cue}`, h.at].filter(Boolean).join(', ') || 'nog geen moment'}`}>
+        {/* Het moment: waarna, en hoe laat. Zonder moment vraagt het briefje erom.
+            Opstaan niet: dat is het eerste van je dag, de tijd staat al in de naam, en je wijzigt hem in Reis. */}
+        {isWakeHabit(h) ? (
+          <span className={`tn-time static ${late ? 'late' : ''}`}>
+            {late && <span className="tn-at">Te laat</span>}
+            <span className="tn-cue">Het eerste van je dag</span>
+          </span>
+        ) : (
+        <button className={`tn-time ${late ? 'late' : ''}`} onClick={() => { if (moved.current) { moved.current = false; return } onTime() }} aria-label={`Wanneer ${h.name}: ${[h.cue && `na ${h.cue}`, h.at].filter(Boolean).join(', ') || 'nog geen moment'}`}>
           {h.cue && <span className="tn-cue">Na {h.cue}</span>}
           {h.at ? <span className="tn-at">{h.at}{late ? ' · te laat' : ''}</span> : !h.cue && <span className="tn-at">Wanneer?</span>}
         </button>
+        )}
         {removable && <button className="tn-x" onClick={onRemove} aria-label={`${h.name} weghalen`}>{Icon.close()}</button>}
       </div>
     </div>

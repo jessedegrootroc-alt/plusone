@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { buzz } from '../lib/store'
 import { getClip, saveClip } from '../lib/voice'
+import { Icon } from './ui'
 
 const MAX_S = 60
 
 /**
- * Opnemen en terugluisteren, zoals Goggins met zijn taperecorder: tik om op te nemen, tik om te stoppen.
+ * Opnemen, zoals Goggins met zijn taperecorder: één grote knop in het midden. Tik om op te nemen, tik om te stoppen.
  * De opname blijft op je telefoon. Bij een tweede opname wordt de eerste vervangen.
+ * `fresh`: begin leeg, ook als er al een opname is (opnieuw opnemen).
  */
-export function Recorder({ clip, label, onSaved }: { clip: string; label: string; onSaved: () => void }) {
+export function Recorder({ clip, label, onSaved, fresh }: { clip: string; label: string; onSaved: () => void; fresh?: boolean }) {
   const [state, setState] = useState<'idle' | 'rec' | 'done' | 'denied'>('idle')
   const [secs, setSecs] = useState(0)
   const rec = useRef<MediaRecorder | null>(null)
@@ -16,9 +18,9 @@ export function Recorder({ clip, label, onSaved }: { clip: string; label: string
   const stream = useRef<MediaStream | null>(null)
 
   useEffect(() => {
-    void getClip(clip).then((b) => { if (b) setState((s) => (s === 'idle' ? 'done' : s)) })
+    if (!fresh) void getClip(clip).then((b) => { if (b) setState((s) => (s === 'idle' ? 'done' : s)) })
     return () => { clearInterval(timer.current); stream.current?.getTracks().forEach((t) => t.stop()) }
-  }, [clip])
+  }, [clip, fresh])
 
   const start = async () => {
     try {
@@ -52,19 +54,19 @@ export function Recorder({ clip, label, onSaved }: { clip: string; label: string
   const stop = () => { buzz(8); if (rec.current?.state === 'recording') rec.current.stop() }
 
   return (
-    <div className="rec">
-      <button className={`rec-btn ${state === 'rec' ? 'on' : ''}`} onClick={state === 'rec' ? stop : start} aria-label={state === 'rec' ? 'Stop opname' : state === 'done' ? `${label} opnieuw opnemen` : label}>
-        <span className="rec-dot" aria-hidden="true" />
+    <div className={`rec ${state}`}>
+      <button className={`rec-btn ${state === 'rec' ? 'on' : ''} ${state === 'done' ? 'ok' : ''}`} onClick={state === 'rec' ? stop : start} aria-label={state === 'rec' ? 'Stop opname' : state === 'done' ? `${label}: opnieuw opnemen` : label}>
+        {state === 'done' ? Icon.check('#0B0B0B') : <span className="rec-dot" aria-hidden="true" />}
       </button>
-      <div className="rec-txt">
+      <div className="rec-txt" aria-live="polite">
         {state === 'rec' ? (
-          <><span className="rec-live">Opname · 0:{String(secs).padStart(2, '0')}</span><span className="rec-hint">Tik om te stoppen</span></>
+          <><span className="rec-live">0:{String(secs).padStart(2, '0')}</span><span className="rec-hint">Tik als je klaar bent</span></>
         ) : state === 'done' ? (
-          <><span className="rec-label">Opgenomen</span><span className="rec-hint">Tik de knop om opnieuw te beginnen</span></>
+          <><span className="rec-label">Opgenomen</span><span className="rec-hint">Tik om het opnieuw op te nemen</span></>
         ) : state === 'denied' ? (
           <><span className="rec-label">Geen microfoon</span><span className="rec-hint">Geef de app toegang, of typ het hieronder</span></>
         ) : (
-          <><span className="rec-label">{label}</span><span className="rec-hint">Tik en praat. Hooguit een minuut.</span></>
+          <><span className="rec-label">{label}</span><span className="rec-hint">Hooguit een minuut</span></>
         )}
       </div>
     </div>

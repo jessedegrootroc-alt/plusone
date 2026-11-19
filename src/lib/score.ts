@@ -8,8 +8,8 @@ export const rockHabit = (r: DayRock): Habit => ({ id: r.id, name: r.text, sin: 
 export const noteHabitId = (n: MirrorNote) => `note:${n.id}`
 
 /**
- * Een post-it op de spiegel telt elke dag mee als deugd onder zijn zonde (Goggins kijkt hem elke ochtend aan):
- * eraan gewerkt telt, overslaan kost. De dag dat je hem eraf haalt telt als grote steen.
+ * Een post-it telt mee op de dag dat je hem eraf haalt, als grote steen. Niet elke dag apart:
+ * je werkt aan één stap tegelijk (lib/focus), en die stap telt mee als je hem zet.
  */
 export const noteHabit = (n: MirrorNote, date: string): Habit => ({
   id: noteHabitId(n),
@@ -21,7 +21,7 @@ export const noteHabit = (n: MirrorNote, date: string): Habit => ({
 })
 
 const notesOn = (state: State, date: string) =>
-  (state.notes ?? []).filter((n) => n.sin && n.createdAt <= date && (!n.doneAt || date <= n.doneAt))
+  (state.notes ?? []).filter((n) => n.sin && n.doneAt === date)
 
 /**
  * Hoe ver uit je comfortzone, zo zwaar telt het mee (1–3). Een trede van je ladder telt zwaarder naarmate hij

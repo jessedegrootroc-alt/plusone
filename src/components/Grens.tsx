@@ -5,6 +5,7 @@ import { addDays, buzz, todayISO, uid, update, useStore, type Challenge } from '
 import { grensHabitId, grensWeight } from '../lib/score'
 import { Icon, Sheet } from './ui'
 import { tierOf } from '../lib/tier'
+import { activeNote } from '../lib/focus'
 
 const day = (iso: string) => {
   const t = todayISO()
@@ -109,6 +110,9 @@ export function GrensRow() {
   const [more, setMore] = useState(false)
   const next = g.open[0]
   const cd = next ? countdown(next.due) : null
+  // Eén ding buiten je comfortzone tegelijk: loopt er een stap van de spiegel, dan wacht een nieuwe grens.
+  // Een grens die al openstaat, blijft gewoon staan.
+  if (!next && g.zone !== 'rust' && activeNote(s)) return null
   const staff = <img src="/art/item-pelgrimsstaf.webp" alt="" className="row-icon" />
   return (
     <>

@@ -8,7 +8,7 @@ import { noteFromGoal } from '../lib/emblems'
 import { countdownLabel, needsDate } from '../lib/goal'
 import { enableNotify, notifySupported } from '../lib/notify'
 import { isWakeHabit, setWakeTime, shortTime } from '../lib/wake'
-import { DOMAIN_BY_ID, planFor, type Domain } from '../data/ladders'
+import { ANSWERS, DOMAIN_BY_ID, answerPlan, type AnswerKey, type Domain } from '../data/ladders'
 import HabitEditor from './HabitEditor'
 import HabitPicker from '../components/HabitPicker'
 import { scrollToTop } from '../lib/scroll'
@@ -39,30 +39,30 @@ const RATINGS: { id: Rating; label: string }[] = [
 ]
 
 /** De vier delen. Per deel vier harde waarheden; elk met de post-it die op je spiegel komt en de taak die erbij hoort. */
-const AREAS: { id: Area; domain: Domain; label: string; sub: string; q: string; options: { id: string; label: string; truth: string; task: string; part: Part; at?: string }[] }[] = [
+const AREAS: { id: Area; domain: Domain; label: string; sub: string; q: string; options: { id: string; label: string; task: string; part: Part; at?: string }[] }[] = [
   { id: 'fysiek', domain: 'fysiek', label: 'Fysiek', sub: 'Je lichaam: kracht, conditie, gewicht, slaap', q: 'Fysiek. Wat zie je echt in de spiegel?', options: [
-    { id: 'beweeg', label: 'Ik beweeg bijna niet', truth: 'Je lichaam doet bijna niets. Dat verandert vandaag.', task: 'Elke dag 30 minuten bewegen', part: 'overdag' },
-    { id: 'zwaar', label: 'Ik ben te zwaar', truth: 'Je bent te zwaar, en je weet het.', task: 'Elke dag 10.000 stappen', part: 'overdag' },
-    { id: 'zacht', label: 'Ik train, maar te zacht', truth: 'Je traint, maar je zoekt nooit je grens op.', task: 'Eén training per dag die pijn doet', part: 'overdag' },
-    { id: 'slaap', label: 'Ik slaap slecht', truth: 'Je slaapt slecht en betaalt er elke dag voor.', task: 'Telefoon de slaapkamer uit', part: 'avond', at: '22:00' },
+    { id: 'beweeg', label: 'Ik beweeg bijna niet', task: 'Elke dag 30 minuten bewegen', part: 'overdag' },
+    { id: 'zwaar', label: 'Ik ben te zwaar', task: 'Elke dag 10.000 stappen', part: 'overdag' },
+    { id: 'zacht', label: 'Ik train, maar te zacht', task: 'Eén training per dag die pijn doet', part: 'overdag' },
+    { id: 'slaap', label: 'Ik slaap slecht', task: 'Telefoon de slaapkamer uit', part: 'avond', at: '22:00' },
   ] },
   { id: 'mentaal', domain: 'mentaal', label: 'Mentaal', sub: 'Je hoofd: discipline, focus, twijfel, uitstel', q: 'Mentaal. Waar breek je?', options: [
-    { id: 'opgeven', label: 'Ik geef op als het zwaar wordt', truth: 'Je stopt op het moment dat het pijn gaat doen.', task: 'Eén ding afmaken dat je liever overslaat', part: 'overdag' },
-    { id: 'uitstel', label: 'Ik stel uit wat ertoe doet', truth: 'Je stelt uit wat het meest telt.', task: 'Je zwaarste klus als eerste, vóór je mail', part: 'ochtend', at: '09:00' },
-    { id: 'twijfel', label: 'Ik twijfel aan mezelf', truth: 'Je gelooft je twijfel meer dan je bewijs.', task: 'Opschrijven wat je vandaag overwon', part: 'avond', at: '21:00' },
-    { id: 'scherm', label: 'Mijn telefoon heeft mijn aandacht', truth: 'Je telefoon krijgt meer van je aandacht dan jij zelf.', task: 'Het eerste uur zonder telefoon', part: 'ochtend' },
+    { id: 'opgeven', label: 'Ik geef op als het zwaar wordt', task: 'Eén ding afmaken dat je liever overslaat', part: 'overdag' },
+    { id: 'uitstel', label: 'Ik stel uit wat ertoe doet', task: 'Je zwaarste klus als eerste, vóór je mail', part: 'ochtend', at: '09:00' },
+    { id: 'twijfel', label: 'Ik twijfel aan mezelf', task: 'Opschrijven wat je vandaag overwon', part: 'avond', at: '21:00' },
+    { id: 'scherm', label: 'Mijn telefoon heeft mijn aandacht', task: 'Het eerste uur zonder telefoon', part: 'ochtend' },
   ] },
   { id: 'financieel', domain: 'financieel', label: 'Financieel', sub: 'Je geld: schulden, sparen, inkomen', q: 'Financieel. Hoe staat het er echt voor?', options: [
-    { id: 'uitgeven', label: 'Ik geef meer uit dan ik verdien', truth: 'Er gaat meer uit dan er binnenkomt.', task: 'Je uitgaven van vandaag opschrijven', part: 'avond', at: '21:00' },
-    { id: 'schuld', label: 'Ik heb schulden', truth: 'Je schulden nemen je beslissingen.', task: '15 minuten aan je aflosplan', part: 'overdag' },
-    { id: 'sparen', label: 'Ik spaar niets', truth: 'Je hebt geen buffer. Eén tegenvaller en je staat klem.', task: '€5 opzij zetten', part: 'ochtend' },
-    { id: 'groei', label: 'Ik verdien minder dan ik kan', truth: 'Je verdient minder dan je waard bent.', task: 'Een uur aan meer inkomen: leren, solliciteren of verkopen', part: 'overdag' },
+    { id: 'uitgeven', label: 'Ik geef meer uit dan ik verdien', task: 'Je uitgaven van vandaag opschrijven', part: 'avond', at: '21:00' },
+    { id: 'schuld', label: 'Ik heb schulden', task: '15 minuten aan je aflosplan', part: 'overdag' },
+    { id: 'sparen', label: 'Ik spaar niets', task: '€5 opzij zetten', part: 'ochtend' },
+    { id: 'groei', label: 'Ik verdien minder dan ik kan', task: 'Een uur aan meer inkomen: leren, solliciteren of verkopen', part: 'overdag' },
   ] },
   { id: 'emotioneel', domain: 'spiritueel', label: 'Emotioneel', sub: 'Je binnenkant: wat je verdooft, wat je meedraagt', q: 'Emotioneel. Wat draag je mee?', options: [
-    { id: 'verdoof', label: 'Ik verdoof het met eten, drank of schermen', truth: 'Je verdooft wat je niet wilt voelen.', task: '10 minuten stil, zonder afleiding', part: 'ochtend' },
-    { id: 'pijn', label: 'Ik draag oude pijn mee', truth: 'Je laat je verleden je toekomst kiezen.', task: 'Opschrijven wat je dwarszit', part: 'avond', at: '21:30' },
-    { id: 'alleen', label: 'Ik sta er alleen voor', truth: 'Niemand weet hoe het echt met je gaat.', task: 'Iemand eerlijk zeggen hoe het met je gaat', part: 'overdag' },
-    { id: 'boos', label: 'Ik word snel boos', truth: 'Je woede beslist voordat jij dat doet.', task: 'Terugkijken: waar werd ik boos, en waarom?', part: 'avond', at: '21:30' },
+    { id: 'verdoof', label: 'Ik verdoof het met eten, drank of schermen', task: '10 minuten stil, zonder afleiding', part: 'ochtend' },
+    { id: 'pijn', label: 'Ik draag oude pijn mee', task: 'Opschrijven wat je dwarszit', part: 'avond', at: '21:30' },
+    { id: 'alleen', label: 'Ik sta er alleen voor', task: 'Iemand eerlijk zeggen hoe het met je gaat', part: 'overdag' },
+    { id: 'boos', label: 'Ik word snel boos', task: 'Terugkijken: waar werd ik boos, en waarom?', part: 'avond', at: '21:30' },
   ] },
 ]
 const AREA_BY_ID = Object.fromEntries(AREAS.map((a) => [a.id, a])) as Record<Area, (typeof AREAS)[number]>
@@ -159,7 +159,7 @@ export default function Onboarding() {
   }
   // Na de spiegel: taken van delen die geen vervolgvraag meer krijgen, gaan eruit
   const leaveMirror = () => setPicked((p) => Object.fromEntries(Object.entries(p).filter(([k]) => !k.startsWith('area-') || focus.includes(k.slice(5) as Area))))
-  const truths = focus.filter((a) => answers[a]).map((a) => ({ area: AREA_BY_ID[a], truth: AREA_BY_ID[a].options.find((o) => o.id === answers[a])!.truth }))
+  const truths = focus.filter((a) => answers[a]).map((a) => ({ area: AREA_BY_ID[a], truth: ANSWERS[`${a}:${answers[a]}` as AnswerKey].truth, key: `${a}:${answers[a]}` as AnswerKey }))
 
   const vices = Object.values(picked).filter((h) => h.kind === 'vice')
   const virtues = Object.values(picked).filter((h) => h.kind === 'virtue')
@@ -209,9 +209,9 @@ export default function Onboarding() {
       d.habits = Object.values(picked).filter((h) => (h.kind === 'virtue' && h.weight === 3) || (h.kind === 'vice' && numbs))
       setWakeTime(d, wake)
       d.settings = { ...d.settings, tier: (level ?? 'gemiddeld') as Tier }
-      // Elke harde waarheid wordt een post-it op je spiegel, met een ladder naar beter
+      // Elke harde waarheid wordt een post-it op je spiegel, met de vaste ladder van dat antwoord
       const today = todayISO()
-      const mirror: MirrorNote[] = truths.map(({ area, truth }) => ({ id: uid(), text: truth, domain: area.domain, sin: DOMAIN_BY_ID[area.domain].sin, steps: planFor(area.domain, '', truth).map((st, k) => ({ ...st, startedAt: k === 0 ? today : undefined })), createdAt: today }))
+      const mirror: MirrorNote[] = truths.map(({ area, truth, key }) => ({ id: uid(), text: truth, answer: key, domain: area.domain, sin: DOMAIN_BY_ID[area.domain].sin, steps: answerPlan(key).map((st, k) => ({ ...st, startedAt: k === 0 ? today : undefined })), createdAt: today }))
       d.notes = [...(goal ? [goal] : []), ...mirror]
       d.mainGoalId = goal?.id
       d.createdAt = todayISO()

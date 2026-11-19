@@ -1315,8 +1315,12 @@ export default function LivingScene({ balance, scene = 'kust', strong, features,
         const n = L!.emb.length
         const cx = W * 0.47
         const cy = H * 0.97 - L!.ch * 0.7
+        // Links en rechts van je figuur, nooit erboven: dan zou een embleem over je hoofd vallen
+        const left = Math.ceil(n / 2)
+        const right = n - left
+        const slot = (k: number, of: number, from: number) => Math.PI * (from + 0.24 * (of === 1 ? 0.5 : k / (of - 1)))
         L!.emb.forEach((cv, i) => {
-          const base = n === 1 ? -Math.PI / 2 : Math.PI + (Math.PI * (i + 0.5)) / n
+          const base = i < left ? slot(i, left, 1.1) : slot(i - left, right, 1.66)
           const a = base + 0.05 * Math.sin(t * 0.3 + i)
           const rx = W * 0.4
           const ry = L!.ch * 0.42
