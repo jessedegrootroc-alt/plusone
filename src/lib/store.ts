@@ -80,6 +80,8 @@ export interface DayLog {
   morning?: { dread?: string; strong?: string; skipped?: boolean; dreadClip?: boolean; strongClip?: boolean }
   /** Na een gemiste dag nog één goed ding voor het slapen: niet in de min naar bed. */
   black?: string
+  /** Je deadline op de kaart Nu: welke taak, vóór wanneer (ms), en wanneer je hem zette. Bewaard, zodat hij doortelt als je de app sluit. */
+  due?: { id: string; at: number; from?: number }
 }
 
 /** Eén grens die je gaat verleggen. Pas gedaan als je het gedaan hebt, niet als je het zei. */

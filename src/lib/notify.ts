@@ -60,7 +60,7 @@ let timers: number[] = []
 const wakeText = (wake: string) => {
   const s = getState()
   const today = todayISO()
-  if (missedYesterday(s, today) && canSave(s, addDays(today, -1))) return 'Gisteren gemist. Red hem met een reservedag, en lever vandaag.'
+  if (missedYesterday(s, today) && canSave(s, addDays(today, -1))) return 'Gisteren gemist. Win vandaag, dan redt je reservedag gisteren.'
   if (lostYesterday(s, today)) return tierOf(s) === 'beginner' ? 'Gisteren gemist. Vandaag telt gewoon weer. Eén taak, dan sta je.' : 'Gisteren verloren. Vandaag niet. Op.'
   const fresh = freshStart(s, today)
   if (fresh === 'week') return 'Nieuwe week. Schone lei. Laat zien wie je bent.'
@@ -100,6 +100,16 @@ export const schedule = () => {
   const nowHM = new Date().toTimeString().slice(0, 5)
   for (const h of openTasks().filter((x) => x.at! > nowHM)) {
     at(h.at!, () => (openTasks().some((x) => x.id === h.id && x.at === h.at) ? (h.cue ? `Na ${h.cue}: ${h.name}. Geen onderhandeling.` : `${h.at!.replace(/^0/, '')}. ${h.name}. Geen onderhandeling.`) : null), 'taak:' + h.id)
+  }
+  // Je deadline op de kaart Nu: tien minuten ervoor, en op de deadline zelf, alleen als de taak dan nog open staat
+  const due = getState().logs[todayISO()]?.due
+  const dueTask = due && openTasks().concat([...bigTasksOn(getState(), todayISO()), ...otherTasksOn(getState(), todayISO())]).find((h) => h.id === due.id)
+  if (due && dueTask) {
+    const still = () => !!getState().logs[todayISO()]?.due && getState().logs[todayISO()]!.due!.id === due.id
+    const at10 = new Date(due.at - 10 * 60000).toTimeString().slice(0, 5)
+    const atHM = new Date(due.at).toTimeString().slice(0, 5)
+    if (at10 > nowHM) at(at10, () => (still() ? `Nog 10 minuten. ${dueTask.name}, vóór ${atHM.replace(/^0/, '')}.` : null), 'due10')
+    if (atHM > nowHM) at(atHM, () => (still() ? `${atHM.replace(/^0/, '')}. Je deadline. ${dueTask.name}: nu of niet.` : null), 'due')
   }
   // Om middernacht de taken van de nieuwe dag
   at('00:01', () => null)

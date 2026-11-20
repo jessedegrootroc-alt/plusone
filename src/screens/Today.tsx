@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import SceneCompare from '../components/SceneCompare'
 import WinMoment from '../components/WinMoment'
-import CookieProof from '../components/CookieProof'
+import NowCard from '../components/NowCard'
 import Offers from '../components/Offers'
 import TaskNotes from '../components/TaskNotes'
 import { WitnessBody, witnessWeek } from '../components/Witness'
@@ -14,7 +14,7 @@ import { AddTaskSheet } from '../components/DaySheets'
 import { activeNote, leftLabel, nextStep } from '../lib/focus'
 import { HabitRow, Icon, Sheet, Toast } from '../components/ui'
 import { WEEKDAYS, dayNumber, inDip, isSimple, tierOf, weakDay, type Tier } from '../lib/tier'
-import { bigTasksOn, canSave, dayResult, doesItAlone, freshStart, isComeback, isSaved, lostYesterday, missedOn, missedYesterday, otherTasksOn, reserveBack, reservesLeft, reservesPerMonth, scheduleLabel, keptOnly, streakNeed, winStreak, wonStats } from '../lib/days'
+import { bigTasksOn, canSave, dayResult, doesItAlone, freshStart, isComeback, isSaved, lostYesterday, missedOn, missedYesterday, otherTasksOn, reservesLeft, reservesPerMonth, scheduleLabel, keptOnly, streakNeed, winStreak, wonStats } from '../lib/days'
 import { countdownLabel, daysLeft, goalTitle, mainGoal } from '../lib/goal'
 import { isDone } from '../lib/score'
 import { isWakeHabit, setWakeTime, shortTime, wakeTime } from '../lib/wake'
@@ -121,10 +121,14 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
       /* geen klembord */
     }
   }
-  const saveYesterday = () => {
+  // Gisteren redden verdien je: win vandaag, dan vangt een reservedag gisteren op. Geen knop, het gebeurt bij je winst.
+  useEffect(() => {
+    if (!wonToday || !savable) return
     buzz(18)
     update((d) => { (d.logs[yesterday] ??= { v: {} }).saved = true })
-  }
+  }, [wonToday, savable, yesterday])
+  // Wat er op het spel staat: je reeks zoals hij blijft als gisteren gered wordt
+  const streakAtStake = savable ? winStreak({ ...s, logs: { ...s.logs, [yesterday]: { ...(s.logs[yesterday] ?? { v: {} }), saved: true } } }, yesterday) : 0
   // Een verse start: maandag na een slechte week, of de eerste van de maand
   const fresh = date === today && s.asked?.fresh !== today ? freshStart(s, today) : null
   // Herinneringen afbouwen: doe je een taak al drie weken zelf, dan vraagt de app of de melding uit mag
@@ -145,6 +149,18 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
     l.rocks = (l.rocks ?? []).filter((r) => r.id !== id)
     delete l.v[id]
   })
+  // Gedaan: een post-it afgescheurd, of op de kaart Nu
+  const tear = (h: Habit) => {
+    setValue(date, h.id, h.type === 'target' ? h.amount ?? 1 : 1)
+    setTorn((t) => ({ h, n: (t?.n ?? 0) + 1 }))
+    update((d) => {
+      const l = d.logs[date]
+      if (l?.due?.id === h.id) delete l.due
+      // Teruggekomen na een misser: dat is een overwinning op zich, dus een koekje
+      const id = 'terug-' + today
+      if (date === today && isComeback(d, today) && !d.jar.some((j) => j.id === id)) d.jar.unshift({ id, text: 'Teruggekomen na een gemiste dag', date: today })
+    })
+  }
   const change = (id: string, v: number, wasSlip: boolean, isVice: boolean) => {
     setValue(date, id, v)
     if (isVice && !wasSlip && v >= 1) {
@@ -223,17 +239,19 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
       {/* 2 · Nooit twee keer missen. Eén misser red je met een reservedag; terugkomen telt dubbel.
           Streng, niet beschamend (Breines & Chen: wie mild naar een misser kijkt, werkt daarna harder). */}
       {comeback ? (
-        <div className="miss-bar back">Gevallen en weer opgestaan. Dát telt.{reserveBack(s, today) ? ' Je reservedag is terug.' : ''}</div>
+        <div className="miss-bar back">{isSaved(s, yesterday) ? 'Opgestaan, en gisteren gered met je reservedag. Nu geen tweede keer.' : 'Gevallen en weer opgestaan. Dát telt.'}</div>
       ) : missed && isSaved(s, yesterday) ? (
         <div className="miss-bar saved">Gered. Nu geen tweede keer.</div>
       ) : savable ? (
         <div className="miss-bar" role="alert">
-          <span className="miss-text">Gisteren gemist.<span className="miss-sub">Nog {left} {left === 1 ? 'reservedag' : 'reservedagen'}</span></span>
-          <button className="miss-act" onClick={saveYesterday} aria-label="Gisteren redden met een reservedag">Red hem</button>
+          <span className="miss-text">Gisteren gemist. Win vandaag, dan red je hem.<span className="miss-sub">{streakAtStake > 0 ? `Je reeks van ${streakAtStake} blijft staan. ` : ''}Kost 1 van je {left} {left === 1 ? 'reservedag' : 'reservedagen'}.</span></span>
         </div>
       ) : lost ? (
         <div className="miss-bar" role="alert">{lostLine(tier, twoInRow, left === 0)}</div>
       ) : null}
+
+      {/* Nu: het ene ding dat nu aan de beurt is, met je bewijs uit de koektrommel en één knop om te beginnen */}
+      {date === today && <NowCard onDone={tear} />}
 
       {/* Voortgang voorop (zoals Dayrise en gewoonte-apps met een weekstrip): hoeveel grote taken, en je week. Direct daaronder je dag. */}
       <section className="pulse" aria-label={isToday ? 'Voortgang vandaag' : `Voortgang op ${dayName}`}>
@@ -276,15 +294,7 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
             ...big.map((h) => ({ h, big: true, done: done(h), late: date === today && !!h.at && h.at < nowHM && !done(h), removable: dayRockIds.has(h.id) })),
             ...other.map((h) => ({ h, big: false, done: done(h), late: false, meta: scheduleLabel(h), removable: dayRockIds.has(h.id) })),
           ]}
-          onTear={(h) => {
-            setValue(date, h.id, h.type === 'target' ? h.amount ?? 1 : 1)
-            setTorn((t) => ({ h, n: (t?.n ?? 0) + 1 }))
-            // Teruggekomen na een misser: dat is een overwinning op zich, dus een koekje
-            update((d) => {
-              const id = 'terug-' + today
-              if (date === today && isComeback(d, today) && !d.jar.some((j) => j.id === id)) d.jar.unshift({ id, text: 'Teruggekomen na een gemiste dag', date: today })
-            })
-          }}
+          onTear={tear}
           onBack={(h) => { setValue(date, h.id, 0); setTorn(null) }}
           onTime={setTimeFor}
           onRemove={(h) => removeRock(h.id)}
@@ -386,9 +396,6 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
           </div>
         </section>
       )}
-
-      {/* Bewijs uit je koektrommel: je deed al zwaarder */}
-      {date === today && <CookieProof />}
 
       {/* 7 · Het beeld: de figuur klimt mee met je gewonnen dagen */}
       <div className="scene-today">

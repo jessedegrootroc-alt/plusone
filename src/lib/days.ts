@@ -102,27 +102,18 @@ export const reservesPerMonth = (s: State) => RESERVES[s.settings?.tier ?? 'gemi
 export const isSaved = (s: State, date: string) => rawResult(s, date) === false && !!s.logs[date]?.saved
 
 /**
- * Hoeveel reservedagen er nog over zijn in de maand van deze datum. Win je de dag na een geredde dag, dan krijg je
- * hem terug (Milkman e.a. 2021: een bonus voor terugkomen na een misser werkte het best van 54 ideeën), één keer per maand.
+ * Hoeveel reservedagen er nog over zijn in de maand van deze datum. Een reservedag redt een gemiste dag pas als je
+ * de dag erna wint: je verdient hem terug (Duolingo's Streak Repair vraagt ook eerst een les). Daarom geen extra bonus meer.
  */
 export const reservesLeft = (s: State, date: string) => {
   const month = date.slice(0, 7)
-  const saved = Object.keys(s.logs).filter((d) => d.startsWith(month) && s.logs[d].saved)
-  const back = Math.min(1, saved.filter((d) => rawResult(s, addDays(d, 1)) === true).length)
-  const per = reservesPerMonth(s)
-  return per === 0 ? 0 : Math.max(0, per - saved.length + back)
+  const saved = Object.keys(s.logs).filter((d) => d.startsWith(month) && s.logs[d].saved).length
+  return Math.max(0, reservesPerMonth(s) - saved)
 }
 
 /** Teruggekomen: gisteren gemist, vandaag gewonnen. */
 export const isComeback = (s: State, today = todayISO()) => rawResult(s, addDays(today, -1)) === false && rawResult(s, today) === true
 
-/** Of terugkomen vandaag een reservedag teruggaf (de eerste keer deze maand). */
-export const reserveBack = (s: State, today = todayISO()) => {
-  const y = addDays(today, -1)
-  if (!isComeback(s, today) || !s.logs[y]?.saved) return false
-  const month = y.slice(0, 7)
-  return !Object.keys(s.logs).some((d) => d.startsWith(month) && d < y && s.logs[d].saved && rawResult(s, addDays(d, 1)) === true)
-}
 
 /** Gemist (ook als je hem met een reservedag redde). */
 export const missedOn = (s: State, date: string) => rawResult(s, date) === false
