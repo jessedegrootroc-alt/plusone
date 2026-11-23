@@ -19,6 +19,9 @@ import { NEED_BY_ID, VOICES, type NeedId } from '../data/urge'
 import { SHADOW } from '../data/shadow'
 import { FEATURES, FEATURE_ART } from '../data/catalog'
 import { aimedFeatures, earnedFeatures } from '../lib/emblems'
+import MirrorNotes, { FocusSheet, NoteSheet } from '../components/MirrorNotes'
+import { Moment } from '../components/Day'
+import { activeNote, leftLabel, nextStep } from '../lib/focus'
 
 type Panel = null | { t: 'settings' } | { t: 'emblem'; prize: string } | { t: 'habit'; h?: Habit; kind: 'vice' | 'virtue' } | { t: 'catalog'; kind: 'vice' | 'virtue' } | { t: 'why' } | { t: 'reset' }
 
@@ -50,6 +53,7 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
       <Pinboard compact />
       <div className="mt-24"><Trophies /></div>
       <Emblems onOpen={(prize) => setPanel({ t: 'emblem', prize })} />
+      <MirrorRow />
 
       <div className="mt-24">
         <SceneCompare />
@@ -154,6 +158,32 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
         </Sheet>
       )}
     </div>
+  )
+}
+
+/**
+ * Je spiegel: de stap waar je nu aan werkt, en vandaar al je post-its. Staat op Reis, naast de emblemen die je ermee
+ * haalt, zodat Vandaag alleen laat zien wat je vandaag moet doen.
+ */
+function MirrorRow() {
+  const s = useStore()
+  const today = todayISO()
+  const [open, setOpen] = useState<null | 'focus' | 'all' | 'edit'>(null)
+  const n = activeNote(s)
+  const st = n ? nextStep(n, today) : null
+  const close = () => setOpen(null)
+  return (
+    <section className="section">
+      <div className="section-head"><h2 className="h2">Je spiegel</h2>{n && <button className="link" onClick={() => setOpen('all')}>Alle post-its</button>}</div>
+      {n && st?.step ? (
+        <Moment art="item-lantaarn" kind={`Nu · ${leftLabel(st.left)}`} title={st.step.text} sub={n.text} onClick={() => setOpen('focus')} />
+      ) : (
+        <Moment art="item-lantaarn" kind="Spiegel" title="Wat moet er anders?" sub="Schrijf een post-it voor je spiegel" onClick={() => setOpen('all')} />
+      )}
+      {open === 'focus' && n && <FocusSheet n={n} onEdit={() => setOpen('edit')} onAll={() => setOpen('all')} onClose={close} />}
+      {open === 'all' && <Sheet onClose={close}><MirrorNotes /></Sheet>}
+      {open === 'edit' && n && <NoteSheet note={n} onClose={close} />}
+    </section>
   )
 }
 

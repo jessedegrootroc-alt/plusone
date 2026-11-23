@@ -97,8 +97,8 @@ export default function NowCard({ onDone }: { onDone: (h: Habit) => void }) {
     <section className={`now-card ${over ? 'late' : ''}`} aria-label={over ? 'Nu, te laat' : 'Nu'}>
       <div className="now-head">
         <div className="now-titles">
-          <span className="eyebrow">{when === 'later' ? 'Hierna' : over ? 'Te laat' : 'Nu'}</span>
-          <h2 className="h1 now-task">{h.name}</h2>
+          {(when === 'later' || over) && <span className="eyebrow">{over ? 'Te laat' : 'Hierna'}</span>}
+          <h2 className="now-task">{h.name}</h2>
           <span className="now-meta">{meta}</span>
         </div>
         {dl && (

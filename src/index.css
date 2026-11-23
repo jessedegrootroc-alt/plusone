@@ -763,7 +763,7 @@ button.card:active { transform: scale(0.985); }
 /* Vandaag als één lijn door je dag: ochtend, overdag, avond. Wat voorbij is staat dicht, wat komt gestippeld,
    en waar je nu bent brandt een licht. Eén kaart tegelijk is "nu": licht op donker. */
 .dag { margin-top: var(--s5); }
-.dagdeel { position: relative; padding: 0 0 var(--s6) 30px; }
+.dagdeel { position: relative; padding: 0 0 var(--s5) 30px; }
 .dagdeel::before { content: ''; position: absolute; left: 7px; top: 26px; bottom: 4px; border-left: 1.5px solid var(--ink-3); opacity: 0.55; }
 .dagdeel.next::before { border-left-style: dashed; border-left-color: var(--ink-3); opacity: 0.4; }
 .dagdeel:last-child::before { display: none; }
@@ -772,7 +772,7 @@ button.card:active { transform: scale(0.985); }
 .dagdeel.past .dagdeel-dot { background: var(--ink-3); box-shadow: none; }
 .dagdeel.now .dagdeel-dot { background: var(--ink); box-shadow: 0 0 0 5px rgba(242, 242, 242, 0.1), 0 0 22px 2px rgba(242, 242, 242, 0.45); animation: dagLicht 3.2s ease-in-out infinite; }
 @keyframes dagLicht { 50% { box-shadow: 0 0 0 7px rgba(242, 242, 242, 0.06), 0 0 30px 4px rgba(242, 242, 242, 0.32); } }
-.dagdeel-label { margin: 0; font: 400 26px/32px var(--title); color: var(--ink); }
+.dagdeel-label { margin: 0; font: 400 22px/28px var(--title); color: var(--ink); }
 .dagdeel.past .dagdeel-label { color: var(--ink-2); }
 .dagdeel-range { font: var(--sm); color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dagdeel-nu, .dagdeel-meta { margin-left: auto; align-self: center; white-space: nowrap; }
@@ -785,16 +785,16 @@ button.card:active { transform: scale(0.985); }
 .dagdeel .won-dots { margin: 0; }
 
 /* Een moment op de lijn: gravure, wat het is en hoe lang, de vraag zelf */
-.moment { display: grid; grid-template-columns: 72px 1fr auto; align-items: center; gap: var(--s4); width: 100%; min-height: 96px; padding: var(--s3) var(--s4) var(--s3) var(--s3); border-radius: var(--r-lg); background: var(--paper-2); color: var(--ink); text-align: left; transition: transform 0.15s var(--ease), background-color 0.3s ease; }
+.moment { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: var(--s3); width: 100%; min-height: 64px; padding: var(--s2) var(--s3) var(--s2) var(--s2); border-radius: var(--r-lg); background: var(--paper-2); color: var(--ink); text-align: left; transition: transform 0.15s var(--ease), background-color 0.3s ease; }
 button.moment:active { transform: scale(0.985); }
 .moment:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-.moment-art { display: grid; place-items: center; width: 72px; height: 72px; border-radius: var(--r-md); overflow: hidden; background: radial-gradient(circle at 50% 62%, rgba(242, 242, 242, 0.12), transparent 70%), #111; }
+.moment-art { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--r-sm); overflow: hidden; background: radial-gradient(circle at 50% 62%, rgba(242, 242, 242, 0.12), transparent 70%), #111; }
 .moment-art img { width: 86%; height: 86%; object-fit: contain; }
-.moment-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.moment-kind { font: 600 12px/16px var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
-.moment-title { font: 400 20px/26px var(--title); }
-.moment-sub { font: var(--sm); color: var(--ink-2); }
-.moment-end { display: grid; place-items: center; width: 32px; height: 32px; color: var(--ink-3); }
+.moment-txt { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+.moment-kind { font: 600 11px/16px var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.moment-title { font: 400 18px/24px var(--title); }
+.moment-sub { font: var(--sm); font-size: 14px; line-height: 20px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.moment-end { display: grid; place-items: center; width: 24px; height: 32px; color: var(--ink-3); }
 .moment.now { background: var(--ink); color: var(--paper); box-shadow: 0 18px 40px -18px rgba(242, 242, 242, 0.35); }
 .moment.now .moment-kind { color: #5A5A5A; }
 .moment.now .moment-sub { color: #3A3A3A; }
@@ -805,9 +805,6 @@ button.moment:active { transform: scale(0.985); }
 .moment.done .moment-end { color: var(--ink); }
 .moment.muted { opacity: 0.5; }
 /* Wat gedaan of nog niet aan de beurt is, neemt minder ruimte in */
-.moment.done, .moment.muted { grid-template-columns: 48px 1fr auto; min-height: 68px; padding-block: var(--s2); }
-.moment.done .moment-art, .moment.muted .moment-art { width: 48px; height: 48px; border-radius: var(--r-sm); }
-.moment.done .moment-title, .moment.muted .moment-title { font-size: 18px; line-height: 24px; }
 @media (prefers-reduced-motion: reduce) { .dagdeel.now .dagdeel-dot { animation: none; } }
 
 /* De start van de app: één vraag per scherm, grote keuzes, en daarna je plan dat zichzelf bouwt */
@@ -997,8 +994,8 @@ button.moment:active { transform: scale(0.985); }
 .pulse-bar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
 .pulse-bar i { display: block; height: 100%; background: var(--ink); transform-origin: left; transition: transform 0.4s var(--ease); }
 /* Nu: het ene ding dat nu aan de beurt is. Een witte rand maakt hem de eerste kaart die je leest; verder dezelfde kaart. */
-.now-card { display: flex; flex-direction: column; gap: var(--s4); margin: 0 0 var(--s3); padding: var(--s5); border-radius: var(--r-lg); background: var(--card); box-shadow: inset 0 0 0 1px var(--ink); }
-.now-task { overflow-wrap: break-word; text-wrap: balance; }
+.now-card { display: flex; flex-direction: column; gap: var(--s3); margin: 0 0 var(--s3); padding: var(--s4) var(--s4) var(--s3); border-radius: var(--r-lg); background: var(--card); box-shadow: inset 0 0 0 1px var(--ink); }
+.now-task { margin: 0; font: 400 26px/32px var(--title); color: var(--ink); overflow-wrap: break-word; text-wrap: balance; }
 /* Het bewijs compacter dan elders: de knop moet op het eerste scherm passen */
 .now-card .proof { gap: var(--s3); }
 .now-card .proof-note { width: 76%; margin-top: 0; padding: var(--s4) var(--s3) var(--s3); }
@@ -1008,13 +1005,13 @@ button.moment:active { transform: scale(0.985); }
 .now-titles { display: flex; flex-direction: column; gap: var(--s1); min-width: 0; }
 .now-meta { font: var(--sm); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 /* De ring: een Time Timer die leegloopt naar je deadline */
-.now-ring { position: relative; flex: none; width: 96px; height: 96px; display: grid; place-items: center; align-content: center; }
+.now-ring { position: relative; flex: none; width: 80px; height: 80px; display: grid; place-items: center; align-content: center; }
 .now-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
 .now-ring circle { fill: none; stroke-width: 3.5; }
 .now-ring-bg { stroke: var(--line); }
 .now-ring-fg { stroke: var(--ink-2); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
 .now-ring.tight .now-ring-fg { stroke: var(--ink); }
-.now-ring-num { position: relative; font: 400 30px/32px var(--title); color: var(--ink); font-variant-numeric: tabular-nums; }
+.now-ring-num { position: relative; font: 400 26px/28px var(--title); color: var(--ink); font-variant-numeric: tabular-nums; }
 .now-ring-unit { position: relative; font: 600 12px/16px var(--sans); letter-spacing: 0.04em; color: var(--ink-3); }
 /* Te laat is te laat: de hele kaart wordt rood, net als de balk van een gemiste dag */
 .now-card.late { background: #7A1712; box-shadow: none; color: #FFF; animation: nowLate 0.5s ease both; }
@@ -1043,7 +1040,7 @@ button.dagdeel-head { width: 100%; text-align: left; color: inherit; }
 .morning-quote { margin: 0; font: var(--t-s); font-size: 18px; line-height: 26px; color: var(--ink); }
 .morning-quote span { font: var(--sm); color: var(--ink-3); }
 /* Doel als één groot getal met een paar woorden */
-.goal-num { font: 400 48px/52px var(--title); color: var(--ink); font-variant-numeric: tabular-nums; }
+.goal-num { font: 400 36px/40px var(--title); color: var(--ink); font-variant-numeric: tabular-nums; }
 .goal-lbl { font: var(--b); color: var(--ink-2); }
 .goal-lbl b { color: var(--ink); font-weight: 600; }
 /* Onder de scène: je plek groot, de berg als balk */
@@ -1182,3 +1179,24 @@ button.dagdeel-head { width: 100%; text-align: left; color: inherit; }
 .now-card.late .proof-vs::before, .now-card.late .proof-vs::after { background: rgba(255, 255, 255, 0.25); }
 .now-card.late .proof-foot .lead { color: #FFF !important; }
 .now-card.late .proof-foot .link { color: #FFF; }
+/* De kop van Vandaag: je doel als titel, rechts je reeks en Drang */
+.goal-head { display: block; padding: 0; text-align: left; color: var(--ink); }
+.goal-head .goal-num { font: 400 32px/36px var(--title); }
+.goal-head .goal-lbl { font: var(--b); color: var(--ink-2); }
+.goal-head.empty .goal-lbl { color: var(--ink-2); }
+.head-acts { display: flex; align-items: center; gap: var(--s2); flex: none; }
+.head-acts .urge-btn { height: 36px; padding: 0 var(--s3); }
+.streak-chip { display: inline-flex; align-items: center; gap: 2px; height: 36px; padding: 0 var(--s3) 0 var(--s2); border-radius: var(--r-full); box-shadow: inset 0 0 0 1px var(--line); font: 400 20px/1 var(--title); color: var(--ink); font-variant-numeric: tabular-nums; }
+.streak-chip img { width: 22px; height: 22px; object-fit: contain; }
+.now-card .btn { height: 48px; }
+/* Een scène schermvullend: tik op Nu of Je ideale zelf */
+button.mini-scene { display: block; padding: 0; cursor: zoom-in; }
+button.mini-scene:active { transform: scale(0.98); }
+.scene-full { position: fixed; inset: 0; z-index: 80; background: #000; animation: fade 0.3s ease both; }
+.scene-full-art { position: absolute; inset: 0; z-index: 0; isolation: isolate; overflow: hidden; }
+.scene-full-art > * { width: 100%; height: 100%; }
+.scene-full-x { position: absolute; z-index: 2; top: calc(env(safe-area-inset-top) + 16px); right: 16px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: rgba(0, 0, 0, 0.55); color: #F2F2F2; box-shadow: inset 0 0 0 1px rgba(242, 242, 242, 0.25); }
+.scene-full-cap { position: absolute; z-index: 1; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; gap: var(--s2); padding: 120px var(--s5) calc(env(safe-area-inset-bottom) + var(--s6)); background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.88) 45%); color: #F2F2F2; }
+.scene-full-title { margin: 0; font: 400 34px/40px var(--title); }
+.scene-full-line { margin: 0; font: var(--b); color: rgba(242, 242, 242, 0.8); }
+.scene-full-cap .climb-head { display: none; }
