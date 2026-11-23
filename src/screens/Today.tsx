@@ -151,6 +151,31 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
       })}
     </div>
   )
+  // De post-its per dagdeel, op hun tijd: voor 12:00 ochtend, tot 18:00 overdag, daarna avond.
+  // Zonder tijd: opstaan hoort bij de ochtend, de rest staat overdag (daar zet je er een tijd bij).
+  const partOfTask = (h: Habit): Part => (h.at ? (h.at < '12:00' ? 'ochtend' : h.at < '18:00' ? 'overdag' : 'avond') : isWakeHabit(h) ? 'ochtend' : 'overdag')
+  const allItems = [
+    ...big.map((h) => ({ h, big: true, done: done(h), late: date === today && !!h.at && h.at < nowHM && !done(h), removable: dayRockIds.has(h.id) })),
+    ...other.map((h) => ({ h, big: false, done: done(h), late: false, meta: scheduleLabel(h), removable: dayRockIds.has(h.id) })),
+  ].sort((a, b) => (a.h.at ?? '99').localeCompare(b.h.at ?? '99'))
+  const itemsIn = (p: Part) => allItems.filter((x) => partOfTask(x.h) === p)
+  const firstBoard = PARTS.find((p) => itemsIn(p).length || p === 'overdag')
+  const board = (p: Part) => (
+    <section className="tasks">
+      <TaskNotes
+        count={false}
+        hint={p === firstBoard}
+        bigDone={bigDone}
+        bigTotal={big.length}
+        items={itemsIn(p)}
+        onTear={tear}
+        onBack={(h) => { setValue(date, h.id, 0); setTorn(null) }}
+        onTime={setTimeFor}
+        onRemove={(h) => removeRock(h.id)}
+        onAdd={isToday && p === 'overdag' ? () => setAddTask(true) : undefined}
+      />
+    </section>
+  )
   const shortDate = new Date(date + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'short' }).replace('.', '')
 
   return (
@@ -207,31 +232,18 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
 
       {/* De dag: ochtend, overdag, avond. Elk dagdeel vraagt één ding; de taken staan overdag. */}
       <div className="dag">
-          <Daypart part="ochtend" label="Ochtend" range={`${shortTime(wake)} – 12:00`} when={whenOf('ochtend')} meta={morningDone(m) ? 'Gedaan' : m?.skipped ? 'Overgeslagen' : !isToday ? 'Niet gedaan' : whenOf('ochtend') === 'past' ? '1 open' : undefined} collapsible={whenOf('ochtend') === 'past'}>
+          <Daypart part="ochtend" label="Ochtend" range={`${shortTime(wake)} – 12:00`} when={whenOf('ochtend')} meta={morningDone(m) ? 'Gedaan' : m?.skipped ? 'Overgeslagen' : !isToday ? 'Niet gedaan' : whenOf('ochtend') === 'past' ? '1 open' : undefined} collapsible={whenOf('ochtend') === 'past' && !itemsIn('ochtend').some((x) => !x.done)}>
             {morningDone(m) ? (
               <Moment art="item-dageraad" kind="Ritueel" title="Ochtendmoment" sub={isToday ? 'Gedaan. Je sterke versie staat bovenaan.' : 'Gedaan.'} done onClick={isToday ? () => setSheet('morning') : undefined} />
             ) : (
               <Moment art="item-dageraad" kind={`Ritueel · 30 sec${inMorningWindow(s) ? '' : ` · vanaf ${fromHM}`}`} title={m?.skipped ? 'Ochtendmoment' : 'Wat zegt de zachte stem in je hoofd?'} sub={m?.skipped ? 'Vandaag overgeslagen. Toch doen?' : 'Neem het op. Dan praat jij terug.'} now={isToday && morningNow} muted={!isToday || (!morningNow && part !== 'ochtend')} onClick={isToday ? () => setSheet('morning') : undefined} />
             )}
+            {itemsIn('ochtend').length > 0 && board('ochtend')}
           </Daypart>
           <Daypart part="overdag" label="Overdag" range="12:00 – 18:00" when={whenOf('overdag')}>
-      {/* 5 en 6 · De taken van vandaag als briefjes: scheur eraf wat gedaan is, het gaat in de koektrommel */}
-            <section className="tasks">
-        <TaskNotes
-          title="Je taken"
-          count={false}
-          bigDone={bigDone}
-          bigTotal={big.length}
-          items={[
-            ...big.map((h) => ({ h, big: true, done: done(h), late: date === today && !!h.at && h.at < nowHM && !done(h), removable: dayRockIds.has(h.id) })),
-            ...other.map((h) => ({ h, big: false, done: done(h), late: false, meta: scheduleLabel(h), removable: dayRockIds.has(h.id) })),
-          ]}
-          onTear={tear}
-          onBack={(h) => { setValue(date, h.id, 0); setTorn(null) }}
-          onTime={setTimeFor}
-          onRemove={(h) => removeRock(h.id)}
-          onAdd={isToday ? () => setAddTask(true) : undefined}
-        />
+      {/* 5 en 6 · De taken van vandaag als briefjes, per dagdeel: scheur eraf wat gedaan is */}
+            {board('overdag')}
+            <section className="tasks-extra">
         {selfMade && (
           <div className="card remind-card">
             <p><b>{selfMade.name}</b>: drie weken bijna elke dag. Je hebt geen herinnering meer nodig om dit te doen. Uitzetten?</p>
@@ -245,6 +257,7 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
 
           </Daypart>
           <Daypart part="avond" label="Avond" range={`18:00 – ${shortTime(bed)}`} when={whenOf('avond')}>
+            {itemsIn('avond').length > 0 && board('avond')}
             {sealed ? (
               <Moment art="item-handspiegel" kind="Terugkijken" title="Dag afgesloten" sub={dayResult(s, date) === true ? (isToday ? 'Gewonnen. Morgen weer.' : 'Gewonnen.') : (isToday ? 'Eerlijk teruggekeken. Morgen weer.' : 'Eerlijk teruggekeken.')} done onClick={() => openMirror(date)} />
             ) : (

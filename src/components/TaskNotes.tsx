@@ -25,7 +25,7 @@ export interface TaskItem {
  * Alleen wat zwaar was, wordt een koekje in de echte koektrommel (dat vraagt Vandaag na het afscheuren).
  * Tik op dat randje en het briefje hangt er weer.
  */
-export default function TaskNotes({ items, bigDone, bigTotal, onTear, onBack, onTime, onRemove, onAdd, title, count = true }: {
+export default function TaskNotes({ items, bigDone, bigTotal, onTear, onBack, onTime, onRemove, onAdd, title, count = true, hint = true }: {
   /** Een nieuwe post-it op het bord (alleen vandaag) */
   onAdd?: () => void
   items: TaskItem[]
@@ -37,15 +37,18 @@ export default function TaskNotes({ items, bigDone, bigTotal, onTear, onBack, on
   onBack: (h: Habit) => void
   onTime: (h: Habit) => void
   onRemove: (h: Habit) => void
-  title: string
+  /** Zonder titel: het bord staat al onder een dagdeel */
+  title?: string
+  /** "Gedaan? Scheur het eraf." Eén keer op de pagina is genoeg */
+  hint?: boolean
 }) {
   const jarRef = useRef<HTMLDivElement>(null)
 
   return (
     <div className="task-pad">
-      <div className="task-head">
+      <div className={`task-head ${title || count ? '' : 'bare'}`}>
         <div className="stack gap-4">
-          <h2 className="h2">{title}</h2>
+          {title && <h2 className="h2">{title}</h2>}
           {count && <span className="small">{bigTotal ? `${bigDone} van ${bigTotal} grote taken gedaan` : 'Geen grote taken'}</span>}
         </div>
         {/* Geen blik meer: een afgescheurd briefje vliegt naar rechtsboven en verdwijnt */}
@@ -68,7 +71,7 @@ export default function TaskNotes({ items, bigDone, bigTotal, onTear, onBack, on
         ) : (
           <p className="board-empty">Geen taken voor deze dag. Maak een gewoonte groot onder Reis.</p>
         )}
-        {items.some((x) => !x.done) && <p className="board-hint">Gedaan? Scheur het eraf.</p>}
+        {hint && items.some((x) => !x.done) && <p className="board-hint">Gedaan? Scheur het eraf.</p>}
       </div>
     </div>
   )

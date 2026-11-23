@@ -1210,3 +1210,6 @@ button.mini-scene:active { transform: scale(0.98); }
 .week-head { margin: calc(-1 * var(--s2)) 0 var(--s4); }
 .week-head .won-dots { margin: 0; }
 .week-head .won-dot { max-width: 36px; }
+/* Een bord onder een dagdeel heeft geen eigen kop: de plek waar briefjes heen vliegen blijft, de ruimte niet */
+.task-head.bare { height: 0; min-height: 0; margin: 0; overflow: visible; }
+.dagdeel-body .tasks + .moment, .dagdeel-body .moment + .tasks { margin-top: var(--s2); }
