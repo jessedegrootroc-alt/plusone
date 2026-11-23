@@ -1213,3 +1213,23 @@ button.mini-scene:active { transform: scale(0.98); }
 /* Een bord onder een dagdeel heeft geen eigen kop: de plek waar briefjes heen vliegen blijft, de ruimte niet */
 .task-head.bare { height: 0; min-height: 0; margin: 0; overflow: visible; }
 .dagdeel-body .tasks + .moment, .dagdeel-body .moment + .tasks { margin-top: var(--s2); }
+
+/* Dag afsluiten: één vraag per scherm (zoals Stoic's avondreflectie). Boven de voortgang, onder één knop. */
+.dc-flow { gap: 0; }
+.dc-top { display: flex; align-items: center; gap: var(--s3); }
+.dc-top-gap { width: 48px; flex: none; }
+.dc-body { flex: 1; display: flex; flex-direction: column; gap: var(--s3); padding-top: var(--s7); }
+.dc-q-title { margin: 0; font: 400 32px/40px var(--title); color: #F2F2F2; text-wrap: balance; }
+.dc-q-title.won { color: #F2F2F2; }
+.dc-q-title.lost { color: #FF8A80; }
+.dc-sub { margin: 0; font: var(--b); color: var(--ink-2); max-width: 36ch; }
+.dc-field { display: flex; flex-direction: column; gap: var(--s4); margin-top: var(--s4); }
+.dc-input { font-size: 18px; }
+.dc-saved { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
+.dc-saved .lead { margin: 0; color: var(--ink); }
+.dc-foot { display: flex; flex-direction: column; align-items: center; gap: var(--s3); padding-top: var(--s5); }
+.dc-foot .btn:disabled { opacity: 0.35; }
+.dc-skip { color: var(--ink-2); min-height: 32px; }
+.dc-sum { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.dc-sum-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s4); padding: var(--s3) 0; border-bottom: 1px solid var(--line); font: var(--b); color: var(--ink-2); }
+.dc-sum-row b { color: var(--ink); font-weight: 600; text-align: right; }
