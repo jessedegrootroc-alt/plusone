@@ -1200,3 +1200,13 @@ button.mini-scene:active { transform: scale(0.98); }
 .scene-full-title { margin: 0; font: 400 34px/40px var(--title); }
 .scene-full-line { margin: 0; font: var(--b); color: rgba(242, 242, 242, 0.8); }
 .scene-full-cap .climb-head { display: none; }
+/* Drang, bij je verleidingen: één rustige regel */
+.urge-row { display: flex; align-items: center; gap: var(--s3); width: 100%; min-height: 48px; text-align: left; font: var(--b); color: var(--ink-2); }
+.urge-row b { color: var(--ink); font-weight: 600; }
+.urge-row .grow { flex: 1; }
+.urge-row .chev { color: var(--ink-3); display: grid; }
+.day-card .fold + .urge-row, .day-card .list + .urge-row { margin-top: var(--s2); padding-top: var(--s2); border-top: 1px solid var(--line); }
+/* Je week onder je doel in de kop, zonder kaart eromheen */
+.week-head { margin: calc(-1 * var(--s2)) 0 var(--s4); }
+.week-head .won-dots { margin: 0; }
+.week-head .won-dot { max-width: 36px; }

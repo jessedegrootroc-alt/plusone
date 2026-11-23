@@ -133,7 +133,6 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
   const isToday = date === today
   // Een andere dag is helemaal voorbij; hij krijgt dezelfde opbouw als vandaag, alleen de inhoud verschilt
   const whenOf = (p: Part) => (!isToday ? 'past' : p === part ? 'now' : PARTS.indexOf(p) < PARTS.indexOf(part) ? 'past' : 'next') as 'past' | 'now' | 'next'
-  const dayName = new Date(date + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'long' })
   const wake = wakeTime(s)
   const bed = s.settings?.notify?.bed ?? '22:15'
   const m = log?.morning
@@ -180,12 +179,12 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
             <span className="streak-chip" aria-label={`${streak} ${streak === 1 ? 'dag' : 'dagen'} op rij. ${wonToday ? 'Vandaag gewonnen.' : keptToday ? 'Je reeks staat.' : `Nog ${streakLeft} ${streakLeft === 1 ? 'taak' : 'taken'} voor ${streak + 1}.`}`}>
               <img src="/art/item-vuur.webp" alt="" />{streak}
             </span>
-            <button onClick={openUrge} className="hstack urge-btn" aria-label="Ik voel drang">
-              {Icon.wave()} <span className="urge-lbl">Drang</span>
-            </button>
           </div>
         )}
       </div>
+
+      {/* Je week direct onder je doel: zeven rondjes, tik een dag om terug te kijken */}
+      <div className="week-head">{weekDots}</div>
 
       {/* 2 · Nooit twee keer missen. Eén misser red je met een reservedag; terugkomen telt dubbel.
           Streng, niet beschamend (Breines & Chen: wie mild naar een misser kijkt, werkt daarna harder). */}
@@ -254,10 +253,6 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
           </Daypart>
         </div>
 
-      {/* Voortgang onder je dag: hoeveel grote taken, en je week. Boven de vouw staat wat je nu moet doen, niet hoe het ging. */}
-      <section className="pulse" aria-label={isToday ? 'Voortgang vandaag' : `Voortgang op ${dayName}`}>
-          {weekDots}
-        </section>
 
       {/* Na je dag alleen wat je zelf zei: je sterke versie van vanochtend, en je plan van gisteren. Geen duwtjes meer. */}
       {date === today && (morningDone(log?.morning) && (log?.morning?.strong || log?.morning?.strongClip) || plan) && (
@@ -275,21 +270,28 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
       {/* Eén keer: het nieuwe schema, of taak 4 */}
       {date === today && <section className="section"><Offers /></section>}
 
-      {/* Verleidingen: bijhouden, telt niet mee */}
-      {vices.length > 0 && (
+      {/* Verleidingen: bijhouden, telt niet mee. Hier woont ook Drang: voel je hem, dan zit je hem uit. */}
+      {(vices.length > 0 || isToday) && (
         <section className="section">
           <div className="card day-card">
-            <button className="fold" onClick={() => setShowVices((x) => !x)} aria-expanded={showVices}>
+            {vices.length > 0 && <button className="fold" onClick={() => setShowVices((x) => !x)} aria-expanded={showVices}>
               <span>Verleidingen · {slips.length ? `${slips.length} toegegeven` : 'alles vrij'}</span>
               <span className={`chev ${showVices ? 'open' : ''}`}>{Icon.next()}</span>
-            </button>
-            {(showVices ? vices : slips).length > 0 && (
+            </button>}
+            {vices.length > 0 && (showVices ? vices : slips).length > 0 && (
               <div className="list flat">
                 {(showVices ? vices : slips).map((h) => {
                   const v = log?.v[h.id] ?? 0
                   return <HabitRow key={h.id} compact tight h={h} value={v} answered={sealed || (!!log && h.id in log.v)} onChange={(nv) => change(h.id, nv, !isDone(h, v), true)} />
                 })}
               </div>
+            )}
+            {isToday && (
+              <button className="urge-row" onClick={openUrge}>
+                {Icon.wave()}
+                <span className="grow">Voel je drang? <b>Zit hem uit.</b></span>
+                <span className="chev">{Icon.next()}</span>
+              </button>
             )}
           </div>
         </section>
