@@ -176,7 +176,7 @@ function MirrorRow() {
     <section className="section">
       <div className="section-head"><h2 className="h2">Je spiegel</h2>{n && <button className="link" onClick={() => setOpen('all')}>Alle post-its</button>}</div>
       {n && st?.step ? (
-        <Moment art="item-lantaarn" kind={`Nu · ${leftLabel(st.left)}`} title={st.step.text} sub={n.text} onClick={() => setOpen('focus')} />
+        <Moment art="item-lantaarn" kind={`Nu · ${leftLabel(st.left)}`} title={st.step.text} sub={n.fear ? `Bang ${n.fear}. En toch.` : n.text} onClick={() => setOpen('focus')} />
       ) : (
         <Moment art="item-lantaarn" kind="Spiegel" title="Wat moet er anders?" sub="Schrijf een post-it voor je spiegel" onClick={() => setOpen('all')} />
       )}

@@ -2,6 +2,7 @@
 import type { JarItem } from './store'
 
 const KINDS: { re: RegExp; label: string; big?: boolean; tape?: boolean }[] = [
+  { re: /^Ondanks angst: /, label: 'Ondanks angst', big: true, tape: true },
   { re: /^Van de spiegel: /, label: 'Van de spiegel', big: true, tape: true },
   { re: /^Grens verlegd: /, label: 'Grens verlegd', big: true },
   { re: /^(?=Drang naar )/, label: 'Golf uitgezeten' },

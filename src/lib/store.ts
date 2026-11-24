@@ -105,6 +105,8 @@ export interface Challenge {
 export interface MirrorNote {
   id: string
   text: string
+  /** Waar je bang voor bent bij dit doel ("dat anderen het zien"). Benoemd, zodat je angst een stap wordt. */
+  fear?: string
   /** Onder welke zonde dit valt. Zo telt de post-it mee in je balans en je mandala. */
   sin?: SinId
   /** Het onderdeel van je leven: financieel, emotioneel (intern: spiritueel), fysiek of mentaal. */

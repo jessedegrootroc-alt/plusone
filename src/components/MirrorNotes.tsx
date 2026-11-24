@@ -5,10 +5,43 @@ import { paperFor } from '../lib/paper'
 import { countdownLabel, domainForFeature, mainGoal, needsDate } from '../lib/goal'
 import { FEATURES, FEATURE_ART, type FeatureId } from '../data/catalog'
 import { BoardCols } from './Pinboard'
-import { noteHabitId, stepHabitId, stepWeight } from '../lib/score'
+import { noteHabitId, stepHabitId } from '../lib/score'
 import { activeNote, focusOn, leftLabel, nextStep } from '../lib/focus'
 import { buzz, todayISO, uid, update, useStore, type MirrorNote } from '../lib/store'
 import { HoldButton, Icon, Sheet } from './ui'
+
+/** Waar mensen bij een groot doel het vaakst bang voor zijn. Eén tik, of je eigen woorden. */
+const FEARS = ['dat ik het niet haal', 'dat anderen het zien', 'voor de pijn', 'dat ik weer opgeef', 'dat ik het niet kan']
+
+/**
+ * "Ik durf dit niet" (Goggins: eerlijk in de spiegel, en dan toch). Benoem waar je bang voor bent;
+ * daarna staat je angst op de post-it naast je stap, en zet je hem toch, dan gaat hij de koektrommel in als "ondanks angst".
+ */
+function FearPanel({ n, onDone }: { n: MirrorNote; onDone: () => void }) {
+  const [fear, setFear] = useState(n.fear ?? '')
+  const save = (f: string) => {
+    const v = f.trim().replace(/^bang\s+/i, '')
+    if (!v) return
+    buzz(14)
+    update((d) => { const x = d.notes.find((y) => y.id === n.id); if (x) x.fear = v })
+    onDone()
+  }
+  return (
+    <div className="fear-panel">
+      <h3 className="fear-q">Waar ben je bang voor?</h3>
+      <p className="focus-hint" style={{ margin: 0 }}>Zeg het eerlijk. Wat je benoemt, kun je aanpakken.</p>
+      <div className="fear-opts">
+        {FEARS.map((f) => <button key={f} className={`fear-opt ${n.fear === f ? 'on' : ''}`} onClick={() => save(f)}>{f[0].toUpperCase() + f.slice(1)}</button>)}
+      </div>
+      <input className="input fear-input" value={FEARS.includes(fear) ? '' : fear} onChange={(e) => setFear(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save(fear)} placeholder="Of in je eigen woorden" maxLength={60} aria-label="Waar je bang voor bent" />
+      {fear.trim() && !FEARS.includes(fear) && <button className="btn pill" onClick={() => save(fear)}>Dit is het</button>}
+      <div className="focus-more">
+        <button className="link" onClick={onDone}>Terug</button>
+        {n.fear && <button className="link" onClick={() => { update((d) => { const x = d.notes.find((y) => y.id === n.id); if (x) delete x.fear }); onDone() }}>Niet meer bang</button>}
+      </div>
+    </div>
+  )
+}
 
 /** Hooguit twee per onderdeel: als alles moet, gebeurt er niets. */
 const MAX_PER = 2
@@ -29,8 +62,9 @@ const completeStep = (id: string) => update((d) => {
     const nx = activeNote(d)
     if (nx) focusOn(d, nx.id)
   }
-  // Een gehaalde post-it gaat de koektrommel in, met het plakband van de spiegel er nog aan
-  d.jar.unshift({ id: uid(), text: `Van de spiegel: ${x.steps![i].text}`, date: today })
+  // Een gehaalde post-it gaat de koektrommel in, met het plakband van de spiegel er nog aan.
+  // Had je je angst benoemd, dan staat erbij dat je het deed terwijl je bang was: dat is het sterkste bewijs.
+  d.jar.unshift({ id: uid(), text: x.fear ? `Ondanks angst: ${x.steps![i].text} · bang ${x.fear}` : `Van de spiegel: ${x.steps![i].text}`, date: today })
 })
 
 /**
@@ -119,6 +153,33 @@ export default function MirrorNotes() {
   )
 }
 
+/**
+ * De hele ladder als eigen scherm, rustig: een lijn met bolletjes zoals de dag op Vandaag.
+ * Gezet staat stil en grijs (geen doorgestreepte tekst), de stap van nu licht op, wat nog komt staat gestippeld met zijn termijn.
+ */
+function LadderView({ n, onBack }: { n: MirrorNote; onBack: () => void }) {
+  const steps = n.steps ?? []
+  const now = steps.findIndex((x) => !x.doneAt)
+  return (
+    <div className="ladder-view">
+      <h3 className="fear-q">De ladder</h3>
+      <p className="focus-hint" style={{ margin: 0 }}>{steps.filter((x) => x.doneAt).length} van {steps.length} gezet{n.goal ? ` · ${n.goal}` : ''}</p>
+      <ol className="ladder-line">
+        {steps.map((x, j) => (
+          <li key={j} className={x.doneAt ? 'done' : j === now ? 'now' : 'next'}>
+            <span className="ll-dot" aria-hidden="true">{x.doneAt ? Icon.check('#0B0B0B') : null}</span>
+            <span className="ll-txt">
+              <span className="ll-name">{x.text}</span>
+              <span className="ll-term">{x.doneAt ? 'Gezet' : j === now ? 'Nu' : termLabel(x.days ?? 7)}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+      <div className="focus-more"><button className="link" onClick={onBack}>Terug</button></div>
+    </div>
+  )
+}
+
 /** De ladder als streepjes: gezette stappen zwart, de rest nog grijs. */
 function Ladder({ n }: { n: MirrorNote }) {
   return (
@@ -140,6 +201,8 @@ export function FocusSheet({ n, onEdit, onClose, onAll }: { n: MirrorNote; onEdi
   const act = activeNote(s)
   const waiting = !!act && act.id !== n.id
   const [peel, setPeel] = useState<string | null>(null)
+  const [fearOpen, setFearOpen] = useState(false)
+  const [ladder, setLadder] = useState(false)
   const paper = (salt: number) => {
     const p = paperFor(`${n.id}:${salt}`, 2.5)
     return { '--rot': `${p.rot}deg`, '--tint': p.tint, '--pin': `${p.pin}%`, '--tape': `${p.tape}deg` } as CSSProperties
@@ -150,68 +213,59 @@ export function FocusSheet({ n, onEdit, onClose, onAll }: { n: MirrorNote; onEdi
     completeStep(n.id)
     setTimeout(() => setPeel(null), 800)
   }
+  const steps = n.steps ?? []
   return (
     <Sheet onClose={onClose}>
-      <div className="stack gap-24">
-        <div className="stack gap-8">
-          <div className="eyebrow">{dom ? dom.name : 'De spiegel'}</div>
-          <p className="lead" style={{ color: 'var(--ink)' }}>{n.text}</p>
-          {n.goal && <div className="small">Doel: <b style={{ color: 'var(--ink-2)' }}>{n.goal}</b></div>}
-          {n.feature && <div className="small hstack" style={{ gap: 8 }}><img src={`/art/${FEATURE_ART[n.feature]}.webp`} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} /> Beloning: {FEATURES.find((f) => f.id === n.feature)!.name.toLowerCase()} voor je ideale zelf</div>}
-        </div>
-
-        {/* De stap van nu als eigen post-it; de vorige scheurt eraf */}
-        <div className="peel-wrap">
-          {peel && <div className="jar-note mnote jar-solo peel" style={paper(st.i - 1)}><span className="tape" aria-hidden="true" /><span className="mnote-text">{peel}</span></div>}
-          <div key={st.i} className="jar-note mnote jar-solo" style={paper(st.i)}>
-            <span className="tape" aria-hidden="true" />
-            {st.step ? (
-              <>
-                <span className="jar-kind">Stap {st.i + 1} van {st.total} · {leftLabel(st.left)}</span>
-                <span className="mnote-text">{st.step.text}</span>
-                <span className="jar-date">telt {stepWeight(st.i, st.total)}× mee in je balans</span>
-              </>
-            ) : (
-              <>
-                <span className="jar-kind">Alle stappen gezet</span>
-                <span className="mnote-text">Bereikt? Haal hem eraf. Nog niet? Leg de lat hoger.</span>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="stack gap-12">
-          {waiting ? (
-            <>
-              <p className="small center" style={{ margin: 0 }}>Je werkt aan één post-it tegelijk. Nu: <b style={{ color: 'var(--ink)' }}>{act!.text}</b></p>
-              <button className="btn ghost" onClick={() => { buzz(); update((d) => focusOn(d, n.id)); onClose() }}>Hier eerst aan werken</button>
-            </>
-          ) : (
-            <>
-              {st.step && <HoldButton key={st.i} className="btn" label={st.left < 0 ? 'Toch gehaald' : 'Gehaald: scheur hem eraf'} ms={900} onDone={stepDone} />}
-              {st.step && st.left < 0 && <p className="small center" style={{ margin: 0 }}>Over tijd. Haal hem deze week, of maak hem kleiner via bewerken. Eerlijk zijn is de helft.</p>}
-            </>
-          )}
-        </div>
-
-        {st.total > 0 && (
-          <div className="stack gap-12">
-            <div className="section-head" style={{ margin: 0 }}><h3 className="h2">De ladder</h3><span className="small">{st.done} van {st.total}</span></div>
-            <ol className="ladder-preview">
-              {(n.steps ?? []).map((x, j) => (
-                <li key={j} className={x.doneAt ? 'done' : j === st.i ? 'now' : ''}>
-                  <span className="n">{x.doneAt ? Icon.check('#F2F2F2') : j + 1}</span>
-                  <span className="grow">{x.text}</span>
-                  {!x.doneAt && <span className="term">{termLabel(x.days ?? 7)}</span>}
-                </li>
-              ))}
-            </ol>
+      {/* Eén ding tegelijk (zoals Stoic): je ladder als streepjes, je stap als post-it, één smalle knop.
+          De harde waarheid, de hele ladder en je angst staan erachter, niet ernaast. */}
+      <div className="focus">
+        {steps.length > 0 && (
+          <div className="focus-dashes" aria-label={`Stap ${st.i + 1} van ${st.total}`}>
+            {steps.map((x, j) => <i key={j} className={x.doneAt ? 'on' : j === st.i ? 'now' : ''} />)}
           </div>
         )}
-        <div className="hstack between">
-          <button className="link" onClick={onEdit}>Bewerken</button>
-          {onAll && <button className="link" onClick={onAll}>Alle post-its</button>}
-        </div>
+
+        {fearOpen ? (
+          <FearPanel n={n} onDone={() => setFearOpen(false)} />
+        ) : ladder ? (
+          <LadderView n={n} onBack={() => setLadder(false)} />
+        ) : (
+          <>
+            <div className="focus-meta">
+              <span className="eyebrow">{st.step ? `Stap ${st.i + 1} van ${st.total} · ${leftLabel(st.left)}` : dom ? dom.name : 'De spiegel'}</span>
+              {n.goal && <span className="focus-goal">{n.goal}</span>}
+            </div>
+
+            <div className="peel-wrap focus-note">
+              {peel && <div className="jar-note mnote jar-solo peel" style={paper(st.i - 1)}><span className="tape" aria-hidden="true" /><span className="mnote-text">{peel}</span></div>}
+              <div key={st.i} className="jar-note mnote jar-solo" style={paper(st.i)}>
+                <span className="tape" aria-hidden="true" />
+                <span className="mnote-text">{st.step ? st.step.text : 'Alle stappen gezet. Bereikt? Haal hem eraf.'}</span>
+                {st.step && n.fear && <span className="mnote-fear">Bang {n.fear}</span>}
+              </div>
+            </div>
+
+            {waiting ? (
+              <div className="focus-acts">
+                <p className="small center" style={{ margin: 0 }}>Je werkt nu aan: <b style={{ color: 'var(--ink)' }}>{act!.text}</b></p>
+                <button className="btn pill" onClick={() => { buzz(); update((d) => focusOn(d, n.id)); onClose() }}>Hier eerst aan werken</button>
+              </div>
+            ) : st.step && (
+              <div className="focus-acts">
+                <HoldButton key={st.i} className="btn pill" label={n.fear || st.left < 0 ? 'Toch gedaan' : 'Gehaald'} ms={900} onDone={stepDone} />
+                <span className="focus-hint">{n.fear ? 'Houd vast. Dan gaat hij de koektrommel in als ondanks angst.' : st.left < 0 ? 'Over tijd. Haal hem deze week, of maak hem kleiner.' : 'Houd vast om hem eraf te scheuren.'}</span>
+                <button className="link focus-fear" onClick={() => setFearOpen(true)}>{n.fear ? 'Mijn angst wijzigen' : 'Ik durf dit niet'}</button>
+              </div>
+            )}
+
+            {/* Alles wat er verder bij hoort, één tik verder */}
+            <div className="focus-more">
+              {steps.length > 0 && <button className="link" onClick={() => setLadder(true)}>De hele ladder</button>}
+              <button className="link" onClick={onEdit}>Bewerken</button>
+              {onAll && <button className="link" onClick={onAll}>Alle post-its</button>}
+            </div>
+          </>
+        )}
       </div>
     </Sheet>
   )
