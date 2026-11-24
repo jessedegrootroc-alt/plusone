@@ -217,13 +217,13 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
         <div className="yday">
           <div className="yday-head">
             <span className="eyebrow">Gisteren</span>
-            <span className="yday-score">{yDone.length} van {yBig.length}</span>
+            {/* Zoals Stoic's streak-rondjes: per grote taak een bolletje, gedaan gevuld */}
+            <span className="yday-dots" aria-label={`${yDone.length} van ${yBig.length} gedaan`}>{yBig.map((h) => <i key={h.id} className={yDone.includes(h) ? 'on' : ''} />)}</span>
           </div>
-          {yDone.length > 0 ? (
-            <ul className="yday-done">
-              {yDone.map((h) => <li key={h.id}>{Icon.check()}<span>{h.name}</span></li>)}
-            </ul>
-          ) : <p className="yday-none">Niets afgevinkt. Vandaag begint opnieuw.</p>}
+          {/* Wat je deed voorop, wat bleef liggen stil eronder: eerlijk, zonder rood */}
+          <ul className="yday-done">
+            {[...yDone, ...yBig.filter((h) => !yDone.includes(h))].map((h) => <li key={h.id} className={yDone.includes(h) ? 'on' : ''}>{yDone.includes(h) ? Icon.check() : <i className="yday-open" />}<span>{h.name}</span></li>)}
+          </ul>
           <div className="yday-next">
             {yPlan ? (
               <button className="yday-plan" onClick={() => update((d) => { const l = d.logs[yesterday]; if (l?.aar) delete l.aar.plan })} aria-label={`Vandaag anders: ${yPlan}. Tik om te wijzigen.`}>
@@ -239,7 +239,7 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
               </>
             )}
           </div>
-          {savable && <p className="yday-save">Win vandaag, dan redt een reservedag gisteren{streakAtStake > 0 ? ` en blijft je reeks van ${streakAtStake} staan` : ''}.</p>}
+          {savable && <p className="yday-save">Win vandaag, dan is gisteren gered{streakAtStake > 0 ? ` en blijft je reeks van ${streakAtStake} staan` : ''}.</p>}
         </div>
       ) : null}
 
