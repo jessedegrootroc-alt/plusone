@@ -61,9 +61,9 @@ export default function SceneCompare({ children }: { children?: ReactNode }) {
           <div className="scene-full-cap">
             <div className="eyebrow">{full === 'nu' ? 'Nu' : 'Je ideale zelf'}</div>
             <h2 className="scene-full-title">{full === 'nu' ? stage.place : paradiso.place}</h2>
-            <p className="scene-full-line">{full === 'nu' ? stage.line : paradiso.line}</p>
-            {/* De klim hoort bij de tekst: waar je staat, en hoe ver nog */}
-            {full === 'nu' && <div className="scene-full-climb"><ClimbCaption balance={climb} /></div>}
+            <p className="scene-full-line">{full === 'nu' ? stage.line : stage.scene === 'paradiso' ? paradiso.line : 'Hier werk je naartoe. Elke gewonnen dag brengt je een stap hoger.'}</p>
+            {/* De klim hoort bij de tekst: waar je nu staat, of bij je ideale zelf: Paradiso */}
+            <div className="scene-full-climb"><ClimbCaption balance={full === 'nu' ? climb : 100} /></div>
           </div>
         </div>,
         document.body,
