@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import SceneCompare from '../components/SceneCompare'
 import WinMoment from '../components/WinMoment'
-import NowCard from '../components/NowCard'
 import Offers from '../components/Offers'
 import TaskNotes from '../components/TaskNotes'
 import { MorningFlow, inMorningWindow, morningDone } from '../components/Morning'
@@ -11,8 +10,8 @@ import { Daypart, Moment, PARTS, partNow, type Part } from '../components/Day'
 import { NoteSheet } from '../components/MirrorNotes'
 import { AddTaskSheet } from '../components/DaySheets'
 import { HabitRow, Icon, Sheet, Toast } from '../components/ui'
-import { tierOf, type Tier } from '../lib/tier'
-import { bigTasksOn, canSave, dayResult, doesItAlone, isComeback, isSaved, lostYesterday, missedOn, missedYesterday, otherTasksOn, reservesLeft, scheduleLabel, keptOnly, streakNeed, winStreak, wonStats } from '../lib/days'
+import { tierOf } from '../lib/tier'
+import { bigTasksOn, canSave, dayResult, doesItAlone, isComeback, isSaved, lostYesterday, missedYesterday, otherTasksOn, scheduleLabel, keptOnly, streakNeed, winStreak, wonStats } from '../lib/days'
 import { countdownLabel, daysLeft, goalTitle, mainGoal } from '../lib/goal'
 import { isDone } from '../lib/score'
 import { isWakeHabit, setWakeTime, shortTime, wakeTime } from '../lib/wake'
@@ -24,12 +23,8 @@ const SLIP_LINES = [
   'Gezien. De volgende keuze telt weer volledig.',
 ]
 
-/** Wat de balk zegt na een gemiste dag, per niveau: mild voor een beginner, hard voor een expert. */
-const lostLine = (tier: Tier, twoInRow: boolean, noReserves: boolean) => {
-  if (tier === 'beginner') return twoInRow ? 'Twee dagen gemist. Geen drama: doe vandaag één taak, dan sta je weer.' : 'Gisteren gemist. Vandaag telt gewoon weer. Begin met je kleinste taak.'
-  if (tier === 'expert') return twoInRow ? 'Twee dagen op rij. Dat is wie je was, niet wie je wordt.' : 'Gisteren gemist. Geen reserves, geen excuses. Vandaag lever je.'
-  return twoInRow ? 'Twee dagen op rij. Dat is een patroon. Breek het vandaag.' : noReserves ? 'Gemist, en je reserves zijn op. Vandaag is er geen ruimte.' : 'Gisteren gemist. Vandaag lever je.'
-}
+/** Wat je met één tik kiest om vandaag anders te doen. */
+const FIXES = ['Het zware ding eerst', 'Telefoon weg', 'Eerder naar bed']
 
 export default function Today({ openMirror, openUrge, openShadow }: { openMirror: (date: string) => void; openUrge: () => void; openShadow: (habitId?: string) => void }) {
   const s = useStore()
@@ -75,17 +70,16 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
   // Wat je reeks vandaag nog vraagt (per niveau minder dan winnen, behalve voor een expert)
   const streakLeft = Math.max(0, streakNeed(s, big.length) - bigDone)
   const nowHM = new Date().toTimeString().slice(0, 5)
-  const plan = s.logs[addDays(date, -1)]?.aar?.plan
   const lost = date === today && lostYesterday(s, today)
+  // Gisteren in het kort: wat je deed, en wat je vandaag anders doet
+  const yBig = bigTasksOn(s, addDays(today, -1))
+  const yDone = yBig.filter((h) => isDone(h, s.logs[addDays(today, -1)]?.v[h.id] ?? 0) && (s.logs[addDays(today, -1)]?.v[h.id] ?? 0) > 0)
+  const yPlan = s.logs[addDays(today, -1)]?.aar?.plan
   // Reservedagen: gisteren gemist? Eén keer red je hem, twee keer op rij niet.
   const yesterday = addDays(today, -1)
   const missed = date === today && missedYesterday(s, today)
   const savable = missed && canSave(s, yesterday)
-  const left = reservesLeft(s, yesterday)
-  const twoInRow = missed && missedOn(s, addDays(today, -2))
   const comeback = date === today && isComeback(s, today)
-  // De versie van de app die bij je niveau hoort
-  const tier = tierOf(s)
   // Gisteren redden verdien je: win vandaag, dan vangt een reservedag gisteren op. Geen knop, het gebeurt bij je winst.
   useEffect(() => {
     if (!wonToday || !savable) return
@@ -217,16 +211,39 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
         <div className="miss-bar back">{isSaved(s, yesterday) ? 'Opgestaan, en gisteren gered met je reservedag. Nu geen tweede keer.' : 'Gevallen en weer opgestaan. Dát telt.'}</div>
       ) : missed && isSaved(s, yesterday) ? (
         <div className="miss-bar saved">Gered. Nu geen tweede keer.</div>
-      ) : savable ? (
-        <div className="miss-bar" role="alert">
-          <span className="miss-text">Gisteren gemist. Win vandaag, dan red je hem.<span className="miss-sub">{streakAtStake > 0 ? `Je reeks van ${streakAtStake} blijft staan. ` : ''}Kost 1 van je {left} {left === 1 ? 'reservedag' : 'reservedagen'}.</span></span>
+      ) : (savable || lost) ? (
+        // Na een gemiste dag geen rode balk maar Goggins' After Action Report, zonder iets in te vullen:
+        // wat goed ging weet de app al, wat je anders doet kies je met één tik.
+        <div className="yday">
+          <div className="yday-head">
+            <span className="eyebrow">Gisteren</span>
+            <span className="yday-score">{yDone.length} van {yBig.length}</span>
+          </div>
+          {yDone.length > 0 ? (
+            <ul className="yday-done">
+              {yDone.map((h) => <li key={h.id}>{Icon.check()}<span>{h.name}</span></li>)}
+            </ul>
+          ) : <p className="yday-none">Niets afgevinkt. Vandaag begint opnieuw.</p>}
+          <div className="yday-next">
+            {yPlan ? (
+              <button className="yday-plan" onClick={() => update((d) => { const l = d.logs[yesterday]; if (l?.aar) delete l.aar.plan })} aria-label={`Vandaag anders: ${yPlan}. Tik om te wijzigen.`}>
+                <span className="eyebrow">Vandaag anders</span>
+                <span className="yday-plan-txt">{yPlan}</span>
+              </button>
+            ) : (
+              <>
+                <span className="eyebrow">Vandaag anders</span>
+                <div className="yday-opts">
+                  {FIXES.map((f) => <button key={f} className="yday-opt" onClick={() => { buzz(12); update((d) => { const l = (d.logs[yesterday] ??= { v: {} }); l.aar = { ...l.aar, plan: f } }) }}>{f}</button>)}
+                </div>
+              </>
+            )}
+          </div>
+          {savable && <p className="yday-save">Win vandaag, dan redt een reservedag gisteren{streakAtStake > 0 ? ` en blijft je reeks van ${streakAtStake} staan` : ''}.</p>}
         </div>
-      ) : lost ? (
-        <div className="miss-bar" role="alert">{lostLine(tier, twoInRow, left === 0)}</div>
       ) : null}
 
       {/* Nu: het ene ding dat nu aan de beurt is, met je bewijs uit de koektrommel en één knop om te beginnen */}
-      {date === today && <NowCard onDone={tear} />}
 
       {cheer && <WinMoment onClose={() => setCheer(false)} />}
 
@@ -268,7 +285,7 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
 
 
       {/* Na je dag alleen wat je zelf zei: je sterke versie van vanochtend, en je plan van gisteren. Geen duwtjes meer. */}
-      {date === today && (morningDone(log?.morning) && (log?.morning?.strong || log?.morning?.strongClip) || plan) && (
+      {date === today && morningDone(log?.morning) && (log?.morning?.strong || log?.morning?.strongClip) && (
         <div className="after-day">
           {morningDone(log?.morning) && (
             <div className="morning-line">
@@ -276,7 +293,6 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
               {log?.morning?.strongClip && <Playback clip={clipKey(today, 'strong')} label="Je sterke versie van vanochtend" />}
             </div>
           )}
-          {plan && <p className="plan-line"><b>Plan van gisteren:</b> {plan}</p>}
         </div>
       )}
 

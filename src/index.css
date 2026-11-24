@@ -1283,3 +1283,19 @@ button.mini-scene:active { transform: scale(0.98); }
 .ladder-line li.now .ll-name { font: 400 20px/26px var(--title); }
 .ll-term { font: var(--sm); font-size: 13px; color: var(--ink-3); }
 .ladder-line li.now .ll-term { color: var(--ink); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; font-size: 11px; }
+/* Gisteren, na een misser: wat goed ging (vinkjes), en met één tik wat je vandaag anders doet */
+.yday { display: flex; flex-direction: column; gap: var(--s3); margin-bottom: var(--s3); padding: var(--s4); border-radius: var(--r-lg); background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+.yday-head { display: flex; align-items: baseline; justify-content: space-between; }
+.yday-score { font: 400 18px/1 var(--title); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.yday-done { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.yday-done li { display: flex; align-items: center; gap: var(--s2); min-width: 0; font: var(--sm); color: var(--ink); }
+.yday-done li .ico { flex: none; width: 16px !important; height: 16px !important; color: var(--ink-2); }
+.yday-done li span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.yday-none { margin: 0; font: var(--sm); color: var(--ink-2); }
+.yday-next { display: flex; flex-direction: column; gap: var(--s2); padding-top: var(--s3); border-top: 1px solid var(--line); }
+.yday-opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
+.yday-opt { min-height: 44px; padding: var(--s1) var(--s2); border-radius: var(--r-md); background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--line); font: 600 13px/16px var(--sans); color: var(--ink); text-align: center; }
+.yday-opt:active { background: var(--ink); color: var(--paper); }
+.yday-plan { display: flex; flex-direction: column; gap: var(--s1); padding: 0; text-align: left; }
+.yday-plan-txt { font: 400 22px/28px var(--title); color: var(--ink); }
+.yday-save { margin: 0; font: var(--sm); font-size: 13px; color: var(--ink-3); }

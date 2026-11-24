@@ -102,10 +102,9 @@ export function Mirror({ date, onClose }: { date: string; onClose: () => void })
     skip = 'Niets vandaag'
   } else {
     q = 'Wat doe je morgen anders?'
-    sub = 'Eén ding. Je ziet het morgen op Vandaag terug.'
+    sub = 'Eén tik. Je ziet het morgen op Vandaag terug.'
     body = (
       <>
-        <input className="input dc-input" value={plan} onChange={(e) => setPlan(e.target.value)} placeholder="Eén ding" maxLength={80} />
         <div className="chips">
           {PLANS.map((p) => <button key={p} className={`chip ${plan === p ? 'on' : ''}`} onClick={() => setPlan(p)}>{p}</button>)}
         </div>
