@@ -86,8 +86,6 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
     buzz(18)
     update((d) => { (d.logs[yesterday] ??= { v: {} }).saved = true })
   }, [wonToday, savable, yesterday])
-  // Wat er op het spel staat: je reeks zoals hij blijft als gisteren gered wordt
-  const streakAtStake = savable ? winStreak({ ...s, logs: { ...s.logs, [yesterday]: { ...(s.logs[yesterday] ?? { v: {} }), saved: true } } }, yesterday) : 0
   // Herinneringen afbouwen: doe je een taak al drie weken zelf, dan vraagt de app of de melding uit mag
   const notifyOn = !!s.settings?.notify?.on
   const selfMade = date === today && notifyOn ? [...big, ...other].find((h) => h.at && h.remind !== false && !h.remindAsked && !dayRockIds.has(h.id) && doesItAlone(s, h, today)) : undefined
@@ -239,7 +237,6 @@ export default function Today({ openMirror, openUrge, openShadow }: { openMirror
               </>
             )}
           </div>
-          {savable && <p className="yday-save">Win vandaag, dan is gisteren gered{streakAtStake > 0 ? ` en blijft je reeks van ${streakAtStake} staan` : ''}.</p>}
         </div>
       ) : null}
 
