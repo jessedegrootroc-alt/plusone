@@ -621,7 +621,7 @@ function PickStep({ mode, picked, toggle, setAmount }: {
             return (
               <div key={key} className="row" style={{ minHeight: 56 }}>
                 <div className="grow">
-                  <div className="name" style={{ fontSize: 13, lineHeight: '20px'}}>{h.name}</div>
+                  <div className="name" style={{ fontSize: 14, lineHeight: '20px'}}>{h.name}</div>
                   <div className="meta">{h.type === 'limit' ? 'Maximaal per dag' : 'Minimaal per dag'}</div>
                 </div>
                 <div className="stepper">

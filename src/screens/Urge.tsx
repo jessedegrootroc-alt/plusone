@@ -128,7 +128,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
           <>
             <div className="big">Kijk vooruit.</div>
             <div style={{ color: 'var(--ink-2)' }}>Geef je nu op, hoe kijk je jezelf vanavond aan? En morgenochtend in de spiegel?</div>
-            <p className="italic" style={{ color: '#F2F2F2', margin: '4px 0 0', fontSize: 16, lineHeight: '24px' }}>Nooit stoppen als het het zwaarst is. Wil je eruit, doe het als het makkelijk is. Dat is nu niet.</p>
+            <p className="italic" style={{ color: '#F2F2F2', margin: '4px 0 0', fontSize: 17, lineHeight: '24px' }}>Nooit stoppen als het het zwaarst is. Wil je eruit, doe het als het makkelijk is. Dat is nu niet.</p>
           </>
         )}
 
@@ -146,7 +146,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
               <button className="chip" style={{ background: 'transparent', color: 'var(--ink-2)', borderColor: 'rgba(242,242,242,.2)' }} onClick={() => go('level')}>Iets anders</button>
             </div>
             {pattern && (
-              <p className="italic" style={{ color: 'var(--ink-2)', fontSize: 16, lineHeight: '24px', marginTop: 8 }}>
+              <p className="italic" style={{ color: 'var(--ink-2)', fontSize: 17, lineHeight: '24px', marginTop: 8 }}>
                 Patroon: in de {pattern.part} zat er {pattern.n} van de {pattern.total} keer <b>{pattern.need.label.toLowerCase()}</b> onder.
               </p>
             )}
@@ -181,22 +181,22 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
               <Plate src={IMG.shadow} alt={`Je schaduw. ${doreAlt(IMG.shadow)}`} />
               <div>
                 <div className="big">Wat fluistert De Schim?</div>
-                <div style={{ color: 'var(--ink-2)', fontSize: 13, lineHeight: '20px', marginTop: 4 }}>Het is een gedachte, geen bevel. Welke hoor je?</div>
+                <div style={{ color: 'var(--ink-2)', fontSize: 14, lineHeight: '20px', marginTop: 4 }}>Het is een gedachte, geen bevel. Welke hoor je?</div>
               </div>
             </div>
             {ev.voice === undefined ? (
               <div className="stack gap-8" style={{ marginTop: 8 }}>
                 {VOICES.map((v, i) => (
-                  <button key={i} className="ans" style={{ height: 'auto', minHeight: 52, padding: '8px 16px', fontFamily: 'var(--title)', fontStyle: 'italic', fontSize: 16, lineHeight: '24px', fontWeight: 400, textAlign: 'left' }} onClick={() => { buzz(8); set({ voice: i }) }}>
+                  <button key={i} className="ans" style={{ height: 'auto', minHeight: 52, padding: '8px 16px', fontFamily: 'var(--title)', fontStyle: 'italic', fontSize: 17, lineHeight: '24px', fontWeight: 400, textAlign: 'left' }} onClick={() => { buzz(8); set({ voice: i }) }}>
                     “{v.says}”
                   </button>
                 ))}
               </div>
             ) : (
               <div className="stack gap-16" style={{ marginTop: 8 }}>
-                <p className="italic" style={{ color: 'var(--ink-2)', margin: 0, fontSize: 16, lineHeight: '24px'}}>De Schim: “{VOICES[ev.voice].says}”</p>
+                <p className="italic" style={{ color: 'var(--ink-2)', margin: 0, fontSize: 17, lineHeight: '24px'}}>De Schim: “{VOICES[ev.voice].says}”</p>
                 <p className="big" style={{ margin: 0 }}>{VOICES[ev.voice].answer}</p>
-                <p style={{ color: 'var(--ink-2)', margin: 0, fontSize: 13, lineHeight: '20px'}}>Zeg het in je hoofd: “Ik merk dat ik de gedachte heb dat …” Dan is het een gedachte, en geen waarheid meer.</p>
+                <p style={{ color: 'var(--ink-2)', margin: 0, fontSize: 14, lineHeight: '20px'}}>Zeg het in je hoofd: “Ik merk dat ik de gedachte heb dat …” Dan is het een gedachte, en geen waarheid meer.</p>
               </div>
             )}
           </>
@@ -214,7 +214,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
                 <div className="big" style={{ marginTop: 8 }}>{memory.gaveIn.map(([f, n]) => `${f.toLowerCase()} (${n}×)`).join(' · ')}</div>
               </div>
             ) : (
-              <p className="italic" style={{ color: 'var(--ink-2)', margin: 0, fontSize: 16, lineHeight: '24px'}}>Denk aan de laatste keer. Hoe voelde je je een kwartier later?</p>
+              <p className="italic" style={{ color: 'var(--ink-2)', margin: 0, fontSize: 17, lineHeight: '24px'}}>Denk aan de laatste keer. Hoe voelde je je een kwartier later?</p>
             )}
             {memory.resisted.length > 0 && (
               <div>
@@ -226,8 +226,8 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
               {[[-85, 'Als toegeven je patroon wordt', `≈ −${nl(impact.lose)} vandaag`], [85, 'Als doorstaan je patroon wordt', `+${nl(impact.gain)} vandaag`]].map(([b, l, n]) => (
                 <div key={l as string} className="stack gap-8">
                   <StagePlate balance={b as number} />
-                  <div style={{ fontSize: 13, lineHeight: '20px', color: 'var(--ink-2)'}}>{l}</div>
-                  <div style={{ fontFamily: 'var(--title)', fontWeight: 400, fontSize: 20, lineHeight: '28px'}}>{n}</div>
+                  <div style={{ fontSize: 14, lineHeight: '20px', color: 'var(--ink-2)'}}>{l}</div>
+                  <div style={{ fontFamily: 'var(--title)', fontWeight: 400, fontSize: 17, lineHeight: '24px'}}>{n}</div>
                 </div>
               ))}
             </div>
@@ -254,7 +254,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
             <div style={{ color: 'var(--ink-2)' }}>{need ? `Wat je eigenlijk zoekt is ${need.promise}. Kies wat je nu doet:` : 'Kies wat je nu doet:'}</div>
             <div className="stack gap-8">
               {(need?.actions ?? ['20 push-ups, nu', 'Verander van ruimte', 'Stuur iemand een bericht']).map((a) => (
-                <button key={a} className="ans" style={{ height: 'auto', minHeight: 60, padding: '12px 16px', textAlign: 'left', fontSize: 16, lineHeight: '24px'}} onClick={() => { set({ action: a }); go('commit') }}>
+                <button key={a} className="ans" style={{ height: 'auto', minHeight: 60, padding: '12px 16px', textAlign: 'left', fontSize: 17, lineHeight: '24px'}} onClick={() => { set({ action: a }); go('commit') }}>
                   {a}
                 </button>
               ))}
@@ -292,7 +292,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
                 : 'Mis het nooit twee keer. De volgende keuze telt weer volledig.'}
             </div>
             {ev.outcome === 'gave-in' && habit && HELP_KEYS.some((k) => habit.id.startsWith(k + '-')) && (
-              <p style={{ color: 'var(--ink-2)', fontSize: 13, lineHeight: '20px', margin: 0 }}>
+              <p style={{ color: 'var(--ink-2)', fontSize: 14, lineHeight: '20px', margin: 0 }}>
                 Gebeurt dit vaak? Hulp vragen is geen zwakte, het is strategie. Jellinek (jellinek.nl) helpt bij middelen en gedrag, Loket Kansspel (loketkansspel.nl) bij gokken.
               </p>
             )}
@@ -301,7 +301,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
       </div>
 
       {showHelp && step !== 'done' && (
-        <p style={{ position: 'relative', color: 'var(--ink-2)', fontSize: 13, lineHeight: '20px', textAlign: 'center', margin: '0 0 8px' }}>
+        <p style={{ position: 'relative', color: 'var(--ink-2)', fontSize: 14, lineHeight: '20px', textAlign: 'center', margin: '0 0 8px' }}>
           Wordt het je te zwaar? Praat met iemand: 113 Zelfmoordpreventie, 0800-0113 (gratis, dag en nacht).
         </p>
       )}
@@ -313,7 +313,7 @@ export default function Urge({ onClose, onShadow }: { onClose: () => void; onSha
         {step === 'commit' && (
           <div className="stack gap-8">
             <button className="ans yes" style={{ width: '100%', height: 64 }} onClick={() => finish('resisted')}>Ik heb het doorstaan</button>
-            <button className="ans" style={{ width: '100%', height: 52, fontSize: 16, lineHeight: '24px'}} onClick={() => go('surf')}>Hij is er nog. Nog een golf.</button>
+            <button className="ans" style={{ width: '100%', height: 52, fontSize: 17, lineHeight: '24px'}} onClick={() => go('surf')}>Hij is er nog. Nog een golf.</button>
           </div>
         )}
         {step === 'done' && (
@@ -347,7 +347,7 @@ function Scale({ value, onPick }: { value?: number; onPick: (n: number) => void 
             onClick={() => onPick(n)}
             aria-label={`Sterkte ${n}`}
             style={{
-              height: 56, borderRadius: 16, fontFamily: 'var(--title)', fontWeight: 400, fontSize: 20,
+              height: 56, borderRadius: 16, fontFamily: 'var(--title)', fontWeight: 400, fontSize: 17,
               border: '1.5px solid rgba(242,242,242,.25)',
               background: on ? '#F2F2F2' : `rgba(242,242,242,${0.02 + i * 0.022})`,
               color: on ? '#0B0B0B' : '#F2F2F2',
@@ -434,7 +434,7 @@ function Surf({ onDone }: { onDone: () => void }) {
           <div style={{ width: '40%', backgroundImage: 'repeating-linear-gradient(-45deg, transparent 0 3px, rgba(242,242,242,.35) 3px 4px)' }} />
           <div style={{ width: '60%', background: '#F2F2F2', animation: 'orb 2.8s ease-in-out infinite' }} />
         </div>
-        <div className="hstack between" style={{ fontSize: 13, lineHeight: '20px', color: 'var(--ink-2)', marginTop: 8 }}>
+        <div className="hstack between" style={{ fontSize: 14, lineHeight: '20px', color: 'var(--ink-2)', marginTop: 8 }}>
           <span>Hier denk je dat je op bent</span>
           <span style={{ color: '#F2F2F2', fontWeight: 600 }}>Nog 60% in de tank</span>
         </div>

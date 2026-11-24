@@ -90,7 +90,7 @@ export default function Mandala({ values, active, onPick, level, onLevel }: { va
             {/* De boog: hoe sterk, rond vanaf boven. Wit voor de deugd, grijs voor de zonde */}
             {/* Wint de deugd: een doorgetrokken boog met de klok mee. Wint de zonde: gestippeld, de andere kant op */}
             {on && Math.abs(v) > 0.5 && <path d={arc(x, y, ARC, (Math.abs(v) / 100) * k, dark)} fill="none" stroke={dark ? INK_2 : INK} strokeWidth="2" strokeLinecap={dark ? 'butt' : 'round'} strokeDasharray={dark ? '2 3' : undefined} />}
-            <text x={x} y={y + ARC + 16} textAnchor="middle" fill={!on ? INK_3 : isSel ? INK : INK_2} style={{ fontFamily: 'var(--sans)', fontWeight: isSel ? 600 : 400, fontSize: 13, transition: 'fill .3s' }}>
+            <text x={x} y={y + ARC + 16} textAnchor="middle" fill={!on ? INK_3 : isSel ? INK : INK_2} style={{ fontFamily: 'var(--sans)', fontWeight: isSel ? 600 : 400, fontSize: 14, transition: 'fill .3s' }}>
               {dark ? s.sin : s.virtue}
             </text>
           </g>
@@ -103,7 +103,7 @@ export default function Mandala({ values, active, onPick, level, onLevel }: { va
         <text x={C.x} y={C.y + 6} textAnchor="middle" fill={INK} style={{ fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 28, letterSpacing: '-0.02em' }}>
           {picked ? (active.has(picked.id) ? fmt(values[picked.id]) : '–') : lv.name}
         </text>
-        <text x={C.x} y={C.y + 28} textAnchor="middle" fill={INK_3} style={{ fontFamily: 'var(--sans)', fontSize: 13 }}>
+        <text x={C.x} y={C.y + 28} textAnchor="middle" fill={INK_3} style={{ fontFamily: 'var(--sans)', fontSize: 14 }}>
           {picked ? 'tik om te openen' : lv.next ? `nog ${lv.to} ${lv.to === 1 ? 'punt' : 'punten'} tot ${lv.next}` : 'en nooit klaar'}
         </text>
       </g>

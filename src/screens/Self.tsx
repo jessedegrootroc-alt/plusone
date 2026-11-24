@@ -321,7 +321,7 @@ function UrgePatterns() {
             <span style={{ fontWeight: 600 }}>{v}</span>
           </div>
         ))}
-        {voice && <p className="italic" style={{ margin: '12px 0 8px', fontSize: 16, lineHeight: '24px'}}>De Schim zegt het vaakst: “{VOICES[voice[0]].says}”</p>}
+        {voice && <p className="italic" style={{ margin: '12px 0 8px', fontSize: 17, lineHeight: '24px'}}>De Schim zegt het vaakst: “{VOICES[voice[0]].says}”</p>}
       </div>
     </>
   )

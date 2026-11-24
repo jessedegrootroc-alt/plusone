@@ -23,8 +23,8 @@ function History({ points }: { points: { date: string; balance: number }[] }) {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', display: 'block' }} role="img" aria-label="Balans afgelopen 30 dagen">
       <line x1="0" y1={H / 2} x2={W} y2={H / 2} stroke="#F2F2F2" strokeDasharray="2 4" opacity={0.35} />
-      <text x="4" y="12" style={{ fontFamily: 'var(--sans)', fontSize: 13 }} fill="#8C8C8C">paradiso</text>
-      <text x="4" y={H - 4} style={{ fontFamily: 'var(--sans)', fontSize: 13 }} fill="#8C8C8C">inferno</text>
+      <text x="4" y="12" style={{ fontFamily: 'var(--sans)', fontSize: 14 }} fill="#8C8C8C">paradiso</text>
+      <text x="4" y={H - 4} style={{ fontFamily: 'var(--sans)', fontSize: 14 }} fill="#8C8C8C">inferno</text>
       <path d={d} fill="none" stroke="#F2F2F2" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
       <circle cx={x(data.length - 1)} cy={y(data[data.length - 1].balance)} r={4} fill="#0B0B0B" stroke="#F2F2F2" strokeWidth={2} />
     </svg>
@@ -96,7 +96,7 @@ export default function Compass({ openShadow }: { openShadow: (sin?: SinId) => v
             <button key={x.id} className="row" onClick={() => setOpen(x.id)} style={{ alignItems: 'stretch', opacity: n ? 1 : 0.55 }}>
               <div className="grow stack gap-4">
                 <div className="hstack between">
-                  <span className="name" style={{ fontFamily: 'var(--title)', fontSize: 20, lineHeight: '28px', fontWeight: 400 }}>{x.numeral} · {x.virtue}</span>
+                  <span className="name" style={{ fontFamily: 'var(--title)', fontSize: 17, lineHeight: '24px', fontWeight: 400 }}>{x.numeral} · {x.virtue}</span>
                   <span className="small">{n ? `${v >= 0 ? '+' : ''}${v.toFixed(0)}` : 'geen gewoontes'}</span>
                 </div>
                 <RedLine value={v} compact />

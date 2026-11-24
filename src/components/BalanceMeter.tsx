@@ -45,7 +45,7 @@ export default function BalanceMeter({ balance, onTap }: { balance: number; onTa
           const cx = (xFor(BOUNDS[i]) + xFor(BOUNDS[i + 1])) / 2
           const on = i === idx
           return (
-            <text key={s.scene} x={cx} y={60} textAnchor="middle" fill={INK} opacity={on ? 1 : 0.32} style={{ fontFamily: 'var(--sans)', fontWeight: 600, fontSize: on ? 14 : 12, letterSpacing: '.12em', transition: 'opacity .6s' }}>
+            <text key={s.scene} x={cx} y={60} textAnchor="middle" fill={INK} opacity={on ? 1 : 0.32} style={{ fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 14, letterSpacing: '.12em', transition: 'opacity .6s' }}>
               {s.plate}
             </text>
           )
