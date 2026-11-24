@@ -523,20 +523,21 @@ function PlanRow({ part, items, last }: { part: string; items: string[]; last?: 
 /**
  * Je plan wordt gebouwd, als een korte film van zes seconden: de klim.
  * Een pelgrim loopt de trappen op naar de poort; de camera klimt mee (vier lagen gravure, elk op hun eigen snelheid).
- * Onderweg valt bij elk dagdeel een briefje uit de lucht dat je plan vastprikt, met een tik en een schok door het beeld.
- * Dan komt de zon op achter de berg, het beeld licht op, en staat er: je plan staat. Tik om over te slaan.
+ * Onderweg wordt bij elk dagdeel een briefje vastgeprikt (met een tik); de briefjes gaan weg vóór het licht komt.
+ * Dan komt de zon rustig op achter de poort, precies als de pelgrim er is, en staat er: je plan staat. Tik om over te slaan.
  * Alles is eigen beeld uit de app; de beweging leent alleen het principe van een verhaal in plaats van een laadbalk.
  */
 const CLIMB_MS = 6200
-const DROPS = [1500, 2600, 3700]
+const DROPS = [900, 1600, 2300]
 function PlanBuild({ wake, bigCount, onDone }: { wake: string; bigCount: number; hasGoal: boolean; hasObstacle: boolean; onDone: () => void }) {
   const still = reduced()
   const done = useRef(onDone)
   useEffect(() => { done.current = onDone })
   useEffect(() => {
     if (still) return
-    const ts = DROPS.map((t) => window.setTimeout(() => buzz(14), t + 180))
-    ts.push(window.setTimeout(() => buzz(30), 4400))
+    // Een tik als een briefje vastzit, en een langere als het licht komt
+    const ts = DROPS.map((t) => window.setTimeout(() => buzz(14), t + 250))
+    ts.push(window.setTimeout(() => buzz(30), 3900))
     ts.push(window.setTimeout(() => done.current(), CLIMB_MS))
     return () => ts.forEach(clearTimeout)
   }, [still])
