@@ -3,7 +3,6 @@ import Plate from '../components/Plate'
 import { Icon, Sheet } from '../components/ui'
 import HabitPicker from '../components/HabitPicker'
 import Pinboard from '../components/Pinboard'
-import SceneCompare from '../components/SceneCompare'
 import Trophies from '../components/Trophies'
 import { MILESTONES, bestStreak, scheduleLabel, winStreak } from '../lib/days'
 import Account from '../components/Account'
@@ -55,9 +54,6 @@ export default function Self({ openShadow }: { openShadow: () => void }) {
       <Emblems onOpen={(prize) => setPanel({ t: 'emblem', prize })} />
       <MirrorRow />
 
-      <div className="mt-24">
-        <SceneCompare />
-      </div>
 
       <div className="group-title"><h2 className="h2">Waarom</h2><button className="link" onClick={() => setPanel({ t: 'why' })}>Wijzig</button></div>
       <div className="card" style={{ padding: '16px 16px' }}>
